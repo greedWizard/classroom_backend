@@ -13,7 +13,7 @@ from classroom.schemas import (ParticipationCreateByJoinSlugSchema,
     RoomCreateSchema,
     RoomCreateSuccessSchema, RoomDeleteSchema,
     RoomDetailSchema,
-    RoomListItemSchema,
+    RoomListItemSchema, RoomParticipationSchema,
 )
 from classroom.services.room_service import ParticipationService, RoomService
 
@@ -25,14 +25,13 @@ from user.models import User
 from user.utils import get_current_user
 
 
-classroom_router = APIRouter(
-    tags=['classroom'],
-)
+classroom_router = APIRouter()
 
 @classroom_router.post(
     '',
     response_model=RoomCreateSuccessSchema,
     status_code=status.HTTP_201_CREATED,
+    operation_id='createRoom',
 )
 async def create_new_room(
     roomCreateSchema: RoomCreateSchema,
@@ -84,6 +83,7 @@ async def update_room(
 @classroom_router.delete(
     '/{room_id}',
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id='deleteRoom',
 )
 async def delete_room(
     room_id: int,
@@ -105,8 +105,29 @@ async def delete_room(
 
 
 @classroom_router.get(
+    '/{room_id}',
+    response_model=RoomDetailSchema,
+    operation_id='getRoom',
+)
+async def get_room(
+    room_id: int,
+    user: User = Depends(get_current_user),
+):
+    room_service = RoomService(user)
+    room, errors = await room_service.retrieve(
+        _fetch_related=['participations', 'author'],
+        id=room_id,
+    )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
+    return RoomDetailSchema.from_orm(room)
+
+
+@classroom_router.get(
     '',
     response_model=List[RoomListItemSchema],
+    operation_id='getCurrentUserRooms',
 )
 async def current_user_room_list(
     user: User = Depends(get_current_user),
@@ -123,10 +144,30 @@ async def current_user_room_list(
 
     room_response_list = []
 
+    # говнокод, потом переделать
     for room in rooms:
         await room.fetch_related('participations')
+        participation, _ = await room_service.participation_service.fetch({
+            'room_id': room.id,
+            'user_id': user.id,
+        })
+        participation = participation[0]
+
         room_response_list.append(
-            RoomListItemSchema.from_orm(room)
+            RoomListItemSchema(
+                id=room.id,
+                name=room.name,
+                description=room.description,
+                participations_count=room.participations_count,
+                participation=RoomParticipationSchema(
+                    id=participation.id,
+                    role=participation.role.name,
+                    user_id=participation.user_id,
+                    room_id=participation.room_id,
+                    created_at=participation.created_at,
+                ),
+                created_at=room.created_at,
+            )
         )
     return room_response_list
 
@@ -163,7 +204,7 @@ async def join_room_by_link(
             join_slug=join_slug,
             author_id=user.id,
         ),
-        fetch_related=['room']
+        fetch_related=['room', 'room__author']
     )
 
     if errors:
@@ -174,9 +215,5 @@ async def join_room_by_link(
         user_id=participation.user_id,
         role=participation.role.name,
         author_id=participation.author_id,
-        room=RoomDetailSchema(
-            name=participation.room.name,
-            description=participation.room.description,
-            id=participation.room.id,
-        ),
+        room=RoomListItemSchema.from_orm(participation.room),
     )

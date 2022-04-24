@@ -32,9 +32,7 @@ from user.schemas import AuthorSchema
 from user.utils import get_current_user
 
 
-materials_router = APIRouter(
-    tags=['classroom'],
-)
+materials_router = APIRouter()
 
 @materials_router.post(
     '',
@@ -201,4 +199,3 @@ async def attach_files_to_material(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
-

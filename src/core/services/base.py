@@ -146,7 +146,7 @@ class CreateUpdateServiceMixin(IServiceBase):
             return None, errors
         obj = await self.model.create(**attrs)
         await obj.fetch_related(*fetch_related)
-        return obj, None
+        return obj, {}
 
     @action
     @atomic
@@ -184,7 +184,7 @@ class CreateUpdateServiceMixin(IServiceBase):
             return None, self.error_messages.get('does_not_exist')
 
         await obj.fetch_related(*fetch_related)
-        return obj, None
+        return obj, {}
 
     @action
     async def bulk_update(
@@ -206,7 +206,7 @@ class CreateUpdateServiceMixin(IServiceBase):
 
         if errors:
             return None, errors
-        return queryset, None
+        return queryset, {}
 
 
 class RetrieveFetchServiceMixin(IServiceBase):
@@ -231,6 +231,22 @@ class RetrieveFetchServiceMixin(IServiceBase):
     @action
     async def retrieve(
         self,
+        _prefetch_related: list = [],
+        _select_related: list = [],
+        **filters,
+    ):
+        qs = await self.get_queryset()
+        obj = qs.filter(**filters).prefetch_related(
+            *_prefetch_related,
+        ).select_related(*_select_related).first()
+
+        if not obj:
+            return None, self.error_messages.get('does_not_exist')
+        return obj, None
+
+    @action
+    async def retrieve(
+        self,
         _fetch_related: list = [],
         **kwargs,
     ):
@@ -240,12 +256,12 @@ class RetrieveFetchServiceMixin(IServiceBase):
 
         if not obj:
             return None, self.error_messages.get('does_not_exist')
-        return obj, None
+        return obj, {}
 
 
 class DeleteMixin(IServiceBase):
     async def _validate_delete(self, attrs: Dict):
-        return attrs, None
+        return attrs, {}
 
     async def _validate_bulk_delete(self, **kwargs):
         qs = await self.get_queryset(for_delete=True)
@@ -275,7 +291,8 @@ class DeleteMixin(IServiceBase):
 
 class CRUDService(CreateUpdateServiceMixin, RetrieveFetchServiceMixin, DeleteMixin):
     '''
-        CrudService for performing CRUD operations.
+        CrudService for performing CRUD operations and validation.
         ! All manager's operations only avaliable from that class and it's subclasses methods!
     '''
-    pass
+    def __init__(self) -> None:
+        self.user = None

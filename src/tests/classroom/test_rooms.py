@@ -254,6 +254,21 @@ def test_delete_room_not_logged_in(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+def test_room_get_detail(
+    authentication_token: str,
+    app: FastAPI,
+    client: TestClient,
+    room: Room,
+):
+    url = app.url_path_for('get_room', room_id=room.id)
+
+    response = client.get(url, headers={
+        'Authorization': f'Bearer {authentication_token}'
+    })
+
+    assert response.status_code == status.HTTP_200_OK
+
+
 def test_delete_room_success(
     authentication_token: str,
     app: FastAPI,

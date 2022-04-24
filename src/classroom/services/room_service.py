@@ -45,14 +45,15 @@ class RoomService(AuthorMixin, CRUDService):
     async def create(self, createSchema, exclude_unset: bool = False):
         created_room, errors = await super().create(createSchema, exclude_unset)
 
-        participation, participation_errors = await self.participation_service.create(ParticipationCreateSchema(
-            user_id=self.user.id,
-            room_id=created_room.id,
-            role=ParticipationRoleEnum.host.name,
-            author_id=self.user.id,
-        ))
-        # TODO: логировать создание комнаты
+        if not errors:
+            await self.participation_service.create(ParticipationCreateSchema(
+                user_id=self.user.id,
+                room_id=created_room.id,
+                role=ParticipationRoleEnum.host.name,
+                author_id=self.user.id,
+            ))
 
+        # TODO: логировать создание комнаты
         return created_room, errors
 
     @action
@@ -91,3 +92,8 @@ class RoomService(AuthorMixin, CRUDService):
         ):
             return None, 'You can not moderate this room'
         return await super()._validate_delete(deleteSchema)
+
+    async def validate_name(self, value):
+        if not value:
+            return False, 'This field is required'
+        return True, None

@@ -25,6 +25,9 @@ class UserService(CRUDService):
     async def get_queryset(self):
         return await self.model.active()
 
+    def set_user(self, user: User):
+        self.user = user
+
     def _hash_password(self, password: str) -> str:
         return md5(password.encode()).hexdigest()
 
@@ -43,17 +46,22 @@ class UserService(CRUDService):
     async def validate_first_name(self, value):
         if not value:
             return False, 'The field should not be empty'
-        return True, None
+        return True, {}
     
     async def validate_last_name(self, value):
         if not value:
             return False, 'The field should not be empty'
-        return True, None
+        return True, {}
 
     async def validate_email(self, value: str) -> ResultTuple:
+        exists_condition = Q(email=value)
+
+        if self.user:
+            exists_condition &= ~Q(id=self.user.id)
+
         if not re.match(EMAIL_REGEX, value):
             return False, 'Invalid email format.'
-        if await self.model.filter(email=value).exists():
+        if await self.model.filter(exists_condition).exists():
             return False, 'User with that email is already registred.'
         return True, {}
 
@@ -63,10 +71,20 @@ class UserService(CRUDService):
         return True, {}
 
     async def validate_phone_number(self, value: str) -> ResultTuple:
+        exists_condition = Q(phone_number=value)
+
+        if self.user:
+            exists_condition &= ~Q(id=self.user.id)
+
         if not re.match(PHONE_REGEX, value):
             return False, 'Invalid phone format.'
-        if await self.model.filter(phone_number=value).exists():
+        if await self.model.filter(exists_condition).exists():
             return False, 'User with that phone number is already registred.'
+        return True, {}
+
+    async def validate_confirm_password(self, value):
+        if self._hash_password(value) != self.user.password:
+            return False, 'Incorrect password'
         return True, {}
 
     async def validate(self, attrs):

@@ -110,13 +110,11 @@ async def update_current_user(
     current_user: User = Depends(get_current_user),
     user_service: UserService = Depends(),
 ):
-    can_proceed, error_message = await user_service.has_update_permission(
-        current_user, userUpdateSchema.confirm_password,
-    )
-
-    if not can_proceed:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error_message)
+    user_service.set_user(current_user)
     user, errors = await user_service.update(current_user.id, userUpdateSchema)
+
+    if errors.get('confirm_password'):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
 
     if errors:
         raise HTTPException(
