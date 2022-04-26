@@ -29,6 +29,7 @@ class UserRegisterSchema(BaseModel):
 
 class UserRegistrationCompleteSchema(BaseModel):
     status: str
+    is_active: bool = False
 
 
 class UserLoginSchema(BaseModel):

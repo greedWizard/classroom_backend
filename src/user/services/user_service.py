@@ -97,7 +97,7 @@ class UserService(CRUDService):
         if self.action == 'create':
             attrs['activation_token'] = uuid.uuid4().hex
             attrs['activation_deadline_dt'] = datetime.utcnow() + timedelta(hours=config.ACTIVATION_DEADLINE_HOURS)
-            attrs['is_active'] = True
+            attrs['is_active'] = False
             attrs.pop('accept_eula')
         if self.action == 'update':
             attrs.pop('confirm_password')
@@ -124,4 +124,21 @@ class UserService(CRUDService):
 
         if not user:
             return None, 'Bad credentials'
+        if not user.is_active:
+            return None, 'User is not active. Please activate your profile.'
+
+        user.last_login = datetime.utcnow()
+        await user.save()
+
+        return user, None
+
+    @action
+    async def activate_user(self, activation_token: str) -> Tuple[User, dict]:
+        user = await self.model.filter(is_active=False, activation_token=activation_token).first()
+
+        if not user:
+            return None, {'activation_token': 'User not found'}
+        user.is_active = True
+        await user.save()
+
         return user, None

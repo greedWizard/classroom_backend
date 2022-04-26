@@ -52,7 +52,7 @@ class ProjectSettings(BaseModel):
     ]
 
     APP_MODULES: Dict[str, List[str]] = {
-        MODELS_APP_LABEL: MODELS_PATHS 
+        MODELS_APP_LABEL: MODELS_PATHS
     }
     MINIMAL_DAYS_DELTA: int = int(env('MINIMAL_DAYS_DELTA'))
 
@@ -62,3 +62,6 @@ class ProjectSettings(BaseModel):
     USER_SUCCESS_STATUS: str = 'success'
     USER_PERMISSION_DENIED_ERROR: str = 'You are not logged in.'
     AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA: timedelta = timedelta(days=3)
+    
+    # ETERNAL SETTINGS
+    FRONTEND_LOGIN_URL: str = os.environ.get('FRONTEND_LOGIN_URL')

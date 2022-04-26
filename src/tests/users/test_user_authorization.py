@@ -32,7 +32,6 @@ def user_data(
         'phone_number': '+79990001122',
         'activation_token': 'test_activation_token',
         'activation_deadline_dt': datetime.utcnow(),
-        'is_active': True,
     }
 
 
@@ -43,10 +42,42 @@ def user(
 ) -> User:
     user = event_loop.run_until_complete(
         User.get_or_create(
-            defaults=user_data,
+            defaults={**user_data, 'is_active': False,},
         )
     )[0]
     yield user
+
+
+def test_authentication_fail_not_active(
+    user: User,
+    app: FastAPI,
+    client: TestClient,
+    user_data: Dict,
+):
+    url = app.url_path_for('authenticate_user')
+
+    response = client.post(
+        url,
+        json={
+            'email': user.email,
+            'password': USER_TEST_PASSWORD,
+        }
+    )
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json()['detail'] == 'User is not active. Please activate your profile.'
+
+
+def test_user_activation(
+    user: User,
+    app: FastAPI,
+    client: TestClient,
+    user_data: Dict,
+):
+    url = app.url_path_for('activate_user', activation_token=user_data['activation_token'])
+    response = client.get(url)
+
+    assert response.status_code == status.HTTP_200_OK
 
 
 def test_authentication_success_email(
@@ -84,7 +115,7 @@ def test_authentication_success_email(
 
     for key in list(json_data.keys()):
         if key in user_data:
-            assert user_data[key] == json_data[key]
+            assert user_data[key] == json_data[key], key
 
 
 def test_authentication_success_phone(
@@ -122,7 +153,7 @@ def test_authentication_success_phone(
 
     for key in list(json_data.keys()):
         if key in user_data:
-            assert user_data[key] == json_data[key]
+            assert user_data[key] == json_data[key], key
 
 
 def test_authentication_fail_phone(
@@ -194,7 +225,7 @@ def test_any_user_info(
 
     for key in list(json_data.keys()):
         if key in user_data:
-            assert user_data[key] == json_data[key]
+            assert user_data[key] == json_data[key], key
 
 
 def test_current_user_update(

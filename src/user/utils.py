@@ -28,3 +28,12 @@ async def get_current_user_optional(
     current_user: User = Depends(_get_current_user),
 ):
     return current_user
+
+
+def get_registration_complete_email_template(
+    activation_link: str,
+):
+    # TODO: мб добавить жинжу сюда? Пока впадлу
+    return '<h2>Thank you for registring in our service! ' \
+        f'<a href="{activation_link}">Click here</a> to activate your profile</h2>'
+

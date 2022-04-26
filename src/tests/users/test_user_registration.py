@@ -48,7 +48,7 @@ def test_user_registration_success(
 
     response = client.post(url, json=user_creds)
 
-    assert response.status_code == status.HTTP_201_CREATED
+    assert response.status_code == status.HTTP_201_CREATED, response.json()
     assert event_loop.run_until_complete(User.all().count()) == user_count + 1
 
     user = event_loop.run_until_complete(User.all().first())

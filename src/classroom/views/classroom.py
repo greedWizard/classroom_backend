@@ -2,11 +2,9 @@ from typing import List
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
-from fastapi.responses import Response
-
-from fastapi_jwt_auth import AuthJWT
 
 from starlette import status
+
 from classroom.schemas import (ParticipationCreateByJoinSlugSchema,
     ParticipationSuccessSchema,
     RoomCreateJoinLinkSuccessSchema,
@@ -16,10 +14,6 @@ from classroom.schemas import (ParticipationCreateByJoinSlugSchema,
     RoomListItemSchema, RoomParticipationSchema,
 )
 from classroom.services.room_service import ParticipationService, RoomService
-
-from core.config import config
-from user.exceptions import NotAuthenticatedException
-
 
 from user.models import User
 from user.utils import get_current_user
@@ -58,6 +52,7 @@ async def create_new_room(
     '/{room_id}',
     response_model=RoomCreateSuccessSchema,
     status_code=status.HTTP_200_OK,
+    operation_id='updateRoom',
 )
 async def update_room(
     roomUpdateSchema: RoomCreateSchema,

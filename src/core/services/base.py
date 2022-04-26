@@ -124,7 +124,6 @@ class CreateUpdateServiceMixin(IServiceBase):
 
             if hasattr(self, validation_method):
                 validation_success, validation_error = await getattr(self, validation_method)(value)
-                print(validation_method, validation_success, validation_error)
 
                 if not validation_success:
                     errors[key] = validation_error

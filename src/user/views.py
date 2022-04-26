@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends
+from urllib.parse import urljoin
+
+from fastapi import APIRouter, Depends, Request
 from fastapi.exceptions import HTTPException
+from fastapi.responses import RedirectResponse
 from fastapi_jwt_auth import AuthJWT
 
 from starlette import status
 
 from core.config import config
+from core.services.email import EmailService
 from user.models import User
 from user.schemas import (
     UserLoginSchema,
@@ -15,12 +19,27 @@ from user.schemas import (
     UserRegistrationCompleteSchema,
 )
 from user.services.user_service import UserService
-from user.utils import get_current_user, get_current_user_optional
+from user.utils import get_current_user, get_current_user_optional, get_registration_complete_email_template
 
 
 router = APIRouter(
     tags=['authentication'],
 )
+
+
+@router.get(
+    '/activate/{activation_token}',
+    operation_id='activateUser',
+)
+async def activate_user(
+    activation_token: str,
+    user_service: UserService = Depends(),
+):
+    _, errors = await user_service.activate_user(activation_token)
+
+    if not errors:
+        return RedirectResponse(config.FRONTEND_LOGIN_URL)
+    raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @router.post(
@@ -30,12 +49,27 @@ router = APIRouter(
     operation_id='registerUser',
 )
 async def register_user(
+    request: Request,
     userRegisterSchema: UserRegisterSchema,
     user_service: UserService = Depends(),
+    email_service: EmailService = Depends(),
 ):
-    _, errors = await user_service.create(userRegisterSchema)
+    user, errors = await user_service.create(userRegisterSchema)
 
     if not errors:
+        activation_link = urljoin(
+            str(request.base_url),
+            request.app.url_path_for(
+                'activate_user',
+                activation_token=user.activation_token,
+            )
+        )
+        # TODO: отправить чиллить в треды, чтобы пользователь не ждал
+        await email_service.send_email(
+            subject='classroom activation link',
+            recipients=[user.email],
+            body=get_registration_complete_email_template(activation_link),
+        )
         return UserRegistrationCompleteSchema(status=config.USER_SUCCESS_STATUS)
     raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -53,7 +87,6 @@ async def authenticate_user(
 ):
     if current_user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='You are already logged in!')
-    print(current_user)
 
     user, error_message = await user_service.authenticate_user(userLoginSchema)
 
