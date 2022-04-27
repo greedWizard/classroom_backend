@@ -1,9 +1,9 @@
 from typing import NewType, Union
 from tortoise import models, fields
 from tortoise.exceptions import NoValuesFetched
-from tortoise.expressions import Q
+from tortoise.validators import MinValueValidator, MaxValueValidator
 
-from classroom.constants import ParticipationRoleEnum
+from classroom.constants import HomeWorkAssignmentStatus, ParticipationRoleEnum
 from core.models import AuthorAbstract, TimeStampAbstract
 
 
@@ -154,6 +154,8 @@ class HomeworkAssignment(TimeStampAbstract, AuthorAbstract):
         related_name='assignments',
         on_delete=fields.CASCADE,
     )
+    status = fields.CharEnumField(enum_type=HomeWorkAssignmentStatus, default=HomeWorkAssignmentStatus.not_passed.name)
+    rate = fields.IntField(validators=[MinValueValidator(0), MaxValueValidator(5)])
 
     class Meta:
         table = 'homework_assignments'
