@@ -110,7 +110,7 @@ class MaterialCreateSuccessSchema(MaterialCreateSchema):
     id: int
 
 
-class MaterialListItemSchema(RoomPostAbstractSchema):
+class MaterialListItemSchema(RoomPostAbstractSchema, NormalizedDatetimeModel):
     id: int
     text: Optional[str]
     author: AuthorSchema
@@ -118,7 +118,7 @@ class MaterialListItemSchema(RoomPostAbstractSchema):
     updated_at: datetime
     room_id: int
 
-    class Config:
+    class Config(NormalizedDatetimeModel.Config):
         orm_mode = True
 
 

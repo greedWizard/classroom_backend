@@ -266,6 +266,9 @@ class DeleteMixin(IServiceBase):
         qs = await self.get_queryset(for_delete=True)
         return await qs.filter(**kwargs).exists()
 
+    async def _validate_delete(self):
+        return True
+
     @action
     async def delete(self, deleteSchema: DeleteSchema, exclude_unset: bool = True):
         delete_schema_dict = deleteSchema.dict(exclude_unset=exclude_unset)
@@ -275,6 +278,16 @@ class DeleteMixin(IServiceBase):
         if errors:
             return None, errors
         return await self.model.filter(**attrs).delete(), None
+
+    @action
+    async def delete_by_id(self, id: int):
+        queryset = await self.get_queryset(for_delete=True)
+
+        if not queryset:
+            return False
+
+        await queryset.filter(id=id).first().delete()
+        return True
 
     @action
     async def bulk_delete(

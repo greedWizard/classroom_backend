@@ -63,6 +63,7 @@ async def create_new_material(
     '',
     response_model=Page[MaterialListItemSchema],
     status_code=status.HTTP_200_OK,
+    operation_id='getMaterials',
 )
 async def get_materials(
     room_id: int,
@@ -83,14 +84,7 @@ async def get_materials(
 
     if errors:
         raise HTTPException(status=status.HTTP_400_BAD_REQUEST, detail=errors)
-    
-    materials_response = []
-
-    for material in materials:
-        materials_response.append(
-            MaterialListItemSchema.from_orm(material)
-        )
-    return paginate(materials_response)
+    return paginate([MaterialListItemSchema.from_orm(material) for material in materials])
 
 
 @materials_router.put(
@@ -191,7 +185,7 @@ async def attach_files_to_material(
     '',
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def attach_files_to_material(
+async def bulk_delete_materials(
     materialDeleteSchema: MaterialDeleteSchema,
     user: User = Depends(get_current_user),
 ):
@@ -200,3 +194,19 @@ async def attach_files_to_material(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
+
+
+@materials_router.delete(
+    '/{material_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id='deleteMaterial',
+)
+async def delete_material(
+    material_id: int,
+    user: User = Depends(get_current_user),
+):
+    material_service = MaterialService(user)
+    success = await material_service.delete_by_id(material_id)
+
+    if not success:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Operation not allowed')
