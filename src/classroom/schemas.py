@@ -44,6 +44,7 @@ class RoomDetailSchema(RoomBaseSchema, NormalizedDatetimeModel):
     created_at: datetime
     updated_at: Optional[datetime]
     author: AuthorSchema
+    join_slug: str
 
 
 class RoomListItemSchema(RoomBaseSchema, NormalizedDatetimeModel):

@@ -29,6 +29,11 @@ class AbstractRoomPostService(AuthorMixin, CRUDService):
     async def _validate_moderation(self, room_id: int):
         return await self.participation_model.is_user_moderator(self.user, room_id)
 
+    async def validate_title(self, value: str):
+        if not value:
+            return False, 'This field is required'
+        return True, None
+
     async def validate_room_id(self, value: int):
         if not await self._validate_moderation(value):
             return False, 'You can not moderate this room.'

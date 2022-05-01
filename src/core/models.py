@@ -2,8 +2,8 @@ from tortoise import models, fields
 
 
 class TimeStampAbstract(models.Model):
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
+    created_at = fields.DatetimeField(auto_now=True)
+    updated_at = fields.DatetimeField(auto_now_add=True)
 
     class Meta:
         abstract = True

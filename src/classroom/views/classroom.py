@@ -186,6 +186,7 @@ async def refresh_join_slug(
 @classroom_router.get(
     '/join/{join_slug}',
     response_model=ParticipationSuccessSchema,
+    operation_id='joinBySlug',
 )
 async def join_room_by_link(
     join_slug: str,

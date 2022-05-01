@@ -38,6 +38,7 @@ materials_router = APIRouter()
     '',
     response_model=MaterialCreateSuccessSchema,
     status_code=status.HTTP_201_CREATED,
+    operation_id='createMaterial',
 )
 async def create_new_material(
     materialCreateSchema: MaterialCreateSchema,

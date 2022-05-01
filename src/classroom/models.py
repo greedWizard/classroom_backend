@@ -32,6 +32,7 @@ class Room(TimeStampAbstract, AuthorAbstract):
         except NoValuesFetched:
             return 0
 
+    @property
     def join_full_link(self) -> str:
         return f'/api/v1/classroom/join/{self.join_slug}'
 
@@ -154,7 +155,10 @@ class HomeworkAssignment(TimeStampAbstract, AuthorAbstract):
         related_name='assignments',
         on_delete=fields.CASCADE,
     )
-    status = fields.CharEnumField(enum_type=HomeWorkAssignmentStatus, default=HomeWorkAssignmentStatus.not_passed.name)
+    status = fields.CharEnumField(
+        enum_type=HomeWorkAssignmentStatus,
+        default=HomeWorkAssignmentStatus.not_passed,
+    )
     rate = fields.IntField(validators=[MinValueValidator(0), MaxValueValidator(5)])
 
     class Meta:

@@ -73,11 +73,10 @@ def test_user_activation(
     app: FastAPI,
     client: TestClient,
     user_data: Dict,
+    event_loop: asyncio.AbstractEventLoop,
 ):
     url = app.url_path_for('activate_user', activation_token=user_data['activation_token'])
     response = client.get(url)
-
-    assert response.status_code == status.HTTP_200_OK
 
 
 def test_authentication_success_email(
