@@ -266,9 +266,6 @@ class DeleteMixin(IServiceBase):
         qs = await self.get_queryset(for_delete=True)
         return await qs.filter(**kwargs).exists()
 
-    async def _validate_delete(self):
-        return True
-
     @action
     async def delete(self, deleteSchema: DeleteSchema, exclude_unset: bool = True):
         delete_schema_dict = deleteSchema.dict(exclude_unset=exclude_unset)

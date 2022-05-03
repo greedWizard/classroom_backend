@@ -79,7 +79,8 @@ async def get_materials(
             'room_id': room_id,
         },
         _ordering=ordering,
-        _select_related=['author']
+        _select_related=['author'],
+        _prefetch_related=['attachments'],
     )
 
     if errors:
@@ -143,6 +144,7 @@ async def get_material(
     '/{material_id}/attachments',
     response_model=MaterialDetailSchema,
     status_code=status.HTTP_201_CREATED,
+    operation_id='attachFilesToMaterial',
 )
 async def attach_files_to_material(
     material_id: int,

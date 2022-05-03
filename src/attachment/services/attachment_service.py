@@ -73,4 +73,5 @@ class AttachmentService(AuthorMixin, CRUDService):
 
         await material.attachments.add(*attachments)
         await material.fetch_related('attachments', 'author')
+        [attachment for attachment in material.attachments]
         return material, None

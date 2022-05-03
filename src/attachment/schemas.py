@@ -3,17 +3,18 @@ from typing import List
 
 from pydantic import BaseModel
 
+from core.schemas import NormalizedDatetimeModel
+
 
 class AttachmentCreateSchema(BaseModel):
     filename: str
     source: bytes
 
 
-class AttachmentListItemSchema(BaseModel):
+class AttachmentListItemSchema(NormalizedDatetimeModel):
     id: int
     filename: str
     download_link: str
-    type: str
     created_at: datetime
     updated_at: datetime
 

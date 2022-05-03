@@ -116,6 +116,7 @@ class MaterialListItemSchema(RoomPostAbstractSchema, NormalizedDatetimeModel):
     author: AuthorSchema
     created_at: datetime
     updated_at: datetime
+    attachments_count: int
     room_id: int
 
     class Config(NormalizedDatetimeModel.Config):

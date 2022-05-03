@@ -105,7 +105,16 @@ class RoomPostAbstract(AuthorAbstract, TimeStampAbstract):
         abstract = True
 
 
-class Material(RoomPostAbstract):
+class AttachmentsCountMixin:
+    @property
+    def attachments_count(self) -> int:
+        try:
+            return len(self.attachments)
+        except NoValuesFetched:
+            return 0
+
+
+class Material(RoomPostAbstract, AttachmentsCountMixin):
     text = fields.TextField(null=True, blank=True)
     room = fields.ForeignKeyField('models.Room', related_name='materials', on_delete=fields.CASCADE)
     attachments = fields.ManyToManyField(
@@ -124,7 +133,7 @@ class Material(RoomPostAbstract):
         table = 'materials'
 
 
-class HomeWork(RoomPostAbstract):
+class HomeWork(RoomPostAbstract, AttachmentsCountMixin):
     room = fields.ForeignKeyField(
         'models.Room',
         related_name='homeworks',
@@ -142,7 +151,7 @@ class HomeWork(RoomPostAbstract):
         table = 'homeworks'
 
 
-class HomeworkAssignment(TimeStampAbstract, AuthorAbstract):
+class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixin):
     id = fields.IntField(pk=True)
     attachments = fields.ManyToManyField(
         'models.Attachment',
