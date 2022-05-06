@@ -3,7 +3,7 @@ from tortoise import models, fields
 from tortoise.exceptions import NoValuesFetched
 from tortoise.validators import MinValueValidator, MaxValueValidator
 
-from classroom.constants import HomeWorkAssignmentStatus, ParticipationRoleEnum
+from classroom.constants import HomeWorkAssignmentStatus, RoomPostType, ParticipationRoleEnum
 from core.models import AuthorAbstract, TimeStampAbstract
 
 
@@ -70,14 +70,14 @@ class Participation(TimeStampAbstract, AuthorAbstract):
     async def can_moderate(
         cls,
         user: Union[int, UserModel],
-        material: Union[int, Room],
+        room_post: Union[int, Room],
     ):
         user_id = getattr(user, 'id', user)
-        material_id = getattr(material, 'id', material)
+        room_post_id = getattr(room_post, 'id', room_post)
 
         return await cls.filter(
             user_id=user_id,
-            room__materials__id=material_id,
+            room__room_posts__id=room_post_id,
             role__in=cls.MODERATOR_ROLES,
         ).exists()
 
@@ -114,41 +114,28 @@ class AttachmentsCountMixin:
             return 0
 
 
-class Material(RoomPostAbstract, AttachmentsCountMixin):
+class RoomPost(RoomPostAbstract, AttachmentsCountMixin):
     text = fields.TextField(null=True, blank=True)
-    room = fields.ForeignKeyField('models.Room', related_name='materials', on_delete=fields.CASCADE)
+    room = fields.ForeignKeyField('models.Room', related_name='room_posts', on_delete=fields.CASCADE)
     attachments = fields.ManyToManyField(
         'models.Attachment',
-        related_name='materials',
-        through='materials_attachments',
+        related_name='room_posts',
+        through='room_posts_attachments',
+    )
+    deadline_at = fields.DatetimeField(blank=True, null=True)
+    type = fields.CharEnumField(
+        enum_type=RoomPostType,
+        default=RoomPostType.room_post,
     )
 
     def __str__(self) -> str:
         return f'"{self.title}" / "{self.description}"'
 
     def __repr__(self) -> str:
-        return f'<Material {str(self)}>'
+        return f'<RoomPost {str(self)}>'
 
     class Meta:
-        table = 'materials'
-
-
-class HomeWork(RoomPostAbstract, AttachmentsCountMixin):
-    room = fields.ForeignKeyField(
-        'models.Room',
-        related_name='homeworks',
-        on_delete=fields.CASCADE,
-    )
-    deadline_at = fields.DatetimeField(blank=True, null=True)
-    receipt_dt = fields.DatetimeField(auto_now_add=True)
-    attachments = fields.ManyToManyField(
-        'models.Attachment',
-        related_name='homeworks',
-        through='homeworks_attachments',
-    )
-
-    class Meta:
-        table = 'homeworks'
+        table = 'room_posts'
 
 
 class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixin):
@@ -159,8 +146,8 @@ class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixi
         through='homeworkassignments_attachments',
     )
     comment = fields.TextField()
-    homework = fields.ForeignKeyField(
-        'models.HomeWork',
+    assigned_room_post = fields.ForeignKeyField(
+        'models.RoomPost',
         related_name='assignments',
         on_delete=fields.CASCADE,
     )

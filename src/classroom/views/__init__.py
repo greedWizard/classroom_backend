@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from .classroom import classroom_router
-from .materials import materials_router
+from .room_posts import room_posts_router
 
 
 router = APIRouter(
@@ -9,4 +9,4 @@ router = APIRouter(
 )
 
 router.include_router(router=classroom_router, prefix='/room')
-router.include_router(router=materials_router, prefix='/materials')
+router.include_router(router=room_posts_router, prefix='/room_posts')

@@ -101,17 +101,17 @@ class RoomDeleteSchema(BaseModel):
     id: int
 
 
-class MaterialCreateSchema(RoomPostAbstractSchema):
+class RoomPostCreateSchema(RoomPostAbstractSchema):
     room_id: int
     text: Optional[str]
     author_id: Optional[int]
 
 
-class MaterialCreateSuccessSchema(MaterialCreateSchema):
+class RoomPostCreateSuccessSchema(RoomPostCreateSchema):
     id: int
 
 
-class MaterialListItemSchema(RoomPostAbstractSchema, NormalizedDatetimeModel):
+class RoomPostListItemSchema(RoomPostAbstractSchema, NormalizedDatetimeModel):
     id: int
     text: Optional[str]
     author: AuthorSchema
@@ -124,11 +124,11 @@ class MaterialListItemSchema(RoomPostAbstractSchema, NormalizedDatetimeModel):
         orm_mode = True
 
 
-class MaterialUpdateSchema(MaterialCreateSchema):
+class RoomPostUpdateSchema(RoomPostCreateSchema):
     pass
 
 
-class MaterialDetailSchema(MaterialListItemSchema):
+class RoomPostDetailSchema(RoomPostListItemSchema):
     attachments: List[AttachmentListItemSchema]
     room_id: int
 
@@ -136,5 +136,5 @@ class MaterialDetailSchema(MaterialListItemSchema):
         orm_mode = True
 
 
-class MaterialDeleteSchema(BaseModel):
+class RoomPostDeleteSchema(BaseModel):
     ids: List[int]

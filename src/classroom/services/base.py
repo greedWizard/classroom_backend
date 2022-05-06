@@ -4,7 +4,7 @@ import uuid
 from tortoise.expressions import Q
 
 from classroom.constants import ParticipationRoleEnum
-from classroom.models import Material, Participation, Room
+from classroom.models import RoomPost, Participation, Room
 
 from core.services.author import AuthorMixin
 from core.services.base import CRUDService
@@ -23,8 +23,8 @@ class AbstractRoomPostService(AuthorMixin, CRUDService):
         if for_delete:
             expression &= Q(room__participations__role=ParticipationRoleEnum.host)
 
-        materials_ids = await self.model.filter(expression).distinct().values_list('id', flat=True)
-        return self.model.filter(id__in=materials_ids).distinct()
+        room_posts_ids = await self.model.filter(expression).distinct().values_list('id', flat=True)
+        return self.model.filter(id__in=room_posts_ids).distinct()
     
     async def _validate_moderation(self, room_id: int):
         return await self.participation_model.is_user_moderator(self.user, room_id)

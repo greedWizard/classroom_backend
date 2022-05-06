@@ -3,9 +3,8 @@ from typing import List
 from tortoise.expressions import Q
 from attachment.models import Attachment
 from attachment.schemas import AttachmentCreateSchema
-from classroom.constants import ParticipationRoleEnum
 
-from classroom.models import HomeWork, HomeworkAssignment, Material, Participation, Room
+from classroom.models import HomeworkAssignment, RoomPost, Participation, Room
 
 from core.services.author import AuthorMixin
 from core.services.base import CRUDService
@@ -18,8 +17,7 @@ class AttachmentService(AuthorMixin, CRUDService):
     model = Attachment
     room_model = Room
     participation_model = Participation
-    material_model = Material
-    homework_model = HomeWork
+    room_post_model = RoomPost
     homework_assignment_model = HomeworkAssignment
     user_model = User
 
@@ -34,7 +32,7 @@ class AttachmentService(AuthorMixin, CRUDService):
         ).values_list('room_id', flat=True)
 
         attachment_ids = await self.model.filter(
-            Q(materials__room_id__in=user_rooms_ids) | \
+            Q(room_posts__room_id__in=user_rooms_ids) | \
             Q(homeworks__room_id__in=user_rooms_ids) | \
             Q(homework_assignments__homework__room_id__in=user_rooms_ids)
         ).values_list('id', flat=True)
@@ -43,24 +41,24 @@ class AttachmentService(AuthorMixin, CRUDService):
     def __init__(self, user: User, *args, **kwargs) -> None:
         super().__init__(user, *args, **kwargs)
     
-    async def _can_attach_to_material(self, material_id: int):
-        return await self.participation_model.can_moderate(self.user, material_id)
+    async def _can_attach_to_room_post(self, room_post_id: int):
+        return await self.participation_model.can_moderate(self.user, room_post_id)
 
-    async def validate_material_id(self, value: int):
-        if not await self._can_attach_to_material(value):
+    async def validate_room_post_id(self, value: int):
+        if not await self._can_attach_to_room_post(value):
             return False, 'You can not moderate this room.'
         return True, None
 
     @action
-    async def create_for_material(
+    async def create_for_room_post(
         self,
         listAttachmentCreateSchema: List[AttachmentCreateSchema],
-        material_id: int,
+        room_post_id: int,
     ):
-        if not await self._can_attach_to_material(material_id):
-            return False, { 'material_id': 'You can not moderate this room.' }
+        if not await self._can_attach_to_room_post(room_post_id):
+            return False, { 'room_post_id': 'You can not moderate this room.' }
 
-        material = await self.material_model.get(id=material_id)
+        room_post = await self.room_post_model.get(id=room_post_id)
         attachments = [await self.model(
             filename=attachmentCreateSchema.filename,
             source=attachmentCreateSchema.source,
@@ -71,7 +69,7 @@ class AttachmentService(AuthorMixin, CRUDService):
         for attachment in attachments:
             await attachment.save()
 
-        await material.attachments.add(*attachments)
-        await material.fetch_related('attachments', 'author')
-        [attachment for attachment in material.attachments]
-        return material, None
+        await room_post.attachments.add(*attachments)
+        await room_post.fetch_related('attachments', 'author')
+        [attachment for attachment in room_post.attachments]
+        return room_post, None

@@ -12,3 +12,8 @@ class HomeWorkAssignmentStatus(Enum):
     passed = 'passed'
     done = 'done'
     change_request = 'changes requested'
+
+
+class RoomPostType(Enum):
+    room_post = 'room_post'
+    homework = 'homework'

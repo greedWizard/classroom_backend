@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 import pytest
 from classroom.constants import ParticipationRoleEnum
 
-from classroom.models import Material, Room, Participation
+from classroom.models import RoomPost, Room, Participation
 
 from tests.utils.fixtures import client, event_loop, fake, app
 from tests.utils.fixtures.users import authentication_token
@@ -44,30 +44,30 @@ def room(
             'updated_by': user,
         }
     ))
-    event_loop.run_until_complete(room.fetch_related('materials'))
+    event_loop.run_until_complete(room.fetch_related('room_posts'))
     yield room
 
 
 @pytest.fixture
-def material(
+def room_post(
     event_loop: asyncio.AbstractEventLoop,
 ):
-    material = event_loop.run_until_complete(Material.first())
-    yield material
+    room_post = event_loop.run_until_complete(RoomPost.first())
+    yield room_post
 
 
-def test_material_create_success(
+def test_room_post_create_success(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
     room: Room,
-    material: Material,
+    room_post: RoomPost,
 ):
-    url = app.url_path_for('create_new_material')
+    url = app.url_path_for('create_new_room_post')
 
     assert room
-    assert not material
+    assert not room_post
 
     response = client.post(url, json={
         'title': 'fake name',
@@ -78,15 +78,15 @@ def test_material_create_success(
     })
     
     assert response.status_code == status.HTTP_201_CREATED, response.json()
-    assert event_loop.run_until_complete(Material.first())
+    assert event_loop.run_until_complete(RoomPost.first())
 
 
-def test_material_create_not_logged_in(
+def test_room_post_create_not_logged_in(
     app: FastAPI,
     client: TestClient,
     room: Room,
 ):
-    url = app.url_path_for('create_new_material')
+    url = app.url_path_for('create_new_room_post')
 
     assert room
 
@@ -99,14 +99,14 @@ def test_material_create_not_logged_in(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED, response.json()
 
 
-def test_material_create_not_a_moder(
+def test_room_post_create_not_a_moder(
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
     room: Room,
     authentication_token: str,
 ):
-    url = app.url_path_for('create_new_material')
+    url = app.url_path_for('create_new_room_post')
     event_loop.run_until_complete(Participation.filter(room_id=room.id)\
         .update(role=ParticipationRoleEnum.participant))
 
@@ -123,15 +123,15 @@ def test_material_create_not_a_moder(
     assert response.status_code == status.HTTP_400_BAD_REQUEST, response.json()
 
 
-def test_material_get(
+def test_room_post_get(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
     room: Room,
 ):
-    url = app.url_path_for('get_materials')
-    assert len(room.materials)
+    url = app.url_path_for('get_room_posts')
+    assert len(room.room_posts)
 
     response = client.get(
         url,
@@ -144,19 +144,19 @@ def test_material_get(
 
     event_loop.run_until_complete(room.refresh_from_db())
     assert response.status_code == status.HTTP_200_OK, response.json()
-    materials = response.json()['items']
-    assert len(materials) == len(room.materials)
+    room_posts = response.json()['items']
+    assert len(room_posts) == len(room.room_posts)
 
 
-def test_material_get_not_a_moder(
+def test_room_post_get_not_a_moder(
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
     room: Room,
-    material: Material,
+    room_post: RoomPost,
     authentication_token: str,
 ):
-    url = app.url_path_for('get_materials')
+    url = app.url_path_for('get_room_posts')
     event_loop.run_until_complete(Participation.filter(room_id=room.id)\
         .update(role=ParticipationRoleEnum.participant))
 
@@ -173,18 +173,18 @@ def test_material_get_not_a_moder(
 
     event_loop.run_until_complete(room.refresh_from_db())
     assert response.status_code == status.HTTP_200_OK, response.json()
-    materials = response.json()['items']
-    assert len(materials) == len(room.materials)
+    room_posts = response.json()['items']
+    assert len(room_posts) == len(room.room_posts)
 
 
-def test_material_get_not_in_room(
+def test_room_post_get_not_in_room(
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
     room: Room,
     authentication_token: str,
 ):
-    url = app.url_path_for('get_materials')
+    url = app.url_path_for('get_room_posts')
     event_loop.run_until_complete(Participation.all().delete())
 
     assert room
@@ -202,89 +202,89 @@ def test_material_get_not_in_room(
     assert response.status_code == status.HTTP_403_FORBIDDEN, response.json()
 
 
-def test_update_material_success(
+def test_update_room_post_success(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
     room: Room,
-    material: Material,
+    room_post: RoomPost,
 ):
     event_loop.run_until_complete(Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.host))
-    url = app.url_path_for('update_material', material_id=material.id)
+    url = app.url_path_for('update_room_post', room_post_id=room_post.id)
 
-    new_material_title = 'Updated title'
-    new_material_description = 'Updated description'
-    new_material_text = 'updated text'
+    new_room_post_title = 'Updated title'
+    new_room_post_description = 'Updated description'
+    new_room_post_text = 'updated text'
 
     response = client.put(url, json={
-        'title': new_material_title,
-        'description': new_material_description,
-        'text': new_material_text,
+        'title': new_room_post_title,
+        'description': new_room_post_description,
+        'text': new_room_post_text,
         'room_id': room.id,
     }, headers={
         'Authorization': f'Bearer {authentication_token}'
     })
 
     assert response.status_code == status.HTTP_200_OK, response.json()
-    event_loop.run_until_complete(material.refresh_from_db())
+    event_loop.run_until_complete(room_post.refresh_from_db())
 
-    assert material.title == new_material_title
-    assert material.description == new_material_description
-    assert material.text == new_material_text
+    assert room_post.title == new_room_post_title
+    assert room_post.description == new_room_post_description
+    assert room_post.text == new_room_post_text
 
 
-def test_update_material_moderator(
+def test_update_room_post_moderator(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
     room: Room,
-    material: Material,
+    room_post: RoomPost,
 ):
     event_loop.run_until_complete(Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.moderator))
-    url = app.url_path_for('update_material', material_id=material.id)
+    url = app.url_path_for('update_room_post', room_post_id=room_post.id)
 
-    new_material_title = 'Updated title2'
-    new_material_description = 'Updated description2'
-    new_material_text = 'updated text2'
+    new_room_post_title = 'Updated title2'
+    new_room_post_description = 'Updated description2'
+    new_room_post_text = 'updated text2'
 
     response = client.put(url, json={
-        'title': new_material_title,
-        'description': new_material_description,
-        'text': new_material_text,
+        'title': new_room_post_title,
+        'description': new_room_post_description,
+        'text': new_room_post_text,
         'room_id': room.id,
     }, headers={
         'Authorization': f'Bearer {authentication_token}'
     })
 
     assert response.status_code == status.HTTP_200_OK, response.json()
-    event_loop.run_until_complete(material.refresh_from_db())
+    event_loop.run_until_complete(room_post.refresh_from_db())
 
-    assert material.title == new_material_title
-    assert material.description == new_material_description
-    assert material.text == new_material_text
+    assert room_post.title == new_room_post_title
+    assert room_post.description == new_room_post_description
+    assert room_post.text == new_room_post_text
 
 
-def test_update_material_participant(
+def test_update_room_post_participant(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
     room: Room,
-    material: Material,
+    room_post: RoomPost,
 ):
     event_loop.run_until_complete(Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.participant))
-    url = app.url_path_for('update_material', material_id=material.id)
+    url = app.url_path_for('update_room_post', room_post_id=room_post.id)
 
-    new_material_title = 'Updated title2'
-    new_material_description = 'Updated description2'
-    new_material_text = 'updated text2'
+    new_room_post_title = 'Updated title2'
+    new_room_post_description = 'Updated description2'
+    new_room_post_text = 'updated text2'
 
     response = client.put(url, json={
-        'title': new_material_title,
-        'description': new_material_description,
-        'text': new_material_text,
+        'title': new_room_post_title,
+        'description': new_room_post_description,
+        'text': new_room_post_text,
         'room_id': room.id,
     }, headers={
         'Authorization': f'Bearer {authentication_token}'
@@ -296,19 +296,19 @@ def test_update_material_participant(
 def test_update_room_not_logged_in(
     app: FastAPI,
     client: TestClient,
-    material: Material,
+    room_post: RoomPost,
     room: Room,
 ):
-    url = app.url_path_for('update_material', material_id=material.id)
+    url = app.url_path_for('update_room_post', room_post_id=room_post.id)
 
-    new_material_title = 'Updated title2'
-    new_material_description = 'Updated description2'
-    new_material_text = 'updated text2'
+    new_room_post_title = 'Updated title2'
+    new_room_post_description = 'Updated description2'
+    new_room_post_text = 'updated text2'
 
     response = client.put(url, json={
-        'title': new_material_title,
-        'description': new_material_description,
-        'text': new_material_text,
+        'title': new_room_post_title,
+        'description': new_room_post_description,
+        'text': new_room_post_text,
         'room_id': room.id,
     })
     assert response.status_code == status.HTTP_401_UNAUTHORIZED, response.json()
