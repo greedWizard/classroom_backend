@@ -17,3 +17,6 @@ class Attachment(AuthorAbstract, TimeStampAbstract):
 
     def __repr__(self) -> str:
         return f'<{str(self)}>'
+
+    async def stream(self):
+        yield self.source

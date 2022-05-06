@@ -114,6 +114,7 @@ async def update_material(
     '/{material_id}',
     response_model=MaterialDetailSchema,
     status_code=status.HTTP_200_OK,
+    operation_id='getMaterial',
 )
 async def get_material(
     material_id: int,
@@ -137,6 +138,7 @@ async def get_material(
         ],
         created_at=material.created_at,
         updated_at=material.updated_at,
+        attachments_count=material.attachments_count,
     ) 
 
 

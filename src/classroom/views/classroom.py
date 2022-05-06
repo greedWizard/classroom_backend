@@ -16,6 +16,7 @@ from classroom.schemas import (ParticipationCreateByJoinSlugSchema,
 from classroom.services.room_service import ParticipationService, RoomService
 
 from user.models import User
+from user.schemas import AuthorSchema
 from user.utils import get_current_user
 
 
@@ -141,7 +142,7 @@ async def current_user_room_list(
 
     # говнокод, потом переделать
     for room in rooms:
-        await room.fetch_related('participations')
+        await room.fetch_related('participations', 'author')
         participation, _ = await room_service.participation_service.fetch({
             'room_id': room.id,
             'user_id': user.id,
@@ -162,6 +163,7 @@ async def current_user_room_list(
                     created_at=participation.created_at,
                 ),
                 created_at=room.created_at,
+                author=AuthorSchema.from_orm(room.author)
             )
         )
     return room_response_list

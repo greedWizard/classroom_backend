@@ -6,6 +6,7 @@ from fastapi.applications import FastAPI
 from fastapi import status
 from fastapi.testclient import TestClient
 import pytest
+from pytest_mock import MockerFixture
 
 from tests.utils.fixtures import client, event_loop, fake, app
 
@@ -27,6 +28,7 @@ def test_user_registration_success(
     event_loop: asyncio.AbstractEventLoop,
     phone_number: str,
     email: str,
+    mocker: MockerFixture,
 ): 
     url = app.router.url_path_for('register_user')
     password = 'KjoiunslAdjkl19'
@@ -45,6 +47,8 @@ def test_user_registration_success(
         'accept_eula': True,
         'email': email,
     }
+
+    mocker.patch('core.services.email.EmailService.send_email')
 
     response = client.post(url, json=user_creds)
 

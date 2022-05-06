@@ -52,6 +52,7 @@ class RoomListItemSchema(RoomBaseSchema, NormalizedDatetimeModel):
     participations_count: int = 0
     participation: Optional[RoomParticipationSchema]
     created_at: datetime
+    author: AuthorSchema
 
     class Config:
         orm_mode = True

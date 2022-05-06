@@ -1,15 +1,11 @@
-from typing import List, TypedDict
-
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
+from fastapi.responses import StreamingResponse
 
 from starlette import status
-from attachment.schemas import AttachmentCreateSchema, AttachmentDeleteSchema, AttachmentListItemSchema
+from attachment.schemas import AttachmentDeleteSchema
 
 from attachment.services.attachment_service import AttachmentService
-
-from core.config import config
-from core.utils import get_author_data
 
 from user.models import User
 from user.utils import get_current_user
@@ -18,6 +14,23 @@ from user.utils import get_current_user
 router = APIRouter(
     tags=['attachments']
 )
+
+
+@router.get(
+    '',
+    status_code=status.HTTP_206_PARTIAL_CONTENT,
+    operation_id='getAttachment',
+)
+async def get_attachment(
+    attachment_id: int,
+    user: User = Depends(get_current_user),
+):
+    attachment_service = AttachmentService(user)
+    attachment, errors = await attachment_service.retrieve(id=attachment_id)
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
+    return StreamingResponse(await attachment.stream())
 
 
 @router.delete(
