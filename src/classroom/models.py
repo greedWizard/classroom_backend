@@ -125,7 +125,7 @@ class RoomPost(RoomPostAbstract, AttachmentsCountMixin):
     deadline_at = fields.DatetimeField(blank=True, null=True)
     type = fields.CharEnumField(
         enum_type=RoomPostType,
-        default=RoomPostType.room_post,
+        default=RoomPostType.material,
     )
 
     def __str__(self) -> str:

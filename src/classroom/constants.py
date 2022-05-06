@@ -14,6 +14,6 @@ class HomeWorkAssignmentStatus(Enum):
     change_request = 'changes requested'
 
 
-class RoomPostType(Enum):
-    room_post = 'room_post'
+class RoomPostType(str, Enum):
+    material = 'material'
     homework = 'homework'

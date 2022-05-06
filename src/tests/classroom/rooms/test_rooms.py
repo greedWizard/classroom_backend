@@ -11,10 +11,6 @@ from classroom.constants import ParticipationRoleEnum
 
 from classroom.models import Room, Participation
 
-from tests.utils.fixtures import client, event_loop, fake, app
-from tests.utils.fixtures.users import authentication_token
-
-from user.models import User
 
 
 @pytest.fixture
@@ -47,10 +43,8 @@ def test_room_create_success(
 
 
 def test_room_create_not_logged_in(
-    authentication_token: str,
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
 ):
     url = app.url_path_for('create_new_room')
 
@@ -207,7 +201,6 @@ def test_update_room_participant(
 
 
 def test_update_room_not_logged_in(
-    authentication_token: str,
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,

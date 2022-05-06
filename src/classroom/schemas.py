@@ -23,6 +23,9 @@ class RoomPostAbstractSchema(BaseModel):
     title: str
     description: Optional[str]
 
+    class Config:
+        orm_mode = True
+
 
 class RoomCreateSuccessSchema(RoomCreateSchema):
     id: int
@@ -105,6 +108,7 @@ class RoomPostCreateSchema(RoomPostAbstractSchema):
     room_id: int
     text: Optional[str]
     author_id: Optional[int]
+    type: str
 
 
 class RoomPostCreateSuccessSchema(RoomPostCreateSchema):

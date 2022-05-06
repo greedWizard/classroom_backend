@@ -8,8 +8,6 @@ from fastapi.testclient import TestClient
 import pytest
 from pytest_mock import MockerFixture
 
-from tests.utils.fixtures import client, event_loop, fake, app
-
 from user.models import User
 
 

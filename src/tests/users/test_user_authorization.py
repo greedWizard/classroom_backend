@@ -10,8 +10,6 @@ from fastapi import status
 from fastapi.testclient import TestClient
 import pytest
 
-from tests.utils.fixtures import client, event_loop, fake, app
-
 from user.models import User
 
 

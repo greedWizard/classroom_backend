@@ -49,14 +49,7 @@ async def create_new_room_post(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return RoomPostCreateSuccessSchema(
-        id=room_post.id,
-        title=room_post.title,
-        description=room_post.description,
-        text=room_post.text,
-        room_id=room_post.room_id,
-        author_id=room_post.author_id,
-    )
+    return RoomPostCreateSuccessSchema.from_orm(room_post)
 
 
 @room_posts_router.get(

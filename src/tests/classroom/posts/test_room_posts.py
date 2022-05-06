@@ -1,18 +1,13 @@
 import asyncio
-import hashlib
 from faker import Faker
 from fastapi.applications import FastAPI
-from fastapi_jwt_auth import AuthJWT
 
 from fastapi import status
 from fastapi.testclient import TestClient
 import pytest
-from classroom.constants import ParticipationRoleEnum
+from classroom.constants import ParticipationRoleEnum, RoomPostType
 
 from classroom.models import RoomPost, Room, Participation
-
-from tests.utils.fixtures import client, event_loop, fake, app
-from tests.utils.fixtures.users import authentication_token
 
 from user.models import User
 
@@ -73,6 +68,7 @@ def test_room_post_create_success(
         'title': 'fake name',
         'description': 'test description',
         'room_id': room.id,
+        'type': RoomPostType.material.name,
     }, headers={
         'Authorization': f'Bearer {authentication_token}'
     })
@@ -116,6 +112,7 @@ def test_room_post_create_not_a_moder(
         'title': 'fake name',
         'description': 'test description',
         'room_id': room.id,
+        'type': RoomPostType.homework.name,
     }, headers={
         'Authorization': f'Bearer {authentication_token}'
     })
@@ -222,6 +219,7 @@ def test_update_room_post_success(
         'description': new_room_post_description,
         'text': new_room_post_text,
         'room_id': room.id,
+        'type': RoomPostType.material.name,
     }, headers={
         'Authorization': f'Bearer {authentication_token}'
     })
@@ -254,6 +252,7 @@ def test_update_room_post_moderator(
         'description': new_room_post_description,
         'text': new_room_post_text,
         'room_id': room.id,
+        'type': RoomPostType.material.name,
     }, headers={
         'Authorization': f'Bearer {authentication_token}'
     })
@@ -286,6 +285,7 @@ def test_update_room_post_participant(
         'description': new_room_post_description,
         'text': new_room_post_text,
         'room_id': room.id,
+        'type': RoomPostType.material.name,
     }, headers={
         'Authorization': f'Bearer {authentication_token}'
     })
