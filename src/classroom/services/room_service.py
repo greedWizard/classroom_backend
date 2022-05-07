@@ -49,7 +49,7 @@ class RoomService(AuthorMixin, CRUDService):
             await self.participation_service.create(ParticipationCreateSchema(
                 user_id=self.user.id,
                 room_id=created_room.id,
-                role=ParticipationRoleEnum.host.name,
+                role=ParticipationRoleEnum.host,
                 author_id=self.user.id,
             ))
 

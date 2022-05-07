@@ -22,7 +22,9 @@ class ParticipationService(AuthorMixin, CRUDService):
 
     async def get_queryset(self, for_delete: bool = False):
         qs = await super().get_queryset(for_delete)
-        return qs.filter(user__id=self.user.id).distinct()
+        room_ids = await self.room_model.filter(participations__user_id=self.user.id)\
+            .distinct().values_list('id', flat=True)
+        return qs.filter(room_id__in=room_ids).distinct()
 
     async def validate_join_slug(self, value: str):
         if not await self.room_model.filter(join_slug=value).exists():
@@ -74,5 +76,5 @@ class ParticipationService(AuthorMixin, CRUDService):
         if 'join_slug' in self.current_action_attributes and not \
             'room_id' in self.current_action_attributes:
             attrs['room_id'] = (await self.room_model.filter(join_slug=join_slug).first()).id
-        attrs['role'] = attrs.get('role') or ParticipationRoleEnum.participant.name
+        attrs['role'] = attrs.get('role') or ParticipationRoleEnum.participant
         return await super().validate(attrs)

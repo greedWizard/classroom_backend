@@ -41,7 +41,11 @@ class Participation(TimeStampAbstract, AuthorAbstract):
     id = fields.IntField(pk=True)
     room = fields.ForeignKeyField('models.Room', related_name='participations', on_delete=fields.CASCADE)
     user = fields.ForeignKeyField('models.User', related_name='participations', on_delete=fields.CASCADE)
-    role = fields.CharEnumField(enum_type=ParticipationRoleEnum, default=ParticipationRoleEnum.participant.name)
+    role = fields.CharEnumField(
+        enum_type=ParticipationRoleEnum,
+        default=ParticipationRoleEnum.participant,
+        max_length=25,
+    )
 
     MODERATOR_ROLES = (
         ParticipationRoleEnum.host, ParticipationRoleEnum.moderator,

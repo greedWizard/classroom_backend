@@ -27,7 +27,10 @@ async def get_participations(
 
     participations, errors = await participation_service.fetch({
         'room_id': room_id,
-    }, _select_related=['user', 'room'])
+    },
+        _select_related=['user', 'room'],
+        _ordering=['created_at']
+    )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

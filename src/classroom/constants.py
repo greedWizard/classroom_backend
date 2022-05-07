@@ -3,8 +3,8 @@ from enum import Enum
 
 class ParticipationRoleEnum(str, Enum):
     moderator = 'moderator'
-    host = 'host'
-    participant = 'participant'
+    host = 'teacher'
+    participant = 'student'
 
 
 class HomeWorkAssignmentStatus(str, Enum):
