@@ -22,6 +22,7 @@ class RoomCreateSchema(RoomBaseSchema):
 class RoomPostAbstractSchema(BaseModel):
     title: str
     description: Optional[str]
+    type: str
 
     class Config:
         orm_mode = True
@@ -79,17 +80,22 @@ class ParticipationCreateByJoinSlugSchema(BaseModel):
     author_id: int
 
 
-class UserParticipationSchema(BaseModel):
+class ParticipationUserSchema(BaseModel):
     id: int
     first_name: str
     last_name: str
     middle_name: Optional[str]
 
 
-class ParticipationListItemSchema:
-    user: UserParticipationSchema
-    room: RoomListItemSchema
+class ParticipationListItemSchema(NormalizedDatetimeModel):
+    id: int
+    user: ParticipationUserSchema
+    room: RoomCreateSuccessSchema
+    role: str
     created_at: datetime
+
+    class Config:
+        orm_mode = True
 
 
 class ParticipationSuccessSchema(BaseModel):

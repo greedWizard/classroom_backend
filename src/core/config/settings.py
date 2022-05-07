@@ -65,3 +65,6 @@ class ProjectSettings(BaseModel):
     
     # ETERNAL SETTINGS
     FRONTEND_LOGIN_URL: str = os.environ.get('FRONTEND_LOGIN_URL')
+
+    # FILE SETTINGS
+    MAX_FILE_SIZE: int = 64 * 1024 * 1024

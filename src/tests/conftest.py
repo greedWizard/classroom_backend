@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from tortoise.contrib.test import finalizer, initializer
 
 from user.models import User
+
 from core.config import config
 from core.factory import AppFactory
 from tests.utils.app import app
@@ -44,15 +45,13 @@ def event_loop() -> Generator:
     yield asyncio.get_event_loop()
 
 
-
 @pytest.fixture
-def authentication_token(
-    event_loop: asyncio.AbstractEventLoop,
+def user(
     fake: Faker,
-    app: FastAPI,
-    client: TestClient
-) -> str:
+    event_loop: asyncio.AbstractEventLoop,
+):
     password = '123'
+
     default_user_data = {
         'first_name': fake.name(),
         'last_name': fake.name(),
@@ -70,7 +69,15 @@ def authentication_token(
             defaults=default_user_data,
         )
     )
-    
+    return user
+
+
+@pytest.fixture
+def authentication_token(
+    app: FastAPI,
+    client: TestClient,
+    user: User
+) -> str:
     url = app.url_path_for('authenticate_user')
     response = client.post(url, json={
         'email': user.email,

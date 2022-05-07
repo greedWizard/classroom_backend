@@ -1,8 +1,5 @@
 import asyncio
-import hashlib
-from faker import Faker
 from fastapi.applications import FastAPI
-from fastapi_jwt_auth import AuthJWT
 
 from fastapi import status
 from fastapi.testclient import TestClient

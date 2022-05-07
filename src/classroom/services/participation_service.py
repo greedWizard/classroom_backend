@@ -20,6 +20,10 @@ class ParticipationService(AuthorMixin, CRUDService):
         self.user = user
         super().__init__(user, *args, **kwargs)
 
+    async def get_queryset(self, for_delete: bool = False):
+        qs = await super().get_queryset(for_delete)
+        return qs.filter(user__id=self.user.id).distinct()
+
     async def validate_join_slug(self, value: str):
         if not await self.room_model.filter(join_slug=value).exists():
             return False, 'This room does not exist.'

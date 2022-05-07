@@ -1,13 +1,13 @@
 from enum import Enum
 
 
-class ParticipationRoleEnum(Enum):
+class ParticipationRoleEnum(str, Enum):
     moderator = 'moderator'
     host = 'host'
     participant = 'participant'
 
 
-class HomeWorkAssignmentStatus(Enum):
+class HomeWorkAssignmentStatus(str, Enum):
     not_passed = 'not passed'
     passed = 'passed'
     done = 'done'

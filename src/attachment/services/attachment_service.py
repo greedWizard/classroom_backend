@@ -6,6 +6,7 @@ from attachment.schemas import AttachmentCreateSchema
 
 from classroom.models import HomeworkAssignment, RoomPost, Participation, Room
 
+from core.config import config
 from core.services.author import AuthorMixin
 from core.services.base import CRUDService
 from core.services.decorators import action
@@ -57,6 +58,10 @@ class AttachmentService(AuthorMixin, CRUDService):
     ):
         if not await self._can_attach_to_room_post(room_post_id):
             return False, { 'room_post_id': 'You can not moderate this room.' }
+
+        for attachment in listAttachmentCreateSchema:
+            if len(attachment.source) > config.MAX_FILE_SIZE:
+                return False, { attachment.filename: 'File is too large' }
 
         room_post = await self.room_post_model.get(id=room_post_id)
         attachments = [await self.model(

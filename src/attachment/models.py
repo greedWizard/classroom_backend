@@ -6,7 +6,7 @@ from core.models import AuthorAbstract, TimeStampAbstract
 class Attachment(AuthorAbstract, TimeStampAbstract):
     id = fields.IntField(pk=True)
     source = fields.BinaryField()
-    filename = fields.CharField(100)
+    filename = fields.CharField(max_length=256)
 
     @property
     def download_link(self):

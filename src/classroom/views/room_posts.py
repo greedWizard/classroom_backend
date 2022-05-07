@@ -1,17 +1,14 @@
-from typing import List, Optional, TypedDict
+from typing import List
 
 from fastapi import APIRouter, Depends, UploadFile, Query
 from fastapi.exceptions import HTTPException
-from fastapi.responses import Response
 
-from fastapi_jwt_auth import AuthJWT
 from fastapi_pagination import Page, paginate
 
 from starlette import status
-from attachment.schemas import AttachmentCreateSchema, AttachmentDeleteSchema, AttachmentListItemSchema
 
+from attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
 from attachment.services.attachment_service import AttachmentService
-
 from classroom.schemas import (
     RoomPostCreateSchema,
     RoomPostCreateSuccessSchema,
@@ -21,12 +18,6 @@ from classroom.schemas import (
     RoomPostUpdateSchema,
 )
 from classroom.services.room_post_service import RoomPostService
-from classroom.services.room_service import ParticipationService, RoomService
-
-from core.config import config
-from core.utils import get_author_data
-from user.exceptions import NotAuthenticatedException
-
 from user.models import User
 from user.schemas import AuthorSchema
 from user.utils import get_current_user
@@ -132,6 +123,7 @@ async def get_room_post(
         created_at=room_post.created_at,
         updated_at=room_post.updated_at,
         attachments_count=room_post.attachments_count,
+        type=room_post.type,
     ) 
 
 
@@ -153,13 +145,12 @@ async def attach_files_to_room_post(
         attachments_list.append(
             AttachmentCreateSchema(
                 filename=attachment.filename,
-                source=await attachment.read()
+                source=await attachment.read(),
             )
         )
     room_post, errors = await attachment_service.create_for_room_post(
         attachments_list, room_post_id,
     )
-
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
     return RoomPostDetailSchema(
@@ -175,7 +166,9 @@ async def attach_files_to_room_post(
         ],
         created_at=room_post.created_at,
         updated_at=room_post.updated_at,
-    )
+        attachments_count=room_post.attachments_count,
+        type=room_post.type,
+    ) 
 
 
 @room_posts_router.delete(
