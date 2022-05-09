@@ -62,6 +62,15 @@ class RoomListItemSchema(RoomBaseSchema, NormalizedDatetimeModel):
         orm_mode = True
 
 
+class RoomNestedSchema(RoomBaseSchema, NormalizedDatetimeModel):
+    id: int
+    created_at: datetime
+    author: AuthorSchema
+
+    class Config:
+        orm_mode = True
+
+
 class RoomCreateJoinLinkSuccessSchema(BaseModel):
     join_slug: str
 
@@ -138,9 +147,18 @@ class RoomPostUpdateSchema(RoomPostCreateSchema):
     pass
 
 
-class RoomPostDetailSchema(RoomPostListItemSchema):
+class RoomPostDetailSchema(BaseModel):
+    id: int
+    text: Optional[str]
+    title: str
+    description: Optional[str]
+    type: str
+    author: AuthorSchema
+    created_at: datetime
+    updated_at: datetime
+    attachments_count: int
     attachments: List[AttachmentListItemSchema]
-    room_id: int
+    room: RoomNestedSchema
 
     class Config:
         orm_mode = True

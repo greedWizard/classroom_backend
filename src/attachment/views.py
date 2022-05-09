@@ -6,6 +6,7 @@ from starlette import status
 from attachment.schemas import AttachmentDeleteSchema
 
 from attachment.services.attachment_service import AttachmentService
+from attachment.utils import stream_file
 
 from user.models import User
 from user.utils import get_current_user
@@ -17,7 +18,7 @@ router = APIRouter(
 
 
 @router.get(
-    '',
+    '/{attachment_id}',
     status_code=status.HTTP_206_PARTIAL_CONTENT,
     operation_id='getAttachment',
 )
@@ -30,7 +31,12 @@ async def get_attachment(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
-    return StreamingResponse(await attachment.stream())
+    return StreamingResponse(
+        content=stream_file(attachment.source),
+        headers={
+            'Content-Disposition': f'attachment; filename={attachment.filename}'
+        }
+    )
 
 
 @router.delete(

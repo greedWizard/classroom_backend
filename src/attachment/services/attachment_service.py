@@ -34,8 +34,7 @@ class AttachmentService(AuthorMixin, CRUDService):
 
         attachment_ids = await self.model.filter(
             Q(room_posts__room_id__in=user_rooms_ids) | \
-            Q(homeworks__room_id__in=user_rooms_ids) | \
-            Q(homework_assignments__homework__room_id__in=user_rooms_ids)
+            Q(homework_assignments__assigned_room_post__room_id__in=user_rooms_ids)
         ).values_list('id', flat=True)
         return self.model.filter(id__in=attachment_ids)
 

@@ -29,7 +29,7 @@ async def get_participations(
         'room_id': room_id,
     },
         _select_related=['user', 'room'],
-        _ordering=['created_at']
+        _ordering=['created_at'],
     )
 
     if errors:

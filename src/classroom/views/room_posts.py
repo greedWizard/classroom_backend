@@ -76,6 +76,7 @@ async def get_room_posts(
     '/{room_post_id}',
     response_model=RoomPostListItemSchema,
     status_code=status.HTTP_200_OK,
+    operation_id='updateRoomPost',
 )
 async def update_room_post(
     room_post_id: int,
@@ -105,13 +106,16 @@ async def get_room_post(
     user: User = Depends(get_current_user),
 ):
     room_post_service = RoomPostService(user)
-    room_post, errors = await room_post_service.retrieve(['author', 'attachments'], id=room_post_id)
+    room_post, errors = await room_post_service.retrieve(
+        ['author', 'attachments', 'room__author'],
+        id=room_post_id,
+    )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
     return RoomPostDetailSchema(
         title=room_post.title,
-        room_id=room_post.room_id,
+        room=room_post.room,
         description=room_post.description,
         id=room_post.id,
         text=room_post.text,
@@ -129,7 +133,7 @@ async def get_room_post(
 
 @room_posts_router.post(
     '/{room_post_id}/attachments',
-    response_model=RoomPostDetailSchema,
+    response_model=AttachmentListItemSchema,
     status_code=status.HTTP_201_CREATED,
     operation_id='attachFilesToRoomPost',
 )
@@ -153,23 +157,8 @@ async def attach_files_to_room_post(
     )
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return RoomPostDetailSchema(
-        title=room_post.title,
-        room_id=room_post.room_id,
-        description=room_post.description,
-        id=room_post.id,
-        text=room_post.text,
-        author=AuthorSchema.from_orm(room_post.author),
-        attachments=[
-            AttachmentListItemSchema.from_orm(attachment) \
-                for attachment in await room_post.attachments
-        ],
-        created_at=room_post.created_at,
-        updated_at=room_post.updated_at,
-        attachments_count=room_post.attachments_count,
-        type=room_post.type,
-    ) 
-
+    return [AttachmentListItemSchema.from_orm(attachment) \
+                    for attachment in await room_post.attachments]
 
 @room_posts_router.delete(
     '',
