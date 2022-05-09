@@ -74,6 +74,4 @@ class AttachmentService(AuthorMixin, CRUDService):
             await attachment.save()
 
         await room_post.attachments.add(*attachments)
-        await room_post.fetch_related('attachments', 'author')
-        [attachment for attachment in room_post.attachments]
-        return room_post, None
+        return attachments, None

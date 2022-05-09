@@ -1,16 +1,12 @@
-from typing import Dict
-import uuid
-
 from tortoise.expressions import Q
 
 from classroom.constants import ParticipationRoleEnum
-from classroom.models import RoomPost, Participation, Room
+from classroom.models import Participation, Room
 
+from core.config import config
 from core.services.author import AuthorMixin
 from core.services.base import CRUDService
-from core.services.decorators import action
 
-from user.models import User
 
 
 class AbstractRoomPostService(AuthorMixin, CRUDService):
@@ -29,9 +25,19 @@ class AbstractRoomPostService(AuthorMixin, CRUDService):
     async def _validate_moderation(self, room_id: int):
         return await self.participation_model.is_user_moderator(self.user, room_id)
 
+    async def validate_description(self, value: str):
+        if not value:
+            return True, None
+        if len(value) > config.DESCRIPTION_MAX_LENGTH:
+            return False, f'Description should be less than {config.TITLE_MAX_LENGTH}' \
+                                                'characters.'
+        return True, None
+
     async def validate_title(self, value: str):
         if not value:
             return False, 'This field is required'
+        if len(value) > config.TITLE_MAX_LENGTH:
+            return False, f'Title should be less than {config.TITLE_MAX_LENGTH} characters.'
         return True, None
 
     async def validate_room_id(self, value: int):

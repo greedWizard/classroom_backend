@@ -68,3 +68,7 @@ class ProjectSettings(BaseModel):
 
     # FILE SETTINGS
     MAX_FILE_SIZE: int = 64 * 1024 * 1024
+
+    # POSTS SETTINGS
+    TITLE_MAX_LENGTH: int = 150
+    DESCRIPTION_MAX_LENGTH: int = 500

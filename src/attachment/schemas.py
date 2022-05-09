@@ -14,7 +14,6 @@ class AttachmentCreateSchema(BaseModel):
 class AttachmentListItemSchema(NormalizedDatetimeModel):
     id: int
     filename: str
-    download_link: str
     created_at: datetime
     updated_at: datetime
 
