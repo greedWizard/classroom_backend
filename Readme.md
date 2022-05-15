@@ -6,7 +6,7 @@
 
 python3.8+
 
-Fast-API - https://fastapi.tiangolo.com/ (Основной веб фреймворк)
+FastAPI - https://fastapi.tiangolo.com/ (Основной веб фреймворк)
 
 Tortoise-ORM - https://tortoise-orm.readthedocs.io/en/latest/examples/fastapi.html (Асинхронная ORM)
 
