@@ -22,7 +22,7 @@ class UserService(CRUDService):
         'does_not_exist': 'User not found. He is either inactive or not registred yet.',
     }
 
-    async def get_queryset(self):
+    async def get_queryset(self, management: bool = False):
         return await self.model.active()
 
     def set_user(self, user: User):

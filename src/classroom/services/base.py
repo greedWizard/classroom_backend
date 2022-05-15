@@ -13,11 +13,15 @@ class AbstractRoomPostService(AuthorMixin, CRUDService):
     room_model = Room
     participation_model = Participation
 
-    async def get_queryset(self, for_delete=False):
+    async def get_queryset(self, management: bool = False):
         expression = Q(room__participations__user_id=self.user.id)
 
-        if for_delete:
-            expression &= Q(room__participations__role=ParticipationRoleEnum.host)
+        if management:
+            expression &= (
+                Q(room__participations__role=ParticipationRoleEnum.host) | Q(
+                    room__participations__role=ParticipationRoleEnum.moderator,
+                )
+            )
 
         room_posts_ids = await self.model.filter(expression).distinct().values_list('id', flat=True)
         return self.model.filter(id__in=room_posts_ids).distinct()

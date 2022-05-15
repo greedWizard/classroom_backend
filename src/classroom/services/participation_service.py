@@ -20,8 +20,8 @@ class ParticipationService(AuthorMixin, CRUDService):
         self.user = user
         super().__init__(user, *args, **kwargs)
 
-    async def get_queryset(self, for_delete: bool = False):
-        qs = await super().get_queryset(for_delete)
+    async def get_queryset(self, management: bool = False):
+        qs = await super().get_queryset(management)
         room_ids = await self.room_model.filter(participations__user_id=self.user.id)\
             .distinct().values_list('id', flat=True)
         return qs.filter(room_id__in=room_ids).distinct()

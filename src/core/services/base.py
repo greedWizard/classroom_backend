@@ -38,7 +38,7 @@ class IServiceBase(SchemaMapMixin):
     def current_action_attributes(self):
         return self._action_attributes.get(self.action, {})
 
-    async def get_queryset(self, for_delete: bool = False):
+    async def get_queryset(self, management: bool = False):
         return self.model.all()
 
     error_messages = {
@@ -175,12 +175,16 @@ class CreateUpdateServiceMixin(IServiceBase):
         if errors:
             return None, errors
 
-        queryset = self.model.filter(id=id)
-        await queryset.update(**attrs)
-        obj = await queryset.first()
+        queryset = await self.get_queryset(management=True)
+        queryset = queryset.filter(id=id).first()
+        obj = await queryset
 
         if not obj:
             return None, self.error_messages.get('does_not_exist')
+
+        for key, value in attrs.items():
+            setattr(obj, key, value)
+            await obj.save()
 
         await obj.fetch_related(*fetch_related)
         return obj, {}
@@ -263,7 +267,7 @@ class DeleteMixin(IServiceBase):
         return attrs, {}
 
     async def _validate_bulk_delete(self, **kwargs):
-        qs = await self.get_queryset(for_delete=True)
+        qs = await self.get_queryset(management=True)
         return await qs.filter(**kwargs).exists()
 
     @action
@@ -278,13 +282,13 @@ class DeleteMixin(IServiceBase):
 
     @action
     async def delete_by_id(self, id: int):
-        queryset = await self.get_queryset(for_delete=True)
+        queryset = await self.get_queryset(management=True)
 
         if not queryset:
-            return False
+            return False, { 'id': 'Operation not allowed' }
 
         await queryset.filter(id=id).first().delete()
-        return True
+        return True, None
 
     @action
     async def bulk_delete(
@@ -293,7 +297,7 @@ class DeleteMixin(IServiceBase):
     ) -> Tuple[models.Model, Dict]:
         if not await self._validate_bulk_delete(**kwargs):
             return { 'permission_error': 'You are not allowed to do that!' }
-        qs = await self.get_queryset(for_delete=True)
+        qs = await self.get_queryset(management=True)
         await qs.filter(**kwargs).delete()
         return None
 

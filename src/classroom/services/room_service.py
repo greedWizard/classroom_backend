@@ -24,8 +24,15 @@ class RoomService(AuthorMixin, CRUDService):
         self.user = user
         super().__init__(user, *args, **kwargs)
 
-    async def get_queryset(self):
-        return self.model.filter(participations__user_id=self.user.id)
+    async def get_queryset(self, management: bool = False):
+        expression = Q(participations__user_id=self.user.id)
+
+        if management:
+            expression &= (
+                Q(participations__role=ParticipationRoleEnum.host) |
+                Q(participations__role=ParticipationRoleEnum.moderator)
+            )
+        return self.model.filter(expression)
 
     def generate_join_slug(self):
         return uuid.uuid4().hex
@@ -75,15 +82,6 @@ class RoomService(AuthorMixin, CRUDService):
         await room.save()
 
         return room.join_slug, None
-
-    @action
-    async def update(self, id: int, updateSchema, exclude_unset = True):
-        if not await self.participation_service.can_moderate_room(
-            room_id=id,
-            user_id=self.user.id,
-        ):
-            return None, 'You are not a host.'
-        return await super().update(id, updateSchema, exclude_unset)
 
     async def _validate_delete(self, deleteSchema):
         if not await self.participation_service.can_moderate_room(

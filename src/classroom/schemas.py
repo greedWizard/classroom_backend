@@ -143,8 +143,11 @@ class RoomPostListItemSchema(RoomPostAbstractSchema, NormalizedDatetimeModel):
         orm_mode = True
 
 
-class RoomPostUpdateSchema(RoomPostCreateSchema):
-    pass
+class RoomPostUpdateSchema(BaseModel):
+    type: str
+    description: Optional[str] = None
+    text: Optional[str] = None
+    title: str
 
 
 class RoomPostDetailSchema(BaseModel):

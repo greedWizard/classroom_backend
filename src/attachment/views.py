@@ -42,6 +42,7 @@ async def get_attachment(
 @router.delete(
     '',
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id='deleteAttachments',
 )
 async def delete_attachments(
     attachmentDeleteSchema: AttachmentDeleteSchema,
@@ -52,3 +53,19 @@ async def delete_attachments(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
+
+
+@router.delete(
+    '/{attachment_id}',
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id='deleteAttachment',
+)
+async def delete_attachment(
+    attachment_id: int,
+    user: User = Depends(get_current_user),
+):
+    attachment_service = AttachmentService(user)
+    success, error_messages = await attachment_service.delete_by_id(id=attachment_id)
+
+    if not success:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error_messages)

@@ -186,7 +186,7 @@ async def delete_room_post(
     user: User = Depends(get_current_user),
 ):
     room_post_service = RoomPostService(user)
-    success = await room_post_service.delete_by_id(room_post_id)
+    success, error_messages = await room_post_service.delete_by_id(room_post_id)
 
     if not success:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Operation not allowed')
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error_messages)

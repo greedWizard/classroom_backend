@@ -22,10 +22,10 @@ class AttachmentService(AuthorMixin, CRUDService):
     homework_assignment_model = HomeworkAssignment
     user_model = User
 
-    async def get_queryset(self, for_delete: bool = False):
+    async def get_queryset(self, management: bool = False):
         room_expression = Q(user_id=self.user.id)
 
-        if for_delete:
+        if management:
             room_expression &= Q(role__in=self.participation_model.MODERATOR_ROLES)
 
         user_rooms_ids = await self.participation_model.filter(
