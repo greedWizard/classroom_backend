@@ -13,6 +13,7 @@ from core.config import config
 from core.services.decorators import action
 from user.models import User
 from user.schemas import UserLoginSchema
+from user.utils import hash_string
 
 
 class UserService(CRUDService):
@@ -119,7 +120,7 @@ class UserService(CRUDService):
     ) -> Tuple[User, str]:
         user = await self.model.filter(
             Q(email=userLoginSchema.email) | Q(phone_number=userLoginSchema.phone_number),
-            password=self._hash_password(userLoginSchema.password),
+            password=hash_string(userLoginSchema.password),
         ).first()
 
         if not user:

@@ -32,7 +32,7 @@ class RoomService(AuthorMixin, CRUDService):
                 Q(participations__role=ParticipationRoleEnum.host) |
                 Q(participations__role=ParticipationRoleEnum.moderator)
             )
-        return self.model.filter(expression)
+        return self.model.filter(expression).distinct()
 
     def generate_join_slug(self):
         return uuid.uuid4().hex

@@ -17,7 +17,7 @@ from classroom.services.room_service import ParticipationService, RoomService
 
 from user.models import User
 from user.schemas import AuthorSchema
-from user.utils import get_current_user
+from user.dependencies import get_current_user
 
 
 classroom_router = APIRouter()

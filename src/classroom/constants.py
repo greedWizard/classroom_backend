@@ -8,10 +8,9 @@ class ParticipationRoleEnum(str, Enum):
 
 
 class HomeWorkAssignmentStatus(str, Enum):
-    not_passed = 'not passed'
     passed = 'passed'
     done = 'done'
-    change_request = 'changes requested'
+    request_changes = 'changes requested'
 
 
 class RoomPostType(str, Enum):

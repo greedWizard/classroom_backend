@@ -9,7 +9,7 @@ from attachment.services.attachment_service import AttachmentService
 from attachment.utils import stream_file
 
 from user.models import User
-from user.utils import get_current_user
+from user.dependencies import get_current_user
 
 
 router = APIRouter(

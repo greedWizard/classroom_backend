@@ -1,10 +1,10 @@
-from enum import unique
-import re
+import hashlib
 
 from tortoise import fields
 from tortoise.queryset import QuerySet
 
 from core.models import TimeStampAbstract
+from user.utils import hash_string
 
 
 class User(TimeStampAbstract):
@@ -34,6 +34,10 @@ class User(TimeStampAbstract):
 
     async def is_participating(self, room_id: int) -> bool:
         return await self.participations.filter(room_id=room_id).exists()
+    
+    async def set_password(self, unhashed_password: str):
+        self.password = hash_string(unhashed_password)
+        await self.save()
 
     @classmethod
     async def active(cls) -> QuerySet:

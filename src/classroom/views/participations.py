@@ -8,7 +8,7 @@ from starlette import status
 from classroom.schemas import ParticipationListItemSchema
 from classroom.services.participation_service import ParticipationService
 from user.models import User
-from user.utils import get_current_user
+from user.dependencies import get_current_user
 
 
 participations_router = APIRouter()

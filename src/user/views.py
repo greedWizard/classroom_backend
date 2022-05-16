@@ -19,7 +19,8 @@ from user.schemas import (
     UserRegistrationCompleteSchema,
 )
 from user.services.user_service import UserService
-from user.utils import get_current_user, get_current_user_optional, get_registration_complete_email_template
+from user.dependencies import get_current_user, get_current_user_optional
+from user.utils import get_registration_complete_email_template
 
 
 router = APIRouter(
@@ -38,6 +39,7 @@ async def activate_user(
     _, errors = await user_service.activate_user(activation_token)
 
     if not errors:
+        # TODO: вот это вот вообще хрень, так быть не должно
         return RedirectResponse(config.FRONTEND_LOGIN_URL)
     raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
 

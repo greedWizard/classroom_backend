@@ -149,7 +149,6 @@ class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixi
         related_name='homework_assignments',
         through='homeworkassignments_attachments',
     )
-    comment = fields.TextField()
     assigned_room_post = fields.ForeignKeyField(
         'models.RoomPost',
         related_name='assignments',
@@ -157,7 +156,7 @@ class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixi
     )
     status = fields.CharEnumField(
         enum_type=HomeWorkAssignmentStatus,
-        default=HomeWorkAssignmentStatus.not_passed,
+        default=HomeWorkAssignmentStatus.passed,
     )
     rate = fields.IntField(validators=[MinValueValidator(0), MaxValueValidator(5)])
 

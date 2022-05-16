@@ -5,6 +5,7 @@ from fastapi.applications import FastAPI
 from fastapi import status
 from fastapi.testclient import TestClient
 import pytest
+import pytest_asyncio
 from classroom.constants import ParticipationRoleEnum, RoomPostType
 
 from classroom.models import RoomPost, Room, Participation
@@ -12,13 +13,10 @@ from classroom.models import RoomPost, Room, Participation
 from user.models import User
 
 
-@pytest.fixture
-def room(
-    event_loop: asyncio.AbstractEventLoop,
-    fake: Faker,
-):
-    user= event_loop.run_until_complete(User.first())
-    room, _ = event_loop.run_until_complete(Room.get_or_create(
+@pytest_asyncio.fixture
+async def room(fake: Faker):
+    user = await User.first()
+    room, _ = await Room.get_or_create(
         defaults={
             'id': 1,
             'name': fake.text(),
@@ -28,8 +26,8 @@ def room(
             'author': user,
             'updated_by': user,
         }
-    ))
-    event_loop.run_until_complete(Participation.get_or_create(
+    )
+    await Participation.get_or_create(
         defaults={
             'id': 1,
             'role': ParticipationRoleEnum.host,
@@ -38,20 +36,19 @@ def room(
             'user': user,
             'updated_by': user,
         }
-    ))
-    event_loop.run_until_complete(room.fetch_related('room_posts'))
+    )
+    await room.fetch_related('room_posts')
     yield room
 
 
-@pytest.fixture
-def room_post(
-    event_loop: asyncio.AbstractEventLoop,
-):
-    room_post = event_loop.run_until_complete(RoomPost.first())
+@pytest_asyncio.fixture
+async def room_post():
+    room_post = await RoomPost.first()
     yield room_post
 
 
-def test_room_post_create_success(
+@pytest.mark.asyncio
+async def test_room_post_create_success(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
@@ -74,10 +71,11 @@ def test_room_post_create_success(
     })
     
     assert response.status_code == status.HTTP_201_CREATED, response.json()
-    assert event_loop.run_until_complete(RoomPost.first())
+    assert await RoomPost.first()
 
 
-def test_room_post_create_not_logged_in(
+@pytest.mark.asyncio
+async def test_room_post_create_not_logged_in(
     app: FastAPI,
     client: TestClient,
     room: Room,
@@ -95,7 +93,8 @@ def test_room_post_create_not_logged_in(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED, response.json()
 
 
-def test_room_post_create_not_a_moder(
+@pytest.mark.asyncio
+async def test_room_post_create_not_a_moder(
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
@@ -103,8 +102,8 @@ def test_room_post_create_not_a_moder(
     authentication_token: str,
 ):
     url = app.url_path_for('create_new_room_post')
-    event_loop.run_until_complete(Participation.filter(room_id=room.id)\
-        .update(role=ParticipationRoleEnum.participant))
+    await Participation.filter(room_id=room.id)\
+        .update(role=ParticipationRoleEnum.participant)
 
     assert room
 
@@ -120,7 +119,8 @@ def test_room_post_create_not_a_moder(
     assert response.status_code == status.HTTP_400_BAD_REQUEST, response.json()
 
 
-def test_room_post_get(
+@pytest.mark.asyncio
+async def test_room_post_get(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
@@ -139,13 +139,14 @@ def test_room_post_get(
         }
     )
 
-    event_loop.run_until_complete(room.refresh_from_db())
+    await room.refresh_from_db()
     assert response.status_code == status.HTTP_200_OK, response.json()
     room_posts = response.json()['items']
     assert len(room_posts) == len(room.room_posts)
 
 
-def test_room_post_get_not_a_moder(
+@pytest.mark.asyncio
+async def test_room_post_get_not_a_moder(
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
@@ -154,8 +155,8 @@ def test_room_post_get_not_a_moder(
     authentication_token: str,
 ):
     url = app.url_path_for('get_room_posts')
-    event_loop.run_until_complete(Participation.filter(room_id=room.id)\
-        .update(role=ParticipationRoleEnum.participant))
+    await Participation.filter(room_id=room.id)\
+        .update(role=ParticipationRoleEnum.participant)
 
     assert room
 
@@ -168,13 +169,14 @@ def test_room_post_get_not_a_moder(
         }
     )
 
-    event_loop.run_until_complete(room.refresh_from_db())
+    await room.refresh_from_db()
     assert response.status_code == status.HTTP_200_OK, response.json()
     room_posts = response.json()['items']
     assert len(room_posts) == len(room.room_posts)
 
 
-def test_room_post_get_not_in_room(
+@pytest.mark.asyncio
+async def test_room_post_get_not_in_room(
     app: FastAPI,
     client: TestClient,
     event_loop: asyncio.AbstractEventLoop,
@@ -182,7 +184,7 @@ def test_room_post_get_not_in_room(
     authentication_token: str,
 ):
     url = app.url_path_for('get_room_posts')
-    event_loop.run_until_complete(Participation.all().delete())
+    await Participation.all().delete()
 
     assert room
 
@@ -195,11 +197,12 @@ def test_room_post_get_not_in_room(
         }
     )
 
-    event_loop.run_until_complete(room.refresh_from_db())
+    await room.refresh_from_db()
     assert response.status_code == status.HTTP_403_FORBIDDEN, response.json()
 
 
-def test_update_room_post_success(
+@pytest.mark.asyncio
+async def test_update_room_post_success(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
@@ -207,7 +210,7 @@ def test_update_room_post_success(
     room: Room,
     room_post: RoomPost,
 ):
-    event_loop.run_until_complete(Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.host))
+    await Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.host)
     url = app.url_path_for('update_room_post', room_post_id=room_post.id)
 
     new_room_post_title = 'Updated title'
@@ -225,14 +228,15 @@ def test_update_room_post_success(
     })
 
     assert response.status_code == status.HTTP_200_OK, response.json()
-    event_loop.run_until_complete(room_post.refresh_from_db())
+    await room_post.refresh_from_db()
 
     assert room_post.title == new_room_post_title
     assert room_post.description == new_room_post_description
     assert room_post.text == new_room_post_text
 
 
-def test_update_room_post_moderator(
+@pytest.mark.asyncio
+async def test_update_room_post_moderator(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
@@ -240,7 +244,7 @@ def test_update_room_post_moderator(
     room: Room,
     room_post: RoomPost,
 ):
-    event_loop.run_until_complete(Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.moderator))
+    await Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.moderator)
     url = app.url_path_for('update_room_post', room_post_id=room_post.id)
 
     new_room_post_title = 'Updated title2'
@@ -258,14 +262,15 @@ def test_update_room_post_moderator(
     })
 
     assert response.status_code == status.HTTP_200_OK, response.json()
-    event_loop.run_until_complete(room_post.refresh_from_db())
+    await room_post.refresh_from_db()
 
     assert room_post.title == new_room_post_title
     assert room_post.description == new_room_post_description
     assert room_post.text == new_room_post_text
 
 
-def test_update_room_post_participant(
+@pytest.mark.asyncio
+async def test_update_room_post_participant(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
@@ -273,7 +278,7 @@ def test_update_room_post_participant(
     room: Room,
     room_post: RoomPost,
 ):
-    event_loop.run_until_complete(Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.participant))
+    await Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.participant)
     url = app.url_path_for('update_room_post', room_post_id=room_post.id)
 
     new_room_post_title = 'Updated title2'
@@ -293,7 +298,8 @@ def test_update_room_post_participant(
     assert response.status_code == status.HTTP_400_BAD_REQUEST, response.json()
 
 
-def test_update_room_not_logged_in(
+@pytest.mark.asyncio
+async def test_update_room_not_logged_in(
     app: FastAPI,
     client: TestClient,
     room_post: RoomPost,
@@ -314,7 +320,8 @@ def test_update_room_not_logged_in(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED, response.json()
 
 
-# def test_delete_room_participant(
+# @pytest.mark.asyncio
+# async def test_delete_room_participant(
 #     authentication_token: str,
 #     app: FastAPI,
 #     client: TestClient,
@@ -331,7 +338,8 @@ def test_update_room_not_logged_in(
 #     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
-# def test_delete_room_not_logged_in(
+# @pytest.mark.asyncio
+# async def test_delete_room_not_logged_in(
 #     app: FastAPI,
 #     client: TestClient,
 #     room: Room,
@@ -342,7 +350,8 @@ def test_update_room_not_logged_in(
 #     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-# def test_delete_room_success(
+# @pytest.mark.asyncio
+# async def test_delete_room_success(
 #     authentication_token: str,
 #     app: FastAPI,
 #     client: TestClient,

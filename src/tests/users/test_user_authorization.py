@@ -1,4 +1,4 @@
-import asyncio
+from requests.exceptions import InvalidSchema
 from datetime import datetime
 
 import hashlib
@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from user.models import User
+from user.utils import hash_string
 
 
 USER_TEST_PASSWORD = 'testpPassword123'
@@ -26,33 +27,27 @@ def user_data(
         'first_name': fake.name(),
         'last_name': fake.name(),
         'email': fake.email(),
-        'password': hashlib.md5(USER_TEST_PASSWORD.encode()).hexdigest(),
+        'password': hash_string(USER_TEST_PASSWORD),
         'phone_number': '+79990001122',
         'activation_token': 'test_activation_token',
         'activation_deadline_dt': datetime.utcnow(),
     }
 
 
-@pytest.fixture
-def user(
-    event_loop: asyncio.AbstractEventLoop,
-    user_data: Dict,
-) -> User:
-    user = event_loop.run_until_complete(
-        User.get_or_create(
-            defaults={**user_data, 'is_active': False,},
-        )
-    )[0]
-    yield user
-
-
-def test_authentication_fail_not_active(
+@pytest.mark.asyncio
+async def test_authentication_fail_not_active(
     user: User,
     app: FastAPI,
     client: TestClient,
-    user_data: Dict,
+    user_data: dict,
 ):
+    await User.update_or_create(
+        defaults=user_data,
+    )
+    await user.refresh_from_db()
+
     url = app.url_path_for('authenticate_user')
+    await User.all().update(is_active=False, password=hash_string(USER_TEST_PASSWORD))
 
     response = client.post(
         url,
@@ -66,18 +61,28 @@ def test_authentication_fail_not_active(
     assert response.json()['detail'] == 'User is not active. Please activate your profile.'
 
 
-def test_user_activation(
+@pytest.mark.asyncio
+async def test_user_activation(
     user: User,
     app: FastAPI,
     client: TestClient,
-    user_data: Dict,
-    event_loop: asyncio.AbstractEventLoop,
 ):
-    url = app.url_path_for('activate_user', activation_token=user_data['activation_token'])
-    response = client.get(url)
+    await User.all().update(is_active=False)
+    await user.refresh_from_db()
+    assert not user.is_active
+    
+    url = app.url_path_for('activate_user', activation_token=user.activation_token)
+    print(user.activation_token, user.is_active)
+    
+    with pytest.raises(InvalidSchema):
+        response = client.get(url)
+
+    await user.refresh_from_db()
+    assert user.is_active
 
 
-def test_authentication_success_email(
+@pytest.mark.asyncio
+async def test_authentication_success_email(
     user: User,
     app: FastAPI,
     client: TestClient,
@@ -115,7 +120,8 @@ def test_authentication_success_email(
             assert user_data[key] == json_data[key], key
 
 
-def test_authentication_success_phone(
+@pytest.mark.asyncio
+async def test_authentication_success_phone(
     user: User,
     app: FastAPI,
     client: TestClient,
@@ -153,7 +159,8 @@ def test_authentication_success_phone(
             assert user_data[key] == json_data[key], key
 
 
-def test_authentication_fail_phone(
+@pytest.mark.asyncio
+async def test_authentication_fail_phone(
     app: FastAPI,
     client: TestClient,
 ):
@@ -170,7 +177,8 @@ def test_authentication_fail_phone(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_authentication_fail_email(
+@pytest.mark.asyncio
+async def test_authentication_fail_email(
     app: FastAPI,
     client: TestClient,
 ):
@@ -187,7 +195,8 @@ def test_authentication_fail_email(
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_any_user_info(
+@pytest.mark.asyncio
+async def test_any_user_info(
     user: User,
     app: FastAPI,
     client: TestClient,
@@ -225,12 +234,12 @@ def test_any_user_info(
             assert user_data[key] == json_data[key], key
 
 
-def test_current_user_update(
+@pytest.mark.asyncio
+async def test_current_user_update(
     user: User,
     app: FastAPI,
     client: TestClient,
     fake: Faker,
-    user_data: Dict,
 ):
     url = app.url_path_for('authenticate_user')
 
