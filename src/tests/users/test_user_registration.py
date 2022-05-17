@@ -130,7 +130,7 @@ async def test_user_registration_eula_is_not_accepted(
 
 
 @pytest.mark.asyncio
-async def test_user_registration_eula_is_not_passed(
+async def test_user_registration_eula_is_not_assigned(
     app: FastAPI,
     client: TestClient,
     fake: Faker,

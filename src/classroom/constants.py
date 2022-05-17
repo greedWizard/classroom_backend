@@ -8,7 +8,7 @@ class ParticipationRoleEnum(str, Enum):
 
 
 class HomeWorkAssignmentStatus(str, Enum):
-    passed = 'passed'
+    assigned = 'assigned'
     done = 'done'
     request_changes = 'changes requested'
 

@@ -196,7 +196,7 @@ class CreateUpdateServiceMixin(IServiceBase):
         filters: Dict = {},
         exclude_unset: bool = True,
     ) -> Tuple[models.Model, Dict]:
-        ''' Update multiple objects fitting passed filters '''
+        ''' Update multiple objects fitting assigned filters '''
         schema_dict = updateSchema.dict(exclude_unset=exclude_unset)
         errors = await self._validate_values(**schema_dict)
 
@@ -231,22 +231,6 @@ class RetrieveFetchServiceMixin(IServiceBase):
             queryset = queryset.distinct()
         return await queryset, None
     
-    @action
-    async def retrieve(
-        self,
-        _prefetch_related: list = [],
-        _select_related: list = [],
-        **filters,
-    ):
-        qs = await self.get_queryset()
-        obj = qs.filter(**filters).prefetch_related(
-            *_prefetch_related,
-        ).select_related(*_select_related).first()
-
-        if not obj:
-            return None, self.error_messages.get('does_not_exist')
-        return obj, None
-
     @action
     async def retrieve(
         self,

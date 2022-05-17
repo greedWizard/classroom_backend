@@ -169,3 +169,16 @@ class RoomPostDetailSchema(BaseModel):
 
 class RoomPostDeleteSchema(BaseModel):
     ids: List[int]
+
+
+class HomeworkAssignmentCreateSchema(BaseModel):
+    assigned_room_post_id: int
+
+
+class HomeworkAssignmentCreateSuccessSchema(NormalizedDatetimeModel):
+    id: int
+    created_at: datetime
+    author_id: int
+
+    class Config(NormalizedDatetimeModel.Config):
+        orm_mode = True

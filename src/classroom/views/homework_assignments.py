@@ -1,38 +1,33 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import Depends
 from fastapi.exceptions import HTTPException
+from fastapi.routing import APIRouter
 
 from starlette import status
 
-from classroom.schemas import (
-    ParticipationCreateByJoinSlugSchema,
-    ParticipationSuccessSchema,
-    RoomCreateJoinLinkSuccessSchema,
-    RoomCreateSchema,
-    RoomCreateSuccessSchema,
-    RoomDeleteSchema,
-    RoomDetailSchema,
-    RoomListItemSchema,
-    RoomParticipationSchema,
-)
-from classroom.services.room_service import ParticipationService, RoomService
-
-from user.models import User
-from user.schemas import AuthorSchema
+from classroom.schemas import HomeworkAssignmentCreateSchema, HomeworkAssignmentCreateSuccessSchema
+from classroom.services.homework_assignment_service import HomeworkAssignmentService
 from user.dependencies import get_current_user
+from user.models import User
 
 
-classroom_router = APIRouter()
 
-@classroom_router.post(
+router = APIRouter()
+
+
+@router.post(
     '',
-    response_model=RoomCreateSuccessSchema,
+    response_model=HomeworkAssignmentCreateSuccessSchema,
+    operation_id='assignHomework',
     status_code=status.HTTP_201_CREATED,
-    operation_id='createRoom',
 )
-async def create_new_assignment(
-    roomCreateSchema: RoomCreateSchema,
-    user: User = Depends(get_current_user),
+async def assign_homework(
+    create_schema: HomeworkAssignmentCreateSchema,
+    user: User = Depends(get_current_user)
 ):
-    pass
+    service = HomeworkAssignmentService(user)
+
+    homework_assignment, errors = await service.create(create_schema)
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return HomeworkAssignmentCreateSuccessSchema.from_orm(homework_assignment)

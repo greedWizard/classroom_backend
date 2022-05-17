@@ -51,6 +51,12 @@ class Participation(TimeStampAbstract, AuthorAbstract):
         ParticipationRoleEnum.host, ParticipationRoleEnum.moderator,
     )
 
+    class Meta:
+        table = 'participations'
+        unique_together = (
+            ('room', 'user')
+        )
+
     def can_moderate_room(self) -> bool:
         return self.role == ParticipationRoleEnum.moderator or \
             self.role == ParticipationRoleEnum.host
@@ -92,12 +98,6 @@ class Participation(TimeStampAbstract, AuthorAbstract):
         room_id: int,
     ):
         return await cls.filter(room_id=room_id, user_id=user_id).exists()
-
-    class Meta:
-        table = 'participations'
-        unique_together = (
-            ('room', 'user')
-        )
 
 
 class RoomPostAbstract(AuthorAbstract, TimeStampAbstract):
@@ -156,9 +156,16 @@ class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixi
     )
     status = fields.CharEnumField(
         enum_type=HomeWorkAssignmentStatus,
-        default=HomeWorkAssignmentStatus.passed,
+        default=HomeWorkAssignmentStatus.assigned,
     )
-    rate = fields.IntField(validators=[MinValueValidator(0), MaxValueValidator(5)])
+    rate = fields.IntField(
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(5),
+        ],
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         table = 'homework_assignments'
