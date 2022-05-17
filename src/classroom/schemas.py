@@ -175,6 +175,28 @@ class HomeworkAssignmentCreateSchema(BaseModel):
     assigned_room_post_id: int
 
 
+class HomeworkAssignmentRequestChangesSchema(BaseModel):
+    comment: str
+
+
+class HomeworkAssignmentMarkAsDoneSchema(BaseModel):
+    rate: int
+    comment: str = ''
+
+
+class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    assigned_room_post_id: int
+    author_id: int
+    comment: str = ''
+
+    class Config(NormalizedDatetimeModel.Config):
+        orm_mode = True
+
+
+
 class HomeworkAssignmentCreateSuccessSchema(NormalizedDatetimeModel):
     id: int
     created_at: datetime

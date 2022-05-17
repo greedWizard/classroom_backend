@@ -166,6 +166,13 @@ class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixi
         null=True,
         blank=True,
     )
+    comment = fields.TextField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f'HomeworkAssignment {self.created_at} by {self.author_id}'
+
+    def __repr__(self) -> str:
+        return f'<{self}>'
 
     class Meta:
         table = 'homework_assignments'

@@ -1,4 +1,3 @@
-import asyncio
 from faker import Faker
 from fastapi.applications import FastAPI
 
@@ -6,9 +5,9 @@ from fastapi import status
 from fastapi.testclient import TestClient
 import pytest
 import pytest_asyncio
-from classroom.constants import ParticipationRoleEnum, RoomPostType
+from classroom.constants import HomeWorkAssignmentStatus, ParticipationRoleEnum, RoomPostType
 
-from classroom.models import Room, Participation, RoomPost, RoomPostAbstract
+from classroom.models import HomeworkAssignment, Room, Participation, RoomPost
 from user.models import User
 
 
@@ -139,3 +138,145 @@ async def test_assign_homework_duplicate(
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert json_data == {'detail': {'assigned_room_post_id': \
         'Homework is already assigned by this user.'}}, json_data
+
+
+@pytest.mark.asyncio
+async def test_request_changes_when_assigned_not_participating(
+    authentication_token: str,
+    app: FastAPI,
+    client: TestClient,
+):
+    await HomeworkAssignment.all().update(status=HomeWorkAssignmentStatus.assigned)
+    await Participation.all().delete()
+    assignment = await HomeworkAssignment.first()
+    url = app.url_path_for(
+        'request_homework_assignment_changes',
+        assignment_id=assignment.id,
+    )
+    comment = 'Переделайте пожалуйста, иначе вам пизда.'
+
+    response = client.post(url, json={
+        'comment': comment,
+        
+    }, headers={
+        'Authorization': f'Bearer {authentication_token}'
+    })
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
+    assert json_data == {'detail': 'Invalid assignment.'}
+
+
+@pytest.mark.asyncio
+async def test_request_changes_when_assigned_done(
+    authentication_token: str,
+    app: FastAPI,
+    client: TestClient,
+    assigned_room_post: RoomPost,
+):
+    await HomeworkAssignment.all().update(status=HomeWorkAssignmentStatus.done)
+    await Participation.all().update(role=ParticipationRoleEnum.host)
+    assignment = await HomeworkAssignment.first()
+    url = app.url_path_for(
+        'request_homework_assignment_changes',
+        assignment_id=assignment.id,
+    )
+    comment = 'Переделайте пожалуйста, иначе вам пизда.'
+
+    response = client.post(url, json={
+        'comment': comment,
+        
+    }, headers={
+        'Authorization': f'Bearer {authentication_token}'
+    })
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
+    assert json_data == { 'detail': "Can't change assignment now." }
+
+
+@pytest.mark.asyncio
+async def test_request_changes_when_assigned_not_allowed(
+    authentication_token: str,
+    app: FastAPI,
+    client: TestClient,
+    assigned_room_post: RoomPost,
+):
+    await HomeworkAssignment.all().update(status=HomeWorkAssignmentStatus.assigned)
+    await Participation.all().update(role=ParticipationRoleEnum.participant)
+    assignment = await HomeworkAssignment.first()
+    url = app.url_path_for(
+        'request_homework_assignment_changes',
+        assignment_id=assignment.id,
+    )
+    comment = 'Переделайте пожалуйста, иначе вам пизда.'
+
+    response = client.post(url, json={
+        'comment': comment,
+        
+    }, headers={
+        'Authorization': f'Bearer {authentication_token}'
+    })
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
+    assert json_data == {'detail': 'You have no permission to do that'}
+
+
+@pytest.mark.asyncio
+async def test_request_changes_when_assigned_success(
+    authentication_token: str,
+    app: FastAPI,
+    client: TestClient,
+    assigned_room_post: RoomPost,
+):
+    await HomeworkAssignment.all().update(status=HomeWorkAssignmentStatus.assigned)
+    await Participation.all().update(role=ParticipationRoleEnum.host)
+    assignment = await HomeworkAssignment.first()
+    url = app.url_path_for(
+        'request_homework_assignment_changes',
+        assignment_id=assignment.id,
+    )
+    comment = 'Переделайте пожалуйста, иначе вам пизда.'
+
+    response = client.post(url, json={
+        'comment': comment,
+        
+    }, headers={
+        'Authorization': f'Bearer {authentication_token}'
+    })
+    json_data = response.json()
+    await assignment.refresh_from_db()
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+    assert assignment.status == HomeWorkAssignmentStatus.request_changes
+    assert assignment.comment == comment
+
+
+@pytest.mark.asyncio
+async def test_mark_success(
+    authentication_token: str,
+    app: FastAPI,
+    client: TestClient,
+    assigned_room_post: RoomPost,
+):
+    await HomeworkAssignment.all().update(status=HomeWorkAssignmentStatus.assigned)
+    await Participation.all().update(role=ParticipationRoleEnum.host)
+    assignment = await HomeworkAssignment.first()
+
+    url = app.url_path_for('mark_assignment_as_done', assignment_id=assignment.id)
+    rate = 3
+    comment = '12345'
+
+    response = client.post(url, json={
+        'rate': rate,
+        'comment': comment,
+        
+    }, headers={
+        'Authorization': f'Bearer {authentication_token}'
+    })
+
+    assert response.status_code == status.HTTP_200_OK
+    await assignment.refresh_from_db()
+    assert assignment.comment == comment
+    assert assignment
