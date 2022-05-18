@@ -138,6 +138,9 @@ class RoomPost(RoomPostAbstract, AttachmentsCountMixin):
     def __repr__(self) -> str:
         return f'<RoomPost {str(self)}>'
 
+    async def get_assignment_for_user(self, user_id: int):
+        return await self.assignments.filter(author_id=user_id).first()
+
     class Meta:
         table = 'room_posts'
 

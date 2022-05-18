@@ -213,6 +213,7 @@ class CreateUpdateServiceMixin(IServiceBase):
 
 
 class RetrieveFetchServiceMixin(IServiceBase):
+    # TODO: рефакторить, фильтры не должны передавать в дикте
     @action
     async def fetch(
         self,

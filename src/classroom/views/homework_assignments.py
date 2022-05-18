@@ -34,7 +34,7 @@ async def assign_homework(
 
 
 @router.post(
-    '{assignment_id}/request-changes',
+    '/{assignment_id}/request-changes',
     response_model=HomeworkAssignmentDetailSchema,
     operation_id='requestAssignmentChanges',
     status_code=status.HTTP_200_OK,
@@ -56,8 +56,27 @@ async def request_homework_assignment_changes(
     return HomeworkAssignmentDetailSchema.from_orm(homework_assignment)
 
 
+@router.get(
+    '/by-room-post/{assigned_room_post_id}',
+    response_model=list[HomeworkAssignmentDetailSchema],
+    operation_id='getAssignmentsForTeacher',
+    status_code=status.HTTP_200_OK,
+)
+async def fetch_assignments_for_teacher(
+    assigned_room_post_id: int,
+    user: User = Depends(get_current_user)
+):
+    service = HomeworkAssignmentService(user)
+
+    homework_assignments, _ = await service.fetch_for_teacher(
+        assigned_room_post_id=assigned_room_post_id,
+    )
+    return [HomeworkAssignmentDetailSchema.from_orm(assignment) \
+                            for assignment in homework_assignments]
+
+
 @router.post(
-    '{assignment_id}/mark-done',
+    '/{assignment_id}/mark-done',
     response_model=HomeworkAssignmentDetailSchema,
     operation_id='markAssignmentAsDone',
     status_code=status.HTTP_200_OK,

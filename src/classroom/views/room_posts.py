@@ -9,7 +9,9 @@ from starlette import status
 
 from attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
 from attachment.services.attachment_service import AttachmentService
+from classroom.models import RoomPost
 from classroom.schemas import (
+    HomeworkAssignmentDetailSchema,
     RoomPostCreateSchema,
     RoomPostCreateSuccessSchema,
     RoomPostDeleteSchema,
@@ -110,6 +112,13 @@ async def get_room_post(
         ['author', 'attachments', 'room__author'],
         id=room_post_id,
     )
+    assignment = await room_post.get_assignment_for_user(user_id=user.id)
+    assignment_schema = None
+
+    if assignment:
+        assignment_schema = HomeworkAssignmentDetailSchema.from_orm(
+            assignment
+        )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
@@ -128,6 +137,7 @@ async def get_room_post(
         updated_at=room_post.updated_at,
         attachments_count=room_post.attachments_count,
         type=room_post.type,
+        assignment=assignment_schema,
     ) 
 
 

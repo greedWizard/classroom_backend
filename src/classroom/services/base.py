@@ -34,7 +34,7 @@ class AbstractRoomPostService(AuthorMixin, CRUDService):
             return True, None
         if len(value) > config.DESCRIPTION_MAX_LENGTH:
             return False, f'Description should be less than {config.TITLE_MAX_LENGTH}' \
-                                                'characters.'
+                                                ' characters.'
         return True, None
 
     async def validate_title(self, value: str):

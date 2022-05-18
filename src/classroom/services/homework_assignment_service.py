@@ -11,7 +11,6 @@ from classroom.services.room_post_service import RoomPostService
 
 from core.services.author import AuthorMixin
 from core.services.base import CRUDService
-from core.services.decorators import action
 
 
 class HomeworkAssignmentService(AuthorMixin, CRUDService):
@@ -59,7 +58,17 @@ class HomeworkAssignmentService(AuthorMixin, CRUDService):
             return None, "Teacher's can not assign homeworks."
         return True, None
 
-    async def _check_assignment(
+    async def fetch_for_teacher(
+        self,
+        assigned_room_post_id: int,
+    ) -> tuple[HomeworkAssignment, Union[dict[str, str], None]]:
+        # TODO: рефакторить, после того как поправлю fetch
+        queryset = await self.get_queryset()
+        assignments = await queryset.filter(assigned_room_post_id=assigned_room_post_id)
+
+        return assignments, None
+
+    async def _check_assignment_teacher_rights(
         self,
         assignment: HomeworkAssignment,
     ) -> tuple[bool, Union[str, None]]:
@@ -86,16 +95,18 @@ class HomeworkAssignmentService(AuthorMixin, CRUDService):
             _fetch_related=[
                 'assigned_room_post',
                 'assigned_room_post__room',
+                'author',
             ],
         )
 
-        is_valid, error = await self._check_assignment(assignment)
+        is_valid, error = await self._check_assignment_teacher_rights(assignment)
 
         if not is_valid:
             return None, error
         
         for field, value in changes_schema.dict().items():
             setattr(assignment, field, value)
+
         assignment.status = status
         await assignment.save()
 

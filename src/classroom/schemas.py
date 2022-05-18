@@ -150,6 +150,18 @@ class RoomPostUpdateSchema(BaseModel):
     title: str
 
 
+class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    assigned_room_post_id: int
+    author: AuthorSchema
+    comment: str = ''
+
+    class Config(NormalizedDatetimeModel.Config):
+        orm_mode = True
+
+
 class RoomPostDetailSchema(BaseModel):
     id: int
     text: Optional[str]
@@ -162,6 +174,7 @@ class RoomPostDetailSchema(BaseModel):
     attachments_count: int
     attachments: List[AttachmentListItemSchema]
     room: RoomNestedSchema
+    assignment: Optional[HomeworkAssignmentDetailSchema] = None
 
     class Config:
         orm_mode = True
@@ -182,19 +195,6 @@ class HomeworkAssignmentRequestChangesSchema(BaseModel):
 class HomeworkAssignmentMarkAsDoneSchema(BaseModel):
     rate: int
     comment: str = ''
-
-
-class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    assigned_room_post_id: int
-    author_id: int
-    comment: str = ''
-
-    class Config(NormalizedDatetimeModel.Config):
-        orm_mode = True
-
 
 
 class HomeworkAssignmentCreateSuccessSchema(NormalizedDatetimeModel):
