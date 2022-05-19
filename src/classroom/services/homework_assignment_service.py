@@ -61,10 +61,15 @@ class HomeworkAssignmentService(AuthorMixin, CRUDService):
     async def fetch_for_teacher(
         self,
         assigned_room_post_id: int,
+        prefetch_related: list[str] = None,
     ) -> tuple[HomeworkAssignment, Union[dict[str, str], None]]:
+        if not prefetch_related:
+            prefetch_related = ['author']
+
         # TODO: рефакторить, после того как поправлю fetch
         queryset = await self.get_queryset()
-        assignments = await queryset.filter(assigned_room_post_id=assigned_room_post_id)
+        assignments = await queryset.filter(assigned_room_post_id=assigned_room_post_id)\
+            .prefetch_related(*prefetch_related)
 
         return assignments, None
 

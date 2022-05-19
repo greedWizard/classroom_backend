@@ -20,7 +20,7 @@ from classroom.schemas import (
     RoomPostUpdateSchema,
 )
 from classroom.services.room_post_service import RoomPostService
-from classroom.utils import make_homework_assignment_schema
+from classroom.utils import make_homework_assignment_schema, make_room_post_schema
 from user.models import User
 from user.schemas import AuthorSchema
 from user.dependencies import get_current_user
@@ -117,30 +117,10 @@ async def get_room_post(
         user_id=user.id,
         prefetch_related=['author'],
     )
-    assignment_schema = None
-
-    if assignment:
-        assignment_schema = await make_homework_assignment_schema(assignment)
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
-    return RoomPostDetailSchema(
-        title=room_post.title,
-        room=room_post.room,
-        description=room_post.description,
-        id=room_post.id,
-        text=room_post.text,
-        author=AuthorSchema.from_orm(room_post.author),
-        attachments=[
-            AttachmentListItemSchema.from_orm(attachment) \
-                for attachment in await room_post.attachments
-        ],
-        created_at=room_post.created_at,
-        updated_at=room_post.updated_at,
-        attachments_count=room_post.attachments_count,
-        type=room_post.type,
-        assignment=assignment_schema,
-    ) 
+    return await make_room_post_schema(room_post, assignment)
 
 
 @room_posts_router.post(

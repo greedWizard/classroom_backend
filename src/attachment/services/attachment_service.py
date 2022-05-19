@@ -100,7 +100,7 @@ class AttachmentService(AuthorMixin, CRUDService):
         return attachments, None
 
     @action
-    async def create_for_homework_assignments(
+    async def create_for_homework_assignment(
         self,
         attachmentCreateSchemaList: List[AttachmentCreateSchema],
         assignment_id: int,
@@ -109,7 +109,7 @@ class AttachmentService(AuthorMixin, CRUDService):
         assignment = await self.homework_assignment_model.filter(
             id=assignment_id,
             author_id=self.user.id,
-        )
+        ).first()
 
         if not assignment:
             return False, { 'assignment_id': 'Assignment not found', }

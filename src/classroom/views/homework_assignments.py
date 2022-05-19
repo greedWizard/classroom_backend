@@ -8,9 +8,9 @@ from attachment.services.attachment_service import AttachmentService
 
 from classroom.schemas import HomeworkAssignmentDetailSchema, HomeworkAssignmentMarkAsDoneSchema, HomeworkAssignmentRequestChangesSchema, HomeworkAssignmentCreateSchema, HomeworkAssignmentCreateSuccessSchema
 from classroom.services.homework_assignment_service import HomeworkAssignmentService
+from classroom.utils import make_homework_assignment_schema
 from user.dependencies import get_current_user
 from user.models import User
-
 
 
 router = APIRouter()
@@ -61,10 +61,10 @@ async def request_homework_assignment_changes(
 @router.get(
     '/by-room-post/{assigned_room_post_id}',
     response_model=list[HomeworkAssignmentDetailSchema],
-    operation_id='getAssignmentsForTeacher',
+    operation_id='getAssignmentsForRoomPost',
     status_code=status.HTTP_200_OK,
 )
-async def fetch_assignments_for_teacher(
+async def fetch_post_assignments(
     assigned_room_post_id: int,
     user: User = Depends(get_current_user)
 ):
@@ -73,7 +73,7 @@ async def fetch_assignments_for_teacher(
     homework_assignments, _ = await service.fetch_for_teacher(
         assigned_room_post_id=assigned_room_post_id,
     )
-    return [HomeworkAssignmentDetailSchema.from_orm(assignment) \
+    return [await make_homework_assignment_schema(assignment) \
                             for assignment in homework_assignments]
 
 
@@ -121,8 +121,9 @@ async def attach_files_to_assignment(
                 source=await attachment.read(),
             )
         )
-    attachments, errors = await attachment_service.create_for_assignment(
-        attachments_list, assignment_id,
+    attachments, errors = await attachment_service.create_for_homework_assignment(
+        attachments_list,
+        assignment_id,
     )
 
     if errors:

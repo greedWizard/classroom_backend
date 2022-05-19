@@ -156,6 +156,7 @@ class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
     updated_at: datetime
     assigned_room_post_id: int
     author: AuthorSchema
+    status: str
     comment: Optional[str] = ''
     attachments: Optional[list[AttachmentListItemSchema]] = []
 
