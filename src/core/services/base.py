@@ -269,7 +269,7 @@ class DeleteMixin(IServiceBase):
     async def delete_by_id(self, id: int):
         queryset = await self.get_queryset(management=True)
 
-        if not queryset:
+        if await len(queryset):
             return False, { 'id': 'Operation not allowed' }
 
         await queryset.filter(id=id).first().delete()

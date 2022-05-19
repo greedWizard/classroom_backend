@@ -44,7 +44,7 @@ class AttachmentService(AuthorMixin, CRUDService):
         if management:
             attachments_expression &= Q(homework_assignments__author_id=self.user.id)
         attachment_ids = await self.model.filter(
-            
+            attachments_expression
         ).values_list('id', flat=True)
         return self.model.filter(id__in=attachment_ids)
     

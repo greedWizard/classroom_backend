@@ -34,7 +34,7 @@ async def get_attachment(
     return StreamingResponse(
         content=stream_file(attachment.source),
         headers={
-            'Content-Disposition': f'attachment; filename={attachment.filename}'
+            'Content-Disposition': f'attachment; filename='
         }
     )
 
