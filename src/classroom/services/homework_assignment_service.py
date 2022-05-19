@@ -73,10 +73,14 @@ class HomeworkAssignmentService(AuthorMixin, CRUDService):
 
         return assignments, None
 
-    async def _check_assignment_teacher_rights(
+    async def _check_assignment_rights(
         self,
         assignment: HomeworkAssignment,
+        status: str,
     ) -> tuple[bool, Union[str, None]]:
+        if status == HomeWorkAssignmentStatus.assigned:
+            return assignment.author.id == self.user.id, 'You are not the author!'
+
         if not assignment:
             return False, "Invalid assignment."
         if self._check_is_status_restricted(assignment):
@@ -92,8 +96,8 @@ class HomeworkAssignmentService(AuthorMixin, CRUDService):
     async def change_assignment_status(
         self,
         assignment_id: int,
-        changes_schema: HomeworkAssignmentRequestChangesSchema,
         status: str,
+        changes_schema: HomeworkAssignmentRequestChangesSchema = None,
     ) -> tuple[HomeworkAssignment, Union[dict[str, str], None]]:
         assignment, _ = await self.retrieve(
             id=assignment_id,
@@ -105,13 +109,14 @@ class HomeworkAssignmentService(AuthorMixin, CRUDService):
             ],
         )
 
-        is_valid, error = await self._check_assignment_teacher_rights(assignment)
+        is_valid, error = await self._check_assignment_rights(assignment, status)
 
         if not is_valid:
             return None, error
         
-        for field, value in changes_schema.dict().items():
-            setattr(assignment, field, value)
+        if changes_schema:
+            for field, value in changes_schema.dict().items():
+                setattr(assignment, field, value)
 
         assignment.status = status
         await assignment.save()
@@ -126,3 +131,8 @@ class HomeworkAssignmentService(AuthorMixin, CRUDService):
         change_assignment_status,
         status=HomeWorkAssignmentStatus.done,
     )
+    reassign = partialmethod(
+        change_assignment_status,
+        status=HomeWorkAssignmentStatus.assigned,
+    )
+

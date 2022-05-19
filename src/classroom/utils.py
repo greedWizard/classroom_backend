@@ -17,6 +17,7 @@ async def make_homework_assignment_schema(assignment: HomeworkAssignment):
         author=assignment.author,
         attachments=await assignment.attachments,
         status=assignment.status,
+        comment=assignment.comment,
     )
 
 

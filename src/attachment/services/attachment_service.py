@@ -25,28 +25,26 @@ class AttachmentService(AuthorMixin, CRUDService):
     user_model = User
 
     async def get_queryset(self, management: bool = False):
-        room_expression = Q(user_id=self.user.id)
+        # expression = Q(homework_assignments__assigned_room_post__room__participations__role__in=self.participation_model.MODERATOR_ROLES) | \
+        #              Q(author_id=self.user.id) | \
+        #                 Q(room_posts__room__participations__user_id=self.user.id)
+        expression = Q(homework_assignments__assigned_room_post__room__participations__role__in=self.participation_model.MODERATOR_ROLES) | \
+            Q(author_id=self.user.id) | \
+                Q(room_posts__room_id__in=await self.user.participations.all().values_list('room_id', flat=True))
 
         if management:
-            room_expression &= Q(
-                role__in=self.participation_model.MODERATOR_ROLES,
-            )
+            expression &= Q(
+                room_posts__room__participations__role__in=self.participation_model.MODERATOR_ROLES
+            ) | Q(author_id=self.user.id)
+        # raise Exception(
+        #     await self.model.filter(id__in=await self.model.filter(expression).values_list('id', flat=True)).values_list('id', flat=True),
+        #     await self.model.all().count(),
+        #     len(await self.model.filter(id__in=await self.model.filter(expression).values_list('id', flat=True)).values_list('id', flat=True))
+        # )
 
-        user_rooms_ids = await self.participation_model.filter(
-            room_expression,
-        ).values_list('room_id', flat=True)
-
-        # TODO: возможно получится отрефакторить, когда выйдет обновления черепахи
-        # сейчас тут какой-то краш из-за джойнов, возможно надо переписать запрос
-        attachments_expression = Q(room_posts__room_id__in=user_rooms_ids) | \
-            Q(homework_assignments__assigned_room_post__room_id__in=user_rooms_ids)
-
-        if management:
-            attachments_expression &= Q(homework_assignments__author_id=self.user.id)
-        attachment_ids = await self.model.filter(
-            attachments_expression
-        ).values_list('id', flat=True)
-        return self.model.filter(id__in=attachment_ids)
+        # raise Exception(await self.model.filter(id__in=await self.model.filter(expression).values_list('id', flat=True)))
+        # TODO: черепаха, блять, почини уже ДЕЛИТЫ И АПДЕЙТЫ С ДЖОЙНАМИ!!!
+        return self.model.filter(id__in=await self.model.filter(expression).values_list('id', flat=True))
     
     async def _can_attach_to_room_post(self, room_post_id: int):
         return await self.participation_model.can_moderate(self.user, room_post_id)

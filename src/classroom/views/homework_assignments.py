@@ -55,7 +55,7 @@ async def request_homework_assignment_changes(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return HomeworkAssignmentDetailSchema.from_orm(homework_assignment)
+    return await make_homework_assignment_schema(homework_assignment)
 
 
 @router.get(
@@ -78,6 +78,27 @@ async def fetch_post_assignments(
 
 
 @router.post(
+    '/{assignment_id}/reassign',
+    response_model=HomeworkAssignmentDetailSchema,
+    operation_id='reassignHomework',
+    status_code=status.HTTP_200_OK,
+)
+async def reassign_homework(
+    assignment_id: int,
+    user: User = Depends(get_current_user)
+):
+    service = HomeworkAssignmentService(user)
+
+    homework_assignment, errors = await service.reassign(
+        assignment_id=assignment_id,
+    )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return await make_homework_assignment_schema(homework_assignment)
+
+
+@router.post(
     '/{assignment_id}/mark-done',
     response_model=HomeworkAssignmentDetailSchema,
     operation_id='markAssignmentAsDone',
@@ -97,7 +118,7 @@ async def mark_assignment_as_done(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return HomeworkAssignmentDetailSchema.from_orm(homework_assignment)
+    return await make_homework_assignment_schema(homework_assignment)
 
 
 @router.post(
