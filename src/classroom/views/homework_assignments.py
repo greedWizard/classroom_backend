@@ -1,8 +1,10 @@
-from fastapi import Depends
+from fastapi import Depends, UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.routing import APIRouter
 
 from starlette import status
+from attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
+from attachment.services.attachment_service import AttachmentService
 
 from classroom.schemas import HomeworkAssignmentDetailSchema, HomeworkAssignmentMarkAsDoneSchema, HomeworkAssignmentRequestChangesSchema, HomeworkAssignmentCreateSchema, HomeworkAssignmentCreateSuccessSchema
 from classroom.services.homework_assignment_service import HomeworkAssignmentService
@@ -97,3 +99,33 @@ async def mark_assignment_as_done(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
     return HomeworkAssignmentDetailSchema.from_orm(homework_assignment)
 
+
+@router.post(
+    '/{assignment_id}/attachments',
+    response_model=list[AttachmentListItemSchema],
+    status_code=status.HTTP_201_CREATED,
+    operation_id='attachFilesToAssignment',
+)
+async def attach_files_to_assignment(
+    assignment_id: int,
+    attachments: list[UploadFile],
+    user: User = Depends(get_current_user),
+):
+    attachments_list = []
+    attachment_service = AttachmentService(user)
+
+    for attachment in attachments:
+        attachments_list.append(
+            AttachmentCreateSchema(
+                filename=attachment.filename,
+                source=await attachment.read(),
+            )
+        )
+    attachments, errors = await attachment_service.create_for_assignment(
+        attachments_list, assignment_id,
+    )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return [AttachmentListItemSchema.from_orm(attachment) \
+                    for attachment in attachments]

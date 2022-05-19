@@ -138,8 +138,17 @@ class RoomPost(RoomPostAbstract, AttachmentsCountMixin):
     def __repr__(self) -> str:
         return f'<RoomPost {str(self)}>'
 
-    async def get_assignment_for_user(self, user_id: int):
-        return await self.assignments.filter(author_id=user_id).first()
+    async def get_assignment_for_user(
+        self,
+        user_id: int,
+        prefetch_related: list = None,
+    ):
+        if not prefetch_related:
+            prefetch_related = []
+
+        return await self.assignments.filter(
+            author_id=user_id,
+        ).prefetch_related('author').first()
 
     class Meta:
         table = 'room_posts'

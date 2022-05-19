@@ -96,6 +96,7 @@ class HomeworkAssignmentService(AuthorMixin, CRUDService):
                 'assigned_room_post',
                 'assigned_room_post__room',
                 'author',
+                'attachments',
             ],
         )
 
