@@ -6,7 +6,7 @@ from starlette import status
 from attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
 from attachment.services.attachment_service import AttachmentService
 
-from classroom.schemas import HomeworkAssignmentDetailSchema, HomeworkAssignmentMarkAsDoneSchema, HomeworkAssignmentRequestChangesSchema, HomeworkAssignmentCreateSchema, HomeworkAssignmentCreateSuccessSchema
+from classroom.schemas import HomeworkAssignmentDetailSchema, HomeworkAssignmentRateSchema, HomeworkAssignmentRequestChangesSchema, HomeworkAssignmentCreateSchema, HomeworkAssignmentCreateSuccessSchema
 from classroom.services.homework_assignment_service import HomeworkAssignmentService
 from classroom.utils import make_homework_assignment_schema
 from user.dependencies import get_current_user
@@ -99,14 +99,14 @@ async def reassign_homework(
 
 
 @router.post(
-    '/{assignment_id}/mark-done',
+    '/{assignment_id}/rate',
     response_model=HomeworkAssignmentDetailSchema,
-    operation_id='markAssignmentAsDone',
+    operation_id='rateHomework',
     status_code=status.HTTP_200_OK,
 )
 async def mark_assignment_as_done(
     assignment_id: int,
-    changes_schema: HomeworkAssignmentMarkAsDoneSchema,
+    changes_schema: HomeworkAssignmentRateSchema,
     user: User = Depends(get_current_user)
 ):
     service = HomeworkAssignmentService(user)

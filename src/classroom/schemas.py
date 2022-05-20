@@ -159,6 +159,7 @@ class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
     status: str
     comment: Optional[str] = ''
     attachments: Optional[list[AttachmentListItemSchema]] = []
+    rate: Optional[int] = None
 
     class Config(NormalizedDatetimeModel.Config):
         orm_mode = True
@@ -194,7 +195,7 @@ class HomeworkAssignmentRequestChangesSchema(BaseModel):
     comment: str
 
 
-class HomeworkAssignmentMarkAsDoneSchema(BaseModel):
+class HomeworkAssignmentRateSchema(BaseModel):
     rate: int
     comment: str = ''
 
