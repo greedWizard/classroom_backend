@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:14.2-alpine
+    volumes:
+      - classroom_db:/var/lib/postgresql/data
+    env_file: .env
+    container_name: classroom-db
+    ports:
+      - "5433:5432"
+  back:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh ./docker/start_app.sh
+    volumes:
+      - ./:/code/
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    container_name: classroom-back
+    restart: always
+
+  # huey:
+  #   container_name: classroom-huey
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   command: poetry run uvicorn app:app --reload
+  #   volumes:
+  #     - ./:/code/
+  #   env_file:
+  #     - .env
+  #   restart: always
+  #   depends_on:
+  #     - db
+
+  redis:
+    image: redis:alpine
+    container_name: classroom-redis
+    volumes:
+      - ./storage/redis:/data
+
+volumes:
+  classroom_db:

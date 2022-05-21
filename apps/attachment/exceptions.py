@@ -1,0 +1,2 @@
+class AttachmentMaxSizeException(Exception):
+    pass
