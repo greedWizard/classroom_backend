@@ -153,7 +153,7 @@ async def test_request_changes_when_assigned_not_participating(
         'request_homework_assignment_changes',
         assignment_id=assignment.id,
     )
-    comment = 'Переделайте пожалуйста, иначе вам пизда.'
+    comment = 'Переделайте пожалуйста, иначе вас отчислят.'
 
     response = client.post(url, json={
         'comment': comment,
@@ -181,7 +181,7 @@ async def test_request_changes_when_assigned_done(
         'request_homework_assignment_changes',
         assignment_id=assignment.id,
     )
-    comment = 'Переделайте пожалуйста, иначе вам пизда.'
+    comment = 'Переделайте пожалуйста, иначе вас отчислят.'
 
     response = client.post(url, json={
         'comment': comment,
@@ -209,7 +209,7 @@ async def test_request_changes_when_assigned_not_allowed(
         'request_homework_assignment_changes',
         assignment_id=assignment.id,
     )
-    comment = 'Переделайте пожалуйста, иначе вам пизда.'
+    comment = 'Переделайте пожалуйста, иначе вас отчислят.'
 
     response = client.post(url, json={
         'comment': comment,
@@ -237,7 +237,7 @@ async def test_request_changes_when_assigned_success(
         'request_homework_assignment_changes',
         assignment_id=assignment.id,
     )
-    comment = 'Переделайте пожалуйста, иначе вам пизда.'
+    comment = 'Переделайте пожалуйста, иначе вас отчислят.'
 
     response = client.post(url, json={
         'comment': comment,
