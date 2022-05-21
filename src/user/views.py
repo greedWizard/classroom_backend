@@ -7,8 +7,8 @@ from fastapi_jwt_auth import AuthJWT
 
 from starlette import status
 
-from core.config import config
-from core.services.email import EmailService
+from common.config import config
+from common.services.email import EmailService
 from user.models import User
 from user.schemas import (
     UserLoginSchema,

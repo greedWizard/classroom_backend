@@ -24,6 +24,19 @@ async def get_current_user(
     return current_user
 
 
+async def websocket_user(
+    token: str,
+    Authorize: AuthJWT = Depends(),
+    user_service: UserService = Depends(),
+):
+    Authorize.jwt_required('websocket', token=token)
+    user_id = Authorize.get_jwt_subject()
+
+    current_user, _ = await user_service.retrieve(id=user_id)
+
+    return current_user
+
+
 async def get_current_user_optional(
     current_user: User = Depends(_get_current_user),
 ):

@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 from attachment.schemas import AttachmentListItemSchema
-from core.schemas import NormalizedDatetimeModel
+from common.schemas import NormalizedDatetimeModel
 from user.schemas import AuthorSchema
 
 

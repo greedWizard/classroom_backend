@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from tortoise import models
 from tortoise.transactions import atomic
 
-from core.services.decorators import action
+from common.services.decorators import action
 
 
 CreateSchema = NewType('CreateSchemaType', BaseModel)

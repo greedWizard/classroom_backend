@@ -6,8 +6,8 @@ from tortoise.expressions import Q
 from classroom.constants import ParticipationRoleEnum
 from classroom.models import Participation, Room
 
-from core.services.author import AuthorMixin
-from core.services.base import CRUDService
+from common.services.author import AuthorMixin
+from common.services.base import CRUDService
 
 from user.models import User
 

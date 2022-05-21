@@ -7,10 +7,10 @@ import uuid
 
 from tortoise.expressions import Q
 
-from core.constants import EMAIL_REGEX, PHONE_REGEX
-from core.services.base import CRUDService, ResultTuple
-from core.config import config
-from core.services.decorators import action
+from user.constants import EMAIL_REGEX, PHONE_REGEX
+from common.services.base import CRUDService, ResultTuple
+from common.config import config
+from common.services.decorators import action
 from user.models import User
 from user.schemas import UserLoginSchema
 from user.utils import hash_string

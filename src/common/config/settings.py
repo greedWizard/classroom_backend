@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 env = environ.Env()
 environ.Env.read_env(
-    os.environ.get('LATERON_ENV_FILE_PATH', 'core/config/.env')
+    os.environ.get('LATERON_ENV_FILE_PATH', '.env')
 )
 
 

@@ -1,6 +1,6 @@
 from tortoise import fields
 
-from core.models import AuthorAbstract, TimeStampAbstract
+from common.models import AuthorAbstract, TimeStampAbstract
 
 
 class Attachment(AuthorAbstract, TimeStampAbstract):

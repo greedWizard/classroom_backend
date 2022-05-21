@@ -10,9 +10,9 @@ from classroom.models import Participation, Room
 from classroom.schemas import ParticipationCreateSchema
 from classroom.services.participation_service import ParticipationService
 
-from core.services.author import AuthorMixin
-from core.services.base import CRUDService
-from core.services.decorators import action
+from common.services.author import AuthorMixin
+from common.services.base import CRUDService
+from common.services.decorators import action
 
 from user.models import User
 

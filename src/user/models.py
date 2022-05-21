@@ -3,7 +3,7 @@ import hashlib
 from tortoise import fields
 from tortoise.queryset import QuerySet
 
-from core.models import TimeStampAbstract
+from common.models import TimeStampAbstract
 from user.utils import hash_string
 
 

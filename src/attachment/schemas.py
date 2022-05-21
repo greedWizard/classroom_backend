@@ -3,7 +3,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from core.schemas import NormalizedDatetimeModel
+from common.schemas import NormalizedDatetimeModel
 
 
 class AttachmentCreateSchema(BaseModel):

@@ -11,7 +11,6 @@ from attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
 from attachment.services.attachment_service import AttachmentService
 from classroom.models import RoomPost
 from classroom.schemas import (
-    HomeworkAssignmentDetailSchema,
     RoomPostCreateSchema,
     RoomPostCreateSuccessSchema,
     RoomPostDeleteSchema,

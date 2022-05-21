@@ -4,7 +4,7 @@ from tortoise.exceptions import NoValuesFetched
 from tortoise.validators import MinValueValidator, MaxValueValidator
 
 from classroom.constants import HomeWorkAssignmentStatus, RoomPostType, ParticipationRoleEnum
-from core.models import AuthorAbstract, TimeStampAbstract
+from common.models import AuthorAbstract, TimeStampAbstract
 
 
 UserModel = NewType('UserModel', models.Model)

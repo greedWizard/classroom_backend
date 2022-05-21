@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime
-import hashlib
 import pytest
 from typing import Generator
 import uuid
@@ -11,14 +10,13 @@ import pytest_asyncio
 from starlette import status
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
-from tortoise import Tortoise
 
 from tortoise.contrib.test import finalizer, initializer
 
 from user.models import User
 
-from core.config import config
-from core.factory import AppFactory
+from common.config import config
+from common.factory import AppFactory
 from tests.utils.app import app
 from user.utils import hash_string
 

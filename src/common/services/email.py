@@ -2,7 +2,7 @@
 from typing import List
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 
-from core.config.integrations import yandex_smtp_config
+from common.config.integrations import yandex_smtp_config
 
 
 class EmailService:

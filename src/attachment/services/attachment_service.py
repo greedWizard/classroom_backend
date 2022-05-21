@@ -7,10 +7,10 @@ from attachment.schemas import AttachmentCreateSchema
 
 from classroom.models import HomeworkAssignment, RoomPost, Participation, Room
 
-from core.config import config
-from core.services.author import AuthorMixin
-from core.services.base import CRUDService
-from core.services.decorators import action
+from common.config import config
+from common.services.author import AuthorMixin
+from common.services.base import CRUDService
+from common.services.decorators import action
 
 from user.models import User
 

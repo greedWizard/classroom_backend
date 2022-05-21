@@ -9,8 +9,8 @@ from classroom.models import HomeworkAssignment, Participation, Room
 from classroom.schemas import HomeworkAssignmentRequestChangesSchema
 from classroom.services.room_post_service import RoomPostService
 
-from core.services.author import AuthorMixin
-from core.services.base import CRUDService
+from common.services.author import AuthorMixin
+from common.services.base import CRUDService
 
 
 class HomeworkAssignmentService(AuthorMixin, CRUDService):

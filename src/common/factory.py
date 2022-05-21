@@ -1,5 +1,4 @@
 import os
-from typing import Dict, List
 
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
@@ -9,8 +8,8 @@ from fastapi_jwt_auth.exceptions import AuthJWTException
 from tortoise import Tortoise
 from tortoise.contrib.fastapi import register_tortoise
 
-from core.config import config
-from core.exception_handlers import authjwt_exception_handler
+from common.config import config
+from common.exception_handlers import authjwt_exception_handler
 
 
 Tortoise.init_models(config.MODELS_PATHS, config.MODELS_APP_LABEL)
@@ -54,19 +53,25 @@ class AppFactory:
 
     @classmethod
     def _register_views(cls, app: FastAPI):
-        import classroom.views
-        import user.views
-        import attachment.views
+        from attachment.views import router as attachment_router
+        from chat.views import router as chat_router
+        from classroom.views import router as classroom_router
+        from user.views import router as user_router
 
         app.include_router(
-            user.views.router,
+            user_router,
             prefix=''.join([API_V1_PREFIX, 'auth/user']),
         )
         app.include_router(
-            classroom.views.router,
+            classroom_router,
             prefix=''.join([API_V1_PREFIX, 'classroom']),
         )
         app.include_router(
-            attachment.views.router,
+            attachment_router,
             prefix=''.join([API_V1_PREFIX, 'attachments']),
         )
+        app.include_router(
+            chat_router,
+            prefix=''.join([API_V1_PREFIX, 'chat']),
+        )
+
