@@ -25,19 +25,20 @@ services:
     container_name: classroom-back
     restart: always
 
-  # huey:
-  #   container_name: classroom-huey
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   command: poetry run uvicorn app:app --reload
-  #   volumes:
-  #     - ./:/code/
-  #   env_file:
-  #     - .env
-  #   restart: always
-  #   depends_on:
-  #     - db
+  huey:
+    container_name: classroom-huey
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: poetry run huey_consumer.py scheduler.start_huey.huey_app
+    volumes:
+      - ./:/code/
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      - db
+      - back
 
   redis:
     image: redis:alpine

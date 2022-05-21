@@ -73,7 +73,6 @@ async def test_user_activation(
     assert not user.is_active
 
     url = app.url_path_for('activate_user', activation_token=user.activation_token)
-    print(user.activation_token, user.is_active)
 
     with pytest.raises(InvalidSchema):
         client.get(url)

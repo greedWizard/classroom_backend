@@ -11,7 +11,4 @@ def get_config():
     return JWTSettings()
 
 
-try:
-    config = ProjectSettings()
-except FileNotFoundError:
-    raise FileNotFoundError('No .env file found')
+config = ProjectSettings()

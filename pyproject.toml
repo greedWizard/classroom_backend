@@ -91,6 +91,7 @@ urllib3 = "1.26.7"
 uvicorn = "0.17.6"
 websockets = "10.3"
 wrapt = "1.14.0"
+huey = "^2.4.3"
 
 
 [tool.poetry.dev-dependencies]
