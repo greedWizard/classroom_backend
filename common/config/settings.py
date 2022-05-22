@@ -28,7 +28,10 @@ class ProjectSettings(BaseModel):
     POSTGRES_DB: str = env('POSTGRES_DB')
     POSTGRES_PORT: int = env('POSTGRES_PORT')
 
-    DB_CONNECTION_STRING: str = f'postgres://{POSTGRES_USER_NAME}:{POSTGRES_USER_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
+    DB_CONNECTION_STRING: str = (
+        f'postgres://{POSTGRES_USER_NAME}:'
+        f'{POSTGRES_USER_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
+    )
     DB_TEST_CONNECTION_STRING: str = 'sqlite://:memory:'
     # END DB SETTINGS
 
@@ -71,3 +74,6 @@ class ProjectSettings(BaseModel):
     # POSTS SETTINGS
     TITLE_MAX_LENGTH: int = 150
     DESCRIPTION_MAX_LENGTH: int = 500
+
+    # TEMPLATES
+    JINJA_TEMPLATES_FOLDER: str = 'apps/templates'

@@ -28,9 +28,10 @@ class AttachmentService(AuthorMixin, CRUDService):
     user_model = User
 
     async def get_queryset(self, management: bool = False):
+        moder_roles = self.participation_model.MODERATOR_ROLES
         expression = (
             Q(
-                homework_assignments__assigned_room_post__room__participations__role__in=self.participation_model.MODERATOR_ROLES,
+                homework_assignments__assigned_room_post__room__participations__role__in=moder_roles,  # no qa
             )
             | Q(author_id=self.user.id)
             | Q(
@@ -96,7 +97,7 @@ class AttachmentService(AuthorMixin, CRUDService):
                 attachmentCreateSchemaList,
             )
         except AttachmentMaxSizeException as e:
-            return False, {'attachment': e}
+            return False, {'attachment': str(e)}
 
         if not room_post:
             return False, {'room_post_id': 'Room post not found'}

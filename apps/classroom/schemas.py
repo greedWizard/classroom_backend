@@ -11,6 +11,7 @@ from apps.user.schemas import AuthorSchema
 from common.schemas import NormalizedDatetimeModel
 
 
+# TODO: навести порядок в схемах
 class RoomBaseSchema(NormalizedDatetimeModel):
     name: str
     description: Optional[str]
@@ -68,6 +69,7 @@ class RoomListItemSchema(RoomBaseSchema, NormalizedDatetimeModel):
 
 class RoomNestedSchema(RoomBaseSchema, NormalizedDatetimeModel):
     id: int
+    name: str
     created_at: datetime
     author: AuthorSchema
 
@@ -121,6 +123,11 @@ class ParticipationSuccessSchema(BaseModel):
 
 class RoomDeleteSchema(BaseModel):
     id: int
+
+
+class RoomPostCreateEmailSchema(BaseModel):
+    id: int
+    room: RoomNestedSchema
 
 
 class RoomPostCreateSchema(RoomPostAbstractSchema):

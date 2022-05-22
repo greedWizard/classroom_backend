@@ -1,0 +1,10 @@
+{% extends "Base.html" %}
+
+{% block content %}
+<div>
+    <h2>
+        {{ room_post.author.first_name }} {{ room_post.author.last_name }} added a new {{ room_post.type }}
+        in {{ room_post.room.name }}
+    </h2>
+</div>
+{% endblock content %}

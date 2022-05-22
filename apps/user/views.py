@@ -25,9 +25,7 @@ from apps.user.schemas import (
     UserRegistrationCompleteSchema,
 )
 from apps.user.services.user_service import UserService
-from apps.user.utils import get_registration_complete_email_template
 from common.config import config
-from common.services.email import EmailService
 
 
 router = APIRouter(
@@ -61,7 +59,6 @@ async def register_user(
     request: Request,
     userRegisterSchema: UserRegisterSchema,
     user_service: UserService = Depends(),
-    email_service: EmailService = Depends(),
 ):
     user, errors = await user_service.create(userRegisterSchema)
 
@@ -73,12 +70,8 @@ async def register_user(
                 activation_token=user.activation_token,
             ),
         )
+        activation_link
         # TODO: отправить чиллить в треды, чтобы пользователь не ждал
-        await email_service.send_email(
-            subject='classroom activation link',
-            recipients=[user.email],
-            body=get_registration_complete_email_template(activation_link),
-        )
         return UserRegistrationCompleteSchema(status=config.USER_SUCCESS_STATUS)
     raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
 
