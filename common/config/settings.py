@@ -76,4 +76,4 @@ class ProjectSettings(BaseModel):
     DESCRIPTION_MAX_LENGTH: int = 500
 
     # TEMPLATES
-    JINJA_TEMPLATES_FOLDER: str = 'apps/templates'
+    JINJA_TEMPLATES_FOLDER: str = 'templates/'

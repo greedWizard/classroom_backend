@@ -1,5 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from smtplib import SMTP
 from typing import (
     Any,
@@ -38,6 +40,22 @@ class SMTPClient(AbstractMailClient):
             '\nSubject: {subject}\n\n{body}'
         )
 
+    def _form_html_message(
+        self,
+        subject: str,
+        recipient: str,
+        body: str,
+    ):
+        message = MIMEMultipart('alternative')
+        message['Subject'] = subject
+        message['From'] = self.config.mail_from
+        message['To'] = recipient
+
+        mime_html = MIMEText(body, 'html')
+        message.attach(mime_html)
+
+        return message
+
     def send_email(
         self,
         subject: str,
@@ -52,13 +70,14 @@ class SMTPClient(AbstractMailClient):
             server.set_debuglevel(1)
 
             for recipient in recipients:
+                message = self._form_html_message(
+                    subject=subject,
+                    recipient=recipient,
+                    body=body,
+                )
+
                 server.sendmail(
                     self.config.mail_from,
                     recipient,
-                    self.email_message.format(
-                        destination_email=recipient,
-                        subject=subject,
-                        body=body,
-                        sender_email=self.config.mail_from,
-                    ),
+                    message.as_string(),
                 )

@@ -125,9 +125,15 @@ class RoomDeleteSchema(BaseModel):
     id: int
 
 
-class RoomPostCreateEmailSchema(BaseModel):
+class RoomPostEmailNotificationSchema(BaseModel):
     id: int
+    title: str
     room: RoomNestedSchema
+    author: AuthorSchema
+    type: str
+
+    class Config:
+        orm_mode = True
 
 
 class RoomPostCreateSchema(RoomPostAbstractSchema):

@@ -6,7 +6,7 @@ from jinja2 import Environment
 from scheduler.app import huey_app
 from scheduler.tasks.email_messages import ROOM_POST_NOTIFICATION_CREATED
 
-from apps.classroom.schemas import RoomPostCreateEmailSchema
+from apps.classroom.schemas import RoomPostEmailNotificationSchema
 from common.containers import (
     MainContainer,
     TemplatesContainer,
@@ -18,11 +18,11 @@ from common.services.email import EmailService
 @inject
 def notify_room_post_created(
     targets: list[str],
-    room_post: RoomPostCreateEmailSchema,
+    room_post: RoomPostEmailNotificationSchema,
     email_service: EmailService = Provide[MainContainer.email_service],
     template_env: Environment = Provide[TemplatesContainer.env],
 ):
-    template = template_env.get_template()
+    template = template_env.get_template('classroom/RoomPostCreated.html')
     body = template.render(room_post=room_post)
 
     email_service.send_email(

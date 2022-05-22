@@ -35,7 +35,6 @@ services:
       - ./:/code/
     env_file:
       - .env
-    restart: always
     depends_on:
       - db
       - back
