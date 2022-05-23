@@ -18,7 +18,6 @@ from apps.classroom.schemas import (
     RoomDeleteSchema,
     RoomDetailSchema,
     RoomListItemSchema,
-    RoomParticipationSchema,
 )
 from apps.classroom.services.room_service import (
     ParticipationService,
@@ -149,17 +148,11 @@ async def current_user_room_list(
         )
 
     room_response_list = []
+    ParticipationService(user)
 
     # говнокод, потом переделать
     for room in rooms:
         await room.fetch_related('participations', 'author')
-        participation, _ = await room_service.participation_service.fetch(
-            {
-                'room_id': room.id,
-                'user_id': user.id,
-            },
-        )
-        participation = participation[0]
 
         room_response_list.append(
             RoomListItemSchema(
@@ -167,15 +160,12 @@ async def current_user_room_list(
                 name=room.name,
                 description=room.description,
                 participations_count=room.participations_count,
-                participation=RoomParticipationSchema(
-                    id=participation.id,
-                    role=participation.role.name,
-                    user_id=participation.user_id,
-                    room_id=participation.room_id,
-                    created_at=participation.created_at,
-                ),
                 created_at=room.created_at,
                 author=AuthorSchema.from_orm(room.author),
+                is_moderator=await room_service.is_user_moderator(
+                    room_id=room.id,
+                    user=user,
+                ),
             ),
         )
     return room_response_list
@@ -225,5 +215,4 @@ async def join_room_by_link(
         user_id=participation.user_id,
         role=participation.role.name,
         author_id=participation.author_id,
-        room=RoomListItemSchema.from_orm(participation.room),
     )

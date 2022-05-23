@@ -84,10 +84,17 @@ class ParticipationService(AuthorMixin, CRUDService):
 
         if (
             'join_slug' in self.current_action_attributes
-            and not 'room_id' in self.current_action_attributes
+            and 'room_id' not in self.current_action_attributes
         ):
             attrs['room_id'] = (
                 await self.room_model.filter(join_slug=join_slug).first()
             ).id
         attrs['role'] = attrs.get('role') or ParticipationRoleEnum.participant
         return await super().validate(attrs)
+
+    async def is_user_moderator(
+        self,
+        room_id: int,
+        user_id: int,
+    ) -> bool:
+        return await self.model.filter(room_id=room_id, user_id=user_id).exists()

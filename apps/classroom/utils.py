@@ -43,7 +43,4 @@ async def make_room_post_schema(room_post: RoomPost, assignment: HomeworkAssignm
         updated_at=room_post.updated_at,
         attachments_count=room_post.attachments_count,
         type=room_post.type,
-        assignment=await make_homework_assignment_schema(
-            assignment=assignment,
-        ),
     )
