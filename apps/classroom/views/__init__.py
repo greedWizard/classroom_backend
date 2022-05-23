@@ -6,14 +6,17 @@ from .participations import participations_router
 from .room_posts import room_posts_router
 
 
-router = APIRouter(
-    tags=['classroom'],
-)
+router = APIRouter()
 
-router.include_router(router=classroom_router, prefix='/room')
-router.include_router(router=room_posts_router, prefix='/room_posts')
-router.include_router(router=participations_router, prefix='/participations')
+router.include_router(router=classroom_router, prefix='/room', tags=['room'])
+router.include_router(router=room_posts_router, prefix='/room_post', tags=['roomPost'])
+router.include_router(
+    router=participations_router,
+    prefix='/participation',
+    tags=['participation'],
+)
 router.include_router(
     router=homework_assignments_router,
-    prefix='/homework-assignments',
+    prefix='/homework-assignment',
+    tags=['assignment'],
 )

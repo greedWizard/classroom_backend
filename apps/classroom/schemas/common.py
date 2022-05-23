@@ -21,3 +21,17 @@ class RoomNestedSchema(RoomBaseSchema, NormalizedDatetimeModel):
 
     class Config:
         orm_mode = True
+
+
+class RoomPostListItemSchema(NormalizedDatetimeModel):
+    id: int
+    text: Optional[str]
+    author: AuthorSchema
+    created_at: datetime
+    updated_at: datetime
+    attachments_count: int
+    room_id: int
+    type: str
+
+    class Config(NormalizedDatetimeModel.Config):
+        orm_mode = True

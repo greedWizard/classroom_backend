@@ -1,4 +1,7 @@
-from typing import Dict
+from typing import (
+    Dict,
+    Type,
+)
 
 from tortoise.expressions import Q
 
@@ -13,8 +16,8 @@ from common.services.base import CRUDService
 
 
 class ParticipationService(AuthorMixin, CRUDService):
-    model = Participation
-    room_model = Room
+    model: Type[Participation] = Participation
+    room_model: Type[Room] = Room
 
     def __init__(self, user: User, *args, **kwargs) -> None:
         self.user = user
@@ -97,4 +100,8 @@ class ParticipationService(AuthorMixin, CRUDService):
         room_id: int,
         user_id: int,
     ) -> bool:
-        return await self.model.filter(room_id=room_id, user_id=user_id).exists()
+        return await self.model.filter(
+            room_id=room_id,
+            user_id=user_id,
+            role__in=self.model.MODERATOR_ROLES,
+        ).exists()

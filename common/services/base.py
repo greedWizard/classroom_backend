@@ -64,14 +64,6 @@ class IServiceBase(SchemaMapMixin):
         raise NotImplementedError()
 
     @action
-    async def create(
-        self,
-        createSchema: CreateSchema,
-        exclude_unset: bool = False,
-    ) -> Tuple[models.Model, Dict]:
-        raise NotImplementedError()
-
-    @action
     @atomic()
     async def bulk_update(
         self,
@@ -107,11 +99,11 @@ class IServiceBase(SchemaMapMixin):
         ordering: List = [],
         distinct: bool = True,
     ):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     @action
     async def retrieve(self, **kwargs):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class CreateUpdateServiceMixin(IServiceBase):
@@ -256,9 +248,10 @@ class RetrieveFetchServiceMixin(IServiceBase):
         _fetch_related: list = [],
         **kwargs,
     ):
-        # TODO: чекнуть сколько запросов идёт в базу, скорее всего тут лишние запросы идут
         qs = await self.get_queryset()
-        obj = await qs.filter(**kwargs).prefetch_related(*_fetch_related).first()
+
+        # TODO: SELECT_RELATED
+        obj = await (qs.filter(**kwargs).prefetch_related(*_fetch_related).first())
 
         if not obj:
             return None, self.error_messages.get('does_not_exist')

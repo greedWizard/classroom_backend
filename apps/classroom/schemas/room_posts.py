@@ -49,19 +49,6 @@ class RoomPostCreateSuccessSchema(RoomPostCreateSchema):
     id: int
 
 
-class RoomPostListItemSchema(RoomPostAbstractSchema, NormalizedDatetimeModel):
-    id: int
-    text: Optional[str]
-    author: AuthorSchema
-    created_at: datetime
-    updated_at: datetime
-    attachments_count: int
-    room_id: int
-
-    class Config(NormalizedDatetimeModel.Config):
-        orm_mode = True
-
-
 class RoomPostUpdateSchema(BaseModel):
     type: str
     description: Optional[str] = None

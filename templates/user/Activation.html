@@ -1,0 +1,19 @@
+{% extends "Base.html" %}
+
+{% block title %}
+Welcome to our services!
+{% endblock title %}
+
+{% block description %}
+We are happy to meat you, {{ user.email }}! We are really hope that our services will
+help you to organize your educational process! To activate your account please click the
+button down below!
+{% endblock description %}
+
+{% block button_text %}
+Get started!
+{% endblock button_text %}
+
+{% block button_link %}
+{{ user.activation_link }}
+{% endblock button_link %}

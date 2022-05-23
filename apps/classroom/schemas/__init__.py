@@ -20,7 +20,6 @@ from .room_posts import (
     RoomPostDeleteSchema,
     RoomPostDetailSchema,
     RoomPostEmailNotificationSchema,
-    RoomPostListItemSchema,
     RoomPostUpdateSchema,
 )
 from .rooms import (

@@ -23,6 +23,7 @@ from apps.classroom.services.room_service import (
     ParticipationService,
     RoomService,
 )
+from apps.classroom.utils import make_room_detail_schema
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
 from apps.user.schemas import AuthorSchema
@@ -120,13 +121,18 @@ async def get_room(
 ):
     room_service = RoomService(user)
     room, errors = await room_service.retrieve(
-        _fetch_related=['participations', 'author'],
+        _fetch_related=[
+            'author',
+            'room_posts',
+            'room_posts__author',
+            'participations',
+        ],
         id=room_id,
     )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
-    return RoomDetailSchema.from_orm(room)
+    return await make_room_detail_schema(room)
 
 
 @classroom_router.get(
@@ -148,7 +154,7 @@ async def current_user_room_list(
         )
 
     room_response_list = []
-    ParticipationService(user)
+    participation_service = ParticipationService(user)
 
     # говнокод, потом переделать
     for room in rooms:
@@ -162,9 +168,9 @@ async def current_user_room_list(
                 participations_count=room.participations_count,
                 created_at=room.created_at,
                 author=AuthorSchema.from_orm(room.author),
-                is_moderator=await room_service.is_user_moderator(
+                is_moderator=await participation_service.is_user_moderator(
                     room_id=room.id,
-                    user=user,
+                    user_id=user.id,
                 ),
             ),
         )

@@ -24,9 +24,9 @@ from apps.classroom.schemas import (
     RoomPostCreateSuccessSchema,
     RoomPostDeleteSchema,
     RoomPostDetailSchema,
-    RoomPostListItemSchema,
     RoomPostUpdateSchema,
 )
+from apps.classroom.schemas.common import RoomPostListItemSchema
 from apps.classroom.services.room_post_service import RoomPostService
 from apps.classroom.utils import make_room_post_schema
 from apps.user.dependencies import get_current_user
@@ -52,6 +52,29 @@ async def create_new_room_post(
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
     return RoomPostCreateSuccessSchema.from_orm(room_post)
+
+
+@room_posts_router.put(
+    '/{room_post_id}',
+    response_model=RoomPostDetailSchema,
+    status_code=status.HTTP_200_OK,
+    operation_id='updateRoomPost',
+)
+async def update_room_post(
+    room_post_id: int,
+    room_postUpdateSchema: RoomPostUpdateSchema,
+    user: User = Depends(get_current_user),
+):
+    room_post_service = RoomPostService(user)
+    room_post, errors = await room_post_service.update(
+        room_post_id,
+        room_postUpdateSchema,
+        fetch_related=['author'],
+    )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return await make_room_post_schema(room_post)
 
 
 @room_posts_router.get(
@@ -86,29 +109,6 @@ async def get_room_posts(
     return paginate(
         [RoomPostListItemSchema.from_orm(room_post) for room_post in room_posts],
     )
-
-
-@room_posts_router.put(
-    '/{room_post_id}',
-    response_model=RoomPostListItemSchema,
-    status_code=status.HTTP_200_OK,
-    operation_id='updateRoomPost',
-)
-async def update_room_post(
-    room_post_id: int,
-    room_postUpdateSchema: RoomPostUpdateSchema,
-    user: User = Depends(get_current_user),
-):
-    room_post_service = RoomPostService(user)
-    room_post, errors = await room_post_service.update(
-        room_post_id,
-        room_postUpdateSchema,
-        fetch_related=['author'],
-    )
-
-    if errors:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return RoomPostListItemSchema.from_orm(room_post)
 
 
 @room_posts_router.get(

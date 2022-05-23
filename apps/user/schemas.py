@@ -67,3 +67,8 @@ class UserProfileUpdateSchema(BaseModel):
     first_name: Optional[str]
     last_name: Optional[str]
     middle_name: Optional[str]
+
+
+class UserActivationEmailSchema(BaseModel):
+    email: str
+    activation_link: str

@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 
 from fastapi_jwt_auth import AuthJWT
+from scheduler.tasks.user import send_activation_email
 from starlette import status
 
 from fastapi import (
@@ -17,6 +18,7 @@ from apps.user.dependencies import (
 )
 from apps.user.models import User
 from apps.user.schemas import (
+    UserActivationEmailSchema,
     UserLoginSchema,
     UserLoginSuccessSchema,
     UserProfileSchema,
@@ -29,7 +31,7 @@ from common.config import config
 
 
 router = APIRouter(
-    tags=['authentication'],
+    tags=['user'],
 )
 
 
@@ -41,12 +43,8 @@ async def activate_user(
     activation_token: str,
     user_service: UserService = Depends(),
 ):
-    _, errors = await user_service.activate_user(activation_token)
-
-    if not errors:
-        # TODO: вот это вот вообще хрень, так быть не должно
-        return RedirectResponse(config.FRONTEND_LOGIN_URL)
-    raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
+    await user_service.activate_user(activation_token)
+    return RedirectResponse(config.FRONTEND_LOGIN_URL)
 
 
 @router.post(
@@ -70,8 +68,12 @@ async def register_user(
                 activation_token=user.activation_token,
             ),
         )
-        activation_link
-        # TODO: отправить чиллить в треды, чтобы пользователь не ждал
+        send_activation_email(
+            user=UserActivationEmailSchema(
+                email=user.email,
+                activation_link=activation_link,
+            ),
+        )
         return UserRegistrationCompleteSchema(status=config.USER_SUCCESS_STATUS)
     raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
 

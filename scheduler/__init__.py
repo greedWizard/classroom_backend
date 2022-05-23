@@ -6,9 +6,9 @@ from common.containers import (
 
 container = MainContainer()
 container.wire(
-    modules=['scheduler.tasks.classroom'],
+    packages=['scheduler.tasks'],
 )
 templates_container = TemplatesContainer()
 templates_container.wire(
-    modules=['scheduler.tasks.classroom'],
+    packages=['scheduler.tasks'],
 )

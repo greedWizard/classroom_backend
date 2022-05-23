@@ -4,9 +4,9 @@ from dependency_injector.wiring import (
 )
 from jinja2 import Environment
 from scheduler.app import huey_app
-from scheduler.tasks.subjects import ROOM_POST_NOTIFICATION_CREATED
+from scheduler.tasks.subjects import USER_ACTIVATION_SUBJECT
 
-from apps.classroom.schemas import RoomPostEmailNotificationSchema
+from apps.user.schemas import UserActivationEmailSchema
 from common.containers import (
     MainContainer,
     TemplatesContainer,
@@ -16,17 +16,16 @@ from common.services.email import EmailService
 
 @huey_app.task()
 @inject
-def notify_room_post_created(
-    targets: list[str],
-    room_post: RoomPostEmailNotificationSchema,
+def send_activation_email(
+    user: UserActivationEmailSchema,
     email_service: EmailService = Provide[MainContainer.email_service],
     template_env: Environment = Provide[TemplatesContainer.env],
 ):
-    template = template_env.get_template('classroom/RoomPostCreated.html')
-    body = template.render(room_post=room_post)
+    template = template_env.get_template('user/Activation.html')
+    body = template.render(user=user)
 
     email_service.send_email(
-        subject=ROOM_POST_NOTIFICATION_CREATED,
-        recipients=targets,
+        subject=USER_ACTIVATION_SUBJECT,
+        recipients=[user.email],
         body=body,
     )
