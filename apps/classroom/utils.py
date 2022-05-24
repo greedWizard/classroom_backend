@@ -20,6 +20,9 @@ async def make_homework_assignment_schema(assignment: HomeworkAssignment):
         status=assignment.status,
         comment=assignment.comment,
         rate=assignment.rate,
+        status_assigned=assignment.status_assigned,
+        status_request_changes=assignment.status_request_changes,
+        status_done=assignment.status_done,
     )
 
 

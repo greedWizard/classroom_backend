@@ -221,3 +221,15 @@ class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixi
 
     class Meta:
         table = 'homework_assignments'
+
+    @property
+    def status_assigned(self):
+        return self.status == HomeWorkAssignmentStatus.assigned
+
+    @property
+    def status_done(self):
+        return self.status == HomeWorkAssignmentStatus.done
+
+    @property
+    def status_request_changes(self):
+        return self.status == HomeWorkAssignmentStatus.request_changes

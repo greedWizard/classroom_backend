@@ -15,6 +15,9 @@ class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
     assigned_room_post_id: int
     author: AuthorSchema
     status: str
+    status_assigned: bool
+    status_done: bool
+    status_request_changes: bool
     comment: Optional[str] = ''
     attachments: Optional[list[AttachmentListItemSchema]] = []
     rate: Optional[int] = None

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from starlette import status
 
 from fastapi import Depends, UploadFile
@@ -88,7 +90,7 @@ async def fetch_post_assignments(
 
 # TODO: тесты на эту вьюху
 @router.get(
-    '{assignment_id}',
+    '/{assignment_id}',
     response_model=list[HomeworkAssignmentDetailSchema],
     operation_id='get',
     status_code=status.HTTP_200_OK,
@@ -111,6 +113,28 @@ async def get_assignment(
                 'assignment_id': 'not found',
             },
         )
+    return await make_homework_assignment_schema(assignment)
+
+
+# TODO: тесты на эту вьюху
+@router.get(
+    '/my/{room_post_id}',
+    response_model=Optional[HomeworkAssignmentDetailSchema],
+    operation_id='myInPost',
+    status_code=status.HTTP_200_OK,
+)
+async def get_my_assignment(
+    room_post_id: int,
+    user: User = Depends(get_current_user),
+):
+    service = HomeworkAssignmentService(user)
+
+    assignment, _ = await service.retrieve(
+        ['assigned_room_post', 'author', 'assigned_room_post__author'],
+        assigned_room_post_id=room_post_id,
+        author=user,
+    )
+
     return await make_homework_assignment_schema(assignment)
 
 
