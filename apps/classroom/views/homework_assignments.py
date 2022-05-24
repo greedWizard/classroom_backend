@@ -1,16 +1,10 @@
 from starlette import status
 
-from fastapi import (
-    Depends,
-    UploadFile,
-)
+from fastapi import Depends, UploadFile
 from fastapi.exceptions import HTTPException
 from fastapi.routing import APIRouter
 
-from apps.attachment.schemas import (
-    AttachmentCreateSchema,
-    AttachmentListItemSchema,
-)
+from apps.attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
 from apps.attachment.services.attachment_service import AttachmentService
 from apps.classroom.schemas import (
     HomeworkAssignmentCreateSchema,
@@ -25,7 +19,6 @@ from apps.classroom.services.homework_assignment_service import (
 from apps.classroom.utils import make_homework_assignment_schema
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
-
 
 router = APIRouter()
 
@@ -73,7 +66,7 @@ async def request_homework_assignment_changes(
 
 
 @router.get(
-    '/by-room-post/{assigned_room_post_id}',
+    '',
     response_model=list[HomeworkAssignmentDetailSchema],
     operation_id='getAssignmentsForRoomPost',
     status_code=status.HTTP_200_OK,
@@ -91,6 +84,34 @@ async def fetch_post_assignments(
         await make_homework_assignment_schema(assignment)
         for assignment in homework_assignments
     ]
+
+
+# TODO: тесты на эту вьюху
+@router.get(
+    '{assignment_id}',
+    response_model=list[HomeworkAssignmentDetailSchema],
+    operation_id='get',
+    status_code=status.HTTP_200_OK,
+)
+async def get_assignment(
+    assignment_id: int,
+    user: User = Depends(get_current_user),
+):
+    service = HomeworkAssignmentService(user)
+
+    assignment, _ = await service.retrieve(
+        ['assigned_room_post', 'author', 'assigned_room_post__author'],
+        id=assignment_id,
+    )
+
+    if not assignment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                'assignment_id': 'not found',
+            },
+        )
+    return await make_homework_assignment_schema(assignment)
 
 
 @router.post(

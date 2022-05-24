@@ -1,13 +1,9 @@
 import os
 from datetime import timedelta
-from typing import (
-    Dict,
-    List,
-)
+from typing import Dict, List
 
 import environ
 from pydantic import BaseModel
-
 
 env = environ.Env()
 
@@ -67,6 +63,7 @@ class ProjectSettings(BaseModel):
 
     # ETERNAL SETTINGS
     FRONTEND_LOGIN_URL: str = os.environ.get('FRONTEND_LOGIN_URL')
+    FRONTEND_ROOM_POST_URL: str = os.environ.get('FRONTEND_ROOM_POST_URL')
 
     # FILE SETTINGS
     MAX_FILE_SIZE: int = 64 * 1024 * 1024

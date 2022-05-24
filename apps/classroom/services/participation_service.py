@@ -1,15 +1,9 @@
-from typing import (
-    Dict,
-    Type,
-)
+from typing import Dict, Type
 
 from tortoise.expressions import Q
 
 from apps.classroom.constants import ParticipationRoleEnum
-from apps.classroom.models import (
-    Participation,
-    Room,
-)
+from apps.classroom.models import Participation, Room
 from apps.user.models import User
 from common.services.author import AuthorMixin
 from common.services.base import CRUDService
@@ -25,12 +19,13 @@ class ParticipationService(AuthorMixin, CRUDService):
 
     async def get_queryset(self, management: bool = False):
         qs = await super().get_queryset(management)
-        room_ids = (
-            await self.room_model.filter(participations__user_id=self.user.id)
-            .distinct()
-            .values_list('id', flat=True)
+        expression = Q(
+            room_id__in=await self.user.participations.all().values_list(
+                'room_id',
+                flat=True,
+            ),
         )
-        return qs.filter(room_id__in=room_ids).distinct()
+        return qs.filter(expression).distinct()
 
     async def validate_join_slug(self, value: str):
         if not await self.room_model.filter(join_slug=value).exists():

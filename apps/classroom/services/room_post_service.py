@@ -4,6 +4,7 @@ from apps.classroom.constants import ParticipationRoleEnum
 from apps.classroom.models import RoomPost
 from apps.classroom.schemas import RoomPostEmailNotificationSchema
 from apps.classroom.services.base import AbstractRoomPostService
+from common.config import config
 from common.services.decorators import action
 
 
@@ -17,11 +18,16 @@ class RoomPostService(AbstractRoomPostService):
             'user__email',
             flat=True,
         )
+        email_subject = RoomPostEmailNotificationSchema.from_orm(room_post)
+        email_subject.subject_link = config.FRONTEND_ROOM_POST_URL.format(
+            room_post_id=room_post.id,
+            room_id=room_post.room_id,
+        )
 
         if room_post:
             notify_room_post_created(
                 targets=emails,
-                room_post=RoomPostEmailNotificationSchema.from_orm(room_post),
+                room_post=email_subject,
             )
 
     @action

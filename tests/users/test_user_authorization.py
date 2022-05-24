@@ -3,7 +3,6 @@ from typing import Dict
 
 import pytest
 from faker import Faker
-from requests.exceptions import InvalidSchema
 
 from fastapi import status
 from fastapi.applications import FastAPI
@@ -74,8 +73,7 @@ async def test_user_activation(
 
     url = app.url_path_for('activate_user', activation_token=user.activation_token)
 
-    with pytest.raises(InvalidSchema):
-        client.get(url)
+    client.get(url)
 
     await user.refresh_from_db()
     assert user.is_active

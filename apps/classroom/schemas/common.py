@@ -25,6 +25,8 @@ class RoomNestedSchema(RoomBaseSchema, NormalizedDatetimeModel):
 
 class RoomPostListItemSchema(NormalizedDatetimeModel):
     id: int
+    title: str
+    description: Optional[str] = None
     text: Optional[str]
     author: AuthorSchema
     created_at: datetime

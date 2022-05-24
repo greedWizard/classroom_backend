@@ -1,23 +1,12 @@
 from typing import List
 
-from fastapi_pagination import (
-    Page,
-    paginate,
-)
+from fastapi_pagination import Page, paginate
 from starlette import status
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    Query,
-    UploadFile,
-)
+from fastapi import APIRouter, Depends, Query, UploadFile
 from fastapi.exceptions import HTTPException
 
-from apps.attachment.schemas import (
-    AttachmentCreateSchema,
-    AttachmentListItemSchema,
-)
+from apps.attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
 from apps.attachment.services.attachment_service import AttachmentService
 from apps.classroom.schemas import (
     RoomPostCreateSchema,
@@ -31,7 +20,6 @@ from apps.classroom.services.room_post_service import RoomPostService
 from apps.classroom.utils import make_room_post_schema
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
-
 
 room_posts_router = APIRouter()
 
@@ -69,7 +57,7 @@ async def update_room_post(
     room_post, errors = await room_post_service.update(
         room_post_id,
         room_postUpdateSchema,
-        fetch_related=['author'],
+        fetch_related=['author', 'room', 'room__author'],
     )
 
     if errors:
@@ -88,12 +76,6 @@ async def get_room_posts(
     user: User = Depends(get_current_user),
     ordering: List[str] = Query(['-created_at']),
 ):
-    if not await user.is_participating(room_id=room_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='You are not participating in this room',
-        )
-
     room_post_service = RoomPostService(user)
     room_posts, errors = await room_post_service.fetch(
         {
@@ -126,14 +108,10 @@ async def get_room_post(
         ['author', 'attachments', 'room__author'],
         id=room_post_id,
     )
-    assignment = await room_post.get_assignment_for_user(
-        user_id=user.id,
-        prefetch_related=['author'],
-    )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
-    return await make_room_post_schema(room_post, assignment)
+    return await make_room_post_schema(room_post)
 
 
 @room_posts_router.post(

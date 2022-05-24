@@ -49,8 +49,16 @@ async def room(fake: Faker):
 
 
 @pytest_asyncio.fixture
-async def room_post():
+async def room_post(user, room):
     room_post = await RoomPost.first()
+
+    if not room_post:
+        await RoomPost.create(
+            author=user,
+            room=room,
+            updated_by=user,
+            title='empty title',
+        )
     yield room_post
 
 
@@ -201,7 +209,6 @@ async def test_room_post_get_not_a_moder(
 async def test_room_post_get_not_in_room(
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
     room: Room,
     authentication_token: str,
 ):
@@ -221,7 +228,8 @@ async def test_room_post_get_not_in_room(
     )
 
     await room.refresh_from_db()
-    assert response.status_code == status.HTTP_403_FORBIDDEN, response.json()
+    assert response.status_code == status.HTTP_200_OK, response.json()
+    assert not response.json()['total']
 
 
 @pytest.mark.asyncio
@@ -369,12 +377,17 @@ async def test_delete_room_participant(
     client: TestClient,
     room: Room,
 ):
-    await Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.participant)
+    await Participation.filter(room_id=room.id).update(
+        role=ParticipationRoleEnum.participant,
+    )
     url = app.url_path_for('delete_room', room_id=room.id)
 
-    response = client.delete(url, headers={
-        'Authorization': f'Bearer {authentication_token}'
-    })
+    response = client.delete(
+        url,
+        headers={
+            'Authorization': f'Bearer {authentication_token}',
+        },
+    )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -401,8 +414,11 @@ async def test_delete_room_success(
     await Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.host)
     url = app.url_path_for('delete_room', room_id=room.id)
 
-    response = client.delete(url, headers={
-        'Authorization': f'Bearer {authentication_token}'
-    })
+    response = client.delete(
+        url,
+        headers={
+            'Authorization': f'Bearer {authentication_token}',
+        },
+    )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT

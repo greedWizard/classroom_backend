@@ -1,10 +1,18 @@
 {% extends "Base.html" %}
 
-{% block content %}
-<div>
-    <h1>Classroom</h1>
-    <h2>
-        {{ room_post.author.first_name }} {{ room_post.author.last_name }} added a new {{ room_post.type }} "{{ room_post.title }}"  in {{ room_post.room.name }}
-    </h2>
-</div>
-{% endblock content %}
+{% block title %}
+Room updates
+{% endblock title %}
+
+{% block description %}
+{{ room_post.author.first_name }} {{ room_post.author.last_name }}
+added a new {{ room_post.type }} "{{ room_post.title }}"  to {{ room_post.room.name }}
+{% endblock description %}
+
+{% block button_text %}
+Go learning
+{% endblock button_text %}
+
+{% block button_link %}
+{{ room_post.subject_link }}
+{% endblock button_link %}

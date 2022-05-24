@@ -45,6 +45,19 @@ class ParticipationListItemSchema(NormalizedDatetimeModel):
         orm_mode = True
 
 
+class ParticipationDetailSchema(NormalizedDatetimeModel):
+    id: int
+    role: str
+    created_at: datetime
+    can_manage_posts: bool
+    can_examine: bool
+    can_assign_homeworks: bool
+    room_id: int
+
+    class Config:
+        orm_mode = True
+
+
 class ParticipationSuccessSchema(BaseModel):
     id: int
     user_id: int

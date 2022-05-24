@@ -1,16 +1,9 @@
-from apps.classroom.schemas import (
-    HomeworkAssignmentDetailSchema,
-    RoomPostDetailSchema,
-)
-from apps.classroom.schemas.common import RoomPostListItemSchema
+from apps.classroom.schemas import HomeworkAssignmentDetailSchema, RoomPostDetailSchema
+from apps.classroom.schemas.common import RoomNestedSchema, RoomPostListItemSchema
 from apps.classroom.schemas.rooms import RoomDetailSchema
 from apps.user.schemas import AuthorSchema
 
-from .models import (
-    HomeworkAssignment,
-    Room,
-    RoomPost,
-)
+from .models import HomeworkAssignment, Room, RoomPost
 
 
 async def make_homework_assignment_schema(assignment: HomeworkAssignment):
@@ -36,7 +29,7 @@ async def make_room_post_schema(room_post: RoomPost):
 
     return RoomPostDetailSchema(
         title=room_post.title,
-        room=room_post.room,
+        room=RoomNestedSchema.from_orm(room_post.room),
         description=room_post.description,
         id=room_post.id,
         text=room_post.text,
