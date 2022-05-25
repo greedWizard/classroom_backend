@@ -6,7 +6,7 @@ authors = ["greedWizard <skavik46111@gmail.com>"]
 
 [tool.aerich]
 tortoise_orm = "common.config.tortoise.TORTOISE_ORM"
-location = "src/migrations"
+location = "migrations"
 src_folder = "./."
 
 [tool.pytest.ini_options]
