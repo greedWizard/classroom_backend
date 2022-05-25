@@ -1,12 +1,11 @@
-import os
-
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi_pagination import add_pagination
-from tortoise import Tortoise
-from tortoise.contrib.fastapi import register_tortoise
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from tortoise import Tortoise
+from tortoise.contrib.fastapi import register_tortoise
 
 from common.config import config
 from common.exception_handlers import authjwt_exception_handler
@@ -22,8 +21,8 @@ class AppFactory:
     def create_app(cls, test_mode: bool = False) -> FastAPI:
         """Returns the FastAPI app with instantiated DB."""
         app = FastAPI(
-            debug=os.environ.get('LATERON_DEBUG', config.DEBUG_MODE),
-            title=os.environ.get('LATERON_TITLE', 'Homework Test'),
+            debug=config.DEBUG_MODE,
+            title='Classroom API',
         )
 
         DB_URL = (
