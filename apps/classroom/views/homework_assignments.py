@@ -2,32 +2,36 @@ from typing import Optional
 
 from starlette import status
 
-from fastapi import Depends, UploadFile
+from fastapi import (
+    Depends,
+    UploadFile,
+)
 from fastapi.exceptions import HTTPException
 from fastapi.routing import APIRouter
 
-from apps.attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
+from apps.attachment.schemas import (
+    AttachmentCreateSchema,
+    AttachmentListItemSchema,
+)
 from apps.attachment.services.attachment_service import AttachmentService
 from apps.classroom.schemas import (
     HomeworkAssignmentCreateSchema,
-    HomeworkAssignmentCreateSuccessSchema,
     HomeworkAssignmentDetailSchema,
     HomeworkAssignmentRateSchema,
     HomeworkAssignmentRequestChangesSchema,
 )
-from apps.classroom.services.homework_assignment_service import (
-    HomeworkAssignmentService,
-)
+from apps.classroom.services.homework_assignment_service import AssignmentService
 from apps.classroom.utils import make_homework_assignment_schema
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
+
 
 router = APIRouter()
 
 
 @router.post(
     '',
-    response_model=HomeworkAssignmentCreateSuccessSchema,
+    response_model=HomeworkAssignmentDetailSchema,
     operation_id='assignHomework',
     status_code=status.HTTP_201_CREATED,
 )
@@ -35,13 +39,16 @@ async def assign_homework(
     create_schema: HomeworkAssignmentCreateSchema,
     user: User = Depends(get_current_user),
 ):
-    service = HomeworkAssignmentService(user)
+    service = AssignmentService(user)
 
-    homework_assignment, errors = await service.create(create_schema)
+    homework_assignment, errors = await service.create(
+        create_schema,
+        fetch_related=['author'],
+    )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return HomeworkAssignmentCreateSuccessSchema.from_orm(homework_assignment)
+    return await make_homework_assignment_schema(homework_assignment)
 
 
 @router.post(
@@ -55,7 +62,7 @@ async def request_homework_assignment_changes(
     changes_schema: HomeworkAssignmentRequestChangesSchema,
     user: User = Depends(get_current_user),
 ):
-    service = HomeworkAssignmentService(user)
+    service = AssignmentService(user)
 
     homework_assignment, errors = await service.request_changes(
         assignment_id=assignment_id,
@@ -77,7 +84,7 @@ async def fetch_post_assignments(
     assigned_room_post_id: int,
     user: User = Depends(get_current_user),
 ):
-    service = HomeworkAssignmentService(user)
+    service = AssignmentService(user)
 
     homework_assignments, _ = await service.fetch_for_teacher(
         assigned_room_post_id=assigned_room_post_id,
@@ -99,7 +106,7 @@ async def get_assignment(
     assignment_id: int,
     user: User = Depends(get_current_user),
 ):
-    service = HomeworkAssignmentService(user)
+    service = AssignmentService(user)
 
     assignment, _ = await service.retrieve(
         ['assigned_room_post', 'author', 'assigned_room_post__author'],
@@ -127,7 +134,7 @@ async def get_my_assignment(
     room_post_id: int,
     user: User = Depends(get_current_user),
 ):
-    service = HomeworkAssignmentService(user)
+    service = AssignmentService(user)
 
     assignment, _ = await service.retrieve(
         ['assigned_room_post', 'author', 'assigned_room_post__author'],
@@ -148,7 +155,7 @@ async def reassign_homework(
     assignment_id: int,
     user: User = Depends(get_current_user),
 ):
-    service = HomeworkAssignmentService(user)
+    service = AssignmentService(user)
 
     homework_assignment, errors = await service.reassign(
         assignment_id=assignment_id,
@@ -170,7 +177,7 @@ async def mark_assignment_as_done(
     changes_schema: HomeworkAssignmentRateSchema,
     user: User = Depends(get_current_user),
 ):
-    service = HomeworkAssignmentService(user)
+    service = AssignmentService(user)
 
     homework_assignment, errors = await service.mark_as_done(
         assignment_id=assignment_id,

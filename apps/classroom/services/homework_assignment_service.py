@@ -18,7 +18,7 @@ from common.services.author import AuthorMixin
 from common.services.base import CRUDService
 
 
-class HomeworkAssignmentService(AuthorMixin, CRUDService):
+class AssignmentService(AuthorMixin, CRUDService):
     model = HomeworkAssignment
 
     @property
