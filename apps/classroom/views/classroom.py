@@ -61,7 +61,7 @@ async def create_new_room(
 
 @classroom_router.put(
     '/{room_id}',
-    response_model=RoomCreateSuccessSchema,
+    response_model=RoomDetailSchema,
     status_code=status.HTTP_200_OK,
     operation_id='updateRoom',
 )
@@ -71,19 +71,21 @@ async def update_room(
     user: User = Depends(get_current_user),
 ):
     room_service = RoomService(user)
-    room, errors = await room_service.update(room_id, roomUpdateSchema)
+
+    room, errors = await room_service.update(
+        room_id,
+        roomUpdateSchema,
+        fetch_related=[
+            'author',
+        ],
+    )
 
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=errors,
         )
-
-    return RoomCreateSuccessSchema(
-        id=room.id,
-        name=room.name,
-        description=room.description,
-    )
+    return await make_room_detail_schema(room, False)
 
 
 @classroom_router.delete(
