@@ -39,7 +39,7 @@ class UserService(CRUDService):
         self.user = user
 
     def _hash_password(self, password: str) -> str:
-        return md5(password.encode()).hexdigest()
+        return md5(password.encode()).hexdigest()  # no qa
 
     async def validate_password(self, value: str) -> ResultTuple:
         password_error = (
@@ -51,7 +51,7 @@ class UserService(CRUDService):
             return False, password_error
         if not any(digit in value for digit in string.digits):
             return False, password_error
-        if value != self.current_action_attributes['repeat_password']:
+        if value != self.current_action_attributes.get('repeat_password'):
             return False, "Passwords don't match."
         return True, {}
 
@@ -104,7 +104,7 @@ class UserService(CRUDService):
 
         if password:
             attrs['password'] = self._hash_password(password)
-            attrs.pop('repeat_password')
+            attrs.pop('repeat_password', None)
 
         if self.action == 'create':
             attrs['activation_token'] = uuid.uuid4().hex

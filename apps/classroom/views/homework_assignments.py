@@ -98,7 +98,7 @@ async def fetch_post_assignments(
 # TODO: тесты на эту вьюху
 @router.get(
     '/{assignment_id}',
-    response_model=list[HomeworkAssignmentDetailSchema],
+    response_model=HomeworkAssignmentDetailSchema,
     operation_id='get',
     status_code=status.HTTP_200_OK,
 )
