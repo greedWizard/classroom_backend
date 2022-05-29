@@ -45,7 +45,7 @@ async def chat(
     )
 
     if not exists:
-        dialog = await dialog_service.create(
+        dialog, _ = await dialog_service.create(
             DialogCreateSchema(
                 sender_id=user.id,
                 reciever_id=reciever_id,
