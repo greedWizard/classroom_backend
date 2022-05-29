@@ -8,6 +8,7 @@ poetry.lock
 
 storage/*
 !storage/.gitkeep
+.mypy_cache/
 
 # environment
 .env

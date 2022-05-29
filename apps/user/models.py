@@ -41,3 +41,7 @@ class User(TimeStampAbstract):
     async def active(cls) -> QuerySet:
         """Get active users."""
         return cls.filter(is_active=True)
+
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.middle_name} {self.last_name}'
