@@ -27,6 +27,7 @@ from apps.user.dependencies import websocket_user
 router = APIRouter(tags=['chat'])
 
 
+# TODO: логировать здесь ВСЁ абсолютно, творится какая-то херня
 @router.websocket('/')
 @inject
 async def chat(
@@ -70,7 +71,3 @@ async def chat(
             await chat_manager.broadcast(messages, dialog)
     except (ConnectionClosedError, WebSocketDisconnect):
         await chat_manager.disconnect(websocket, dialog)
-
-
-# @router.get('/my')
-# async def my_dialogues()

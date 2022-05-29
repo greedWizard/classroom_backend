@@ -158,7 +158,6 @@ async def current_user_room_list(
     room_response_list = []
     participation_service = ParticipationService(user)
 
-    # говнокод, потом переделать
     for room in rooms:
         await room.fetch_related('participations', 'author')
 
