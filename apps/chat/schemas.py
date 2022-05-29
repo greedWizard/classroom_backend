@@ -6,7 +6,6 @@ from apps.user.schemas import AuthorSchema
 
 
 class DialogCreateSchema(BaseModel):
-    sender_id: int
     reciever_id: int
 
 
@@ -25,7 +24,28 @@ class MessageSchema(BaseModel):
 
 
 class MessageCreateSchema(BaseModel):
-    sender_id: int
     reciever_id: int
     text: str
     dialog_id: int
+
+
+class DialogNestedSchema(BaseModel):
+    id: int
+    sender: AuthorSchema
+    reciever: AuthorSchema
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class MessageListItemSchema(BaseModel):
+    id: int
+    sender: AuthorSchema
+    reciever: AuthorSchema
+    text: str
+    created_at: datetime
+    dialog: DialogNestedSchema
+
+    class Config:
+        orm_mode = True

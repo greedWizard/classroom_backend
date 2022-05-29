@@ -37,11 +37,17 @@ class ChatManager:
     async def disconnect(self, websocket: WebSocket, dialog: Dialog):
         self.active_connections.remove(self._get_connection(websocket, dialog))
 
-    async def broadcast(self, messages: list[MessageSchema], dialog: Dialog):
+    async def broadcast_messages(self, messages: list[MessageSchema], dialog: Dialog):
         dialog_connections = self._get_dialog_connections(dialog)
 
         for connection in dialog_connections:
             await connection['websocket'].send_json(prepare_json_list(messages))
+
+    async def broadcast_dialog(self, dialog: Dialog):
+        await self.broadcast_messages(
+            [MessageSchema.from_orm(message) for message in dialog.messages],
+            dialog=dialog,
+        )
 
     async def remove_inactive(self):
         self.active_connections = [
