@@ -1,12 +1,19 @@
-from typing import Dict, Type
+from typing import (
+    Dict,
+    Type,
+)
 
 from tortoise.expressions import Q
 
 from apps.classroom.constants import ParticipationRoleEnum
-from apps.classroom.models import Participation, Room
+from apps.classroom.models import (
+    Participation,
+    Room,
+)
 from apps.user.models import User
 from common.services.author import AuthorMixin
 from common.services.base import CRUDService
+from common.services.decorators import action
 
 
 class ParticipationService(AuthorMixin, CRUDService):
@@ -18,6 +25,7 @@ class ParticipationService(AuthorMixin, CRUDService):
         super().__init__(user, *args, **kwargs)
 
     async def get_queryset(self, management: bool = False):
+        # TODO: user.participations?
         qs = await super().get_queryset(management)
         expression = Q(
             room_id__in=await self.user.participations.all().values_list(
@@ -95,8 +103,30 @@ class ParticipationService(AuthorMixin, CRUDService):
         room_id: int,
         user_id: int,
     ) -> bool:
-        return await self.model.filter(
+        return await self.exists(
             room_id=room_id,
             user_id=user_id,
             role__in=self.model.MODERATOR_ROLES,
-        ).exists()
+        )
+
+    @action
+    async def remove_user_from_room(self, user_id: int, room_id: int):
+        participation, _ = await self.retrieve(
+            room_id=room_id,
+            user_id=self.user.id,
+        )
+        errors = []
+
+        if not participation:
+            return False, {'error': 'Not Found'}
+        if not participation.can_remove_participants:
+            errors.append({'room_id': 'Permission denied'})
+        if (
+            participation.role == ParticipationRoleEnum.host
+            and participation.user_id == user_id
+        ):
+            errors.append({'user_id': "Can't remove a room host."})
+        if errors:
+            return False, errors
+        await self.model.filter(user_id=user_id, room_id=room_id).delete()
+        return True, None

@@ -1,15 +1,28 @@
-from typing import NewType, Union
+from typing import (
+    NewType,
+    Union,
+)
 
-from tortoise import fields, models
+from tortoise import (
+    fields,
+    models,
+)
 from tortoise.exceptions import NoValuesFetched
-from tortoise.validators import MaxValueValidator, MinValueValidator
+from tortoise.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+)
 
 from apps.classroom.constants import (
     HomeWorkAssignmentStatus,
     ParticipationRoleEnum,
     RoomPostType,
 )
-from common.models import AuthorAbstract, TimeStampAbstract
+from common.models import (
+    AuthorAbstract,
+    TimeStampAbstract,
+)
+
 
 UserModel = NewType('UserModel', models.Model)
 
@@ -69,10 +82,7 @@ class Participation(TimeStampAbstract, AuthorAbstract):
         unique_together = ('room', 'user')
 
     def can_moderate_room(self) -> bool:
-        return (
-            self.role == ParticipationRoleEnum.moderator
-            or self.role == ParticipationRoleEnum.host
-        )
+        return self.role in self.MODERATOR_ROLES
 
     @classmethod
     async def is_user_moderator(
@@ -123,6 +133,10 @@ class Participation(TimeStampAbstract, AuthorAbstract):
     @property
     def can_assign_homeworks(self) -> bool:
         return self.role == ParticipationRoleEnum.participant
+
+    @property
+    def can_remove_participants(self) -> bool:
+        return self.role in self.MODERATOR_ROLES
 
 
 class RoomPostAbstract(AuthorAbstract, TimeStampAbstract):

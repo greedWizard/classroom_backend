@@ -12,6 +12,7 @@ from apps.classroom.services.participation_service import ParticipationService
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
 
+
 participations_router = APIRouter()
 
 
@@ -45,7 +46,7 @@ async def get_participations(
 
 # TODO: обязательно тесты на эту вьюху
 @participations_router.get(
-    '/my}',
+    '/my',
     operation_id='my',
     response_model=ParticipationDetailSchema,
 )
@@ -55,7 +56,7 @@ async def current_user_participation(
 ):
     participation_service = ParticipationService(user)
 
-    participation, errors = await participation_service.retrieve(
+    participation, _ = await participation_service.retrieve(
         room_id=room_id,
         user_id=user.id,
     )
@@ -63,3 +64,24 @@ async def current_user_participation(
     if not participation:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     return ParticipationDetailSchema.from_orm(participation)
+
+
+# TODO: обязательно тесты на эту вьюху
+@participations_router.delete(
+    '',
+    operation_id='delete',
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_participant(
+    user_id: int,
+    room_id: int,
+    user: User = Depends(get_current_user),
+):
+    participation_service = ParticipationService(user)
+    success, errors = await participation_service.remove_user_from_room(
+        user_id=user_id,
+        room_id=room_id,
+    )
+
+    if not success:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)

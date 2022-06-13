@@ -41,6 +41,7 @@ class ParticipationListItemSchema(NormalizedDatetimeModel):
     user: ParticipationUserSchema
     role: str
     created_at: datetime
+    room_id: int
 
     class Config:
         orm_mode = True
@@ -53,6 +54,7 @@ class ParticipationDetailSchema(NormalizedDatetimeModel):
     can_manage_posts: bool
     can_examine: bool
     can_assign_homeworks: bool
+    can_remove_participants: bool
     room_id: int
 
     class Config:

@@ -8,6 +8,7 @@ from typing import (
 )
 
 from pydantic import BaseModel
+
 from tortoise import models
 from tortoise.transactions import atomic
 
@@ -221,7 +222,7 @@ class CreateUpdateServiceMixin(IServiceBase):
 
 class RetrieveFetchServiceMixin(IServiceBase):
     # TODO: рефакторить, фильтры не должны передавать в дикте
-    @action
+
     async def fetch(
         self,
         _filters: Dict = {},
@@ -246,16 +247,20 @@ class RetrieveFetchServiceMixin(IServiceBase):
     async def retrieve(
         self,
         _fetch_related: list = [],
-        **kwargs,
+        **filters,
     ):
         qs = await self.get_queryset()
 
         # TODO: SELECT_RELATED
-        obj = await (qs.filter(**kwargs).prefetch_related(*_fetch_related).first())
+        obj = await (qs.filter(**filters).prefetch_related(*_fetch_related).first())
 
         if not obj:
             return None, self.error_messages.get('does_not_exist')
         return obj, {}
+
+    @action
+    async def exists(self, **filters):
+        return await self.model.filter(**filters).exists()
 
 
 class DeleteMixin(IServiceBase):
