@@ -1,9 +1,13 @@
 import os
 from datetime import timedelta
-from typing import Dict, List
+from typing import (
+    Dict,
+    List,
+)
 
 import environ
 from pydantic import BaseModel
+
 
 env = environ.Env()
 

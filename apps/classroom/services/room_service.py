@@ -8,10 +8,10 @@ from apps.classroom.constants import ParticipationRoleEnum
 from apps.classroom.models import Room
 from apps.classroom.schemas import ParticipationCreateSchema
 from apps.classroom.services.participation_service import ParticipationService
+from apps.common.services.author import AuthorMixin
+from apps.common.services.base import CRUDService
+from apps.common.services.decorators import action
 from apps.user.models import User
-from common.services.author import AuthorMixin
-from common.services.base import CRUDService
-from common.services.decorators import action
 
 
 class RoomService(AuthorMixin, CRUDService):

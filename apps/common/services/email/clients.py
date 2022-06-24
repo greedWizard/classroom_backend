@@ -9,7 +9,7 @@ from typing import (
     NewType,
 )
 
-from common.config.integrations import MailClientConnectionConfig
+from apps.common.config.integrations import MailClientConnectionConfig
 
 
 AbstractMailClient = NewType('AbstractMailClient', Any)

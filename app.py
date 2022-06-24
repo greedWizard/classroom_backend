@@ -1,5 +1,5 @@
 from apps.chat.containers import ChatContainer
-from common.factory import AppFactory
+from apps.common.factory import AppFactory
 
 
 ChatContainer()

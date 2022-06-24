@@ -4,9 +4,9 @@ from tortoise.expressions import Q
 
 from apps.chat.models import Dialog
 from apps.chat.services.mixins import ChatPermissionsMixin
+from apps.common.services.base import CRUDService
+from apps.common.services.decorators import action
 from apps.user.models import User
-from common.services.base import CRUDService
-from common.services.decorators import action
 
 
 class DialogService(ChatPermissionsMixin, CRUDService):

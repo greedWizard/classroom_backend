@@ -12,6 +12,7 @@ from fastapi import (
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
 
+from apps.common.config import config
 from apps.user.dependencies import (
     get_current_user,
     get_current_user_optional,
@@ -27,7 +28,6 @@ from apps.user.schemas import (
     UserRegistrationCompleteSchema,
 )
 from apps.user.services.user_service import UserService
-from common.config import config
 
 
 router = APIRouter(

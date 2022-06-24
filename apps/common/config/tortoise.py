@@ -3,7 +3,6 @@ from . import config
 
 TORTOISE_ORM = {
     'connections': {'default': config.DB_CONNECTION_STRING},
-    # "connections": {"default": config.DB_TEST_CONNECTION_STRING},
     'apps': {
         'models': {
             'models': [

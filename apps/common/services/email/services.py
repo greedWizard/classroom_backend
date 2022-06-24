@@ -5,7 +5,7 @@ from typing import (
     NewType,
 )
 
-from common.services.email.clients import SMTPClient
+from apps.common.services.email.clients import SMTPClient
 
 
 AbstractMailClient = NewType('AbstractMailClient', Any)

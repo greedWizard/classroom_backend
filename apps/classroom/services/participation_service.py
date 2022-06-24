@@ -10,10 +10,10 @@ from apps.classroom.models import (
     Participation,
     Room,
 )
+from apps.common.services.author import AuthorMixin
+from apps.common.services.base import CRUDService
+from apps.common.services.decorators import action
 from apps.user.models import User
-from common.services.author import AuthorMixin
-from common.services.base import CRUDService
-from common.services.decorators import action
 
 
 class ParticipationService(AuthorMixin, CRUDService):

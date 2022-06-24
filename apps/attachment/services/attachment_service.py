@@ -11,11 +11,11 @@ from apps.classroom.models import (
     Room,
     RoomPost,
 )
+from apps.common.config import config
+from apps.common.services.author import AuthorMixin
+from apps.common.services.base import CRUDService
+from apps.common.services.decorators import action
 from apps.user.models import User
-from common.config import config
-from common.services.author import AuthorMixin
-from common.services.base import CRUDService
-from common.services.decorators import action
 
 
 # TODO: здесь всё ужасно, нужен рефакторинг

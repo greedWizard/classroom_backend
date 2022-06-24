@@ -1,4 +1,4 @@
-from common.containers import (
+from apps.common.containers import (
     MainContainer,
     TemplatesContainer,
 )

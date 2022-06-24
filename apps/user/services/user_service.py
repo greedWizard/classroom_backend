@@ -10,6 +10,12 @@ from typing import Tuple
 
 from tortoise.expressions import Q
 
+from apps.common.config import config
+from apps.common.services.base import (
+    CRUDService,
+    ResultTuple,
+)
+from apps.common.services.decorators import action
 from apps.user.constants import (
     EMAIL_REGEX,
     PHONE_REGEX,
@@ -17,12 +23,6 @@ from apps.user.constants import (
 from apps.user.models import User
 from apps.user.schemas import UserLoginSchema
 from apps.user.utils import hash_string
-from common.config import config
-from common.services.base import (
-    CRUDService,
-    ResultTuple,
-)
-from common.services.decorators import action
 
 
 class UserService(CRUDService):

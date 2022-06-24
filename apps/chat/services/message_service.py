@@ -5,8 +5,8 @@ from apps.chat.models import (
     Message,
 )
 from apps.chat.services.mixins import ChatPermissionsMixin
-from common.services.base import CRUDService
-from common.services.decorators import action
+from apps.common.services.base import CRUDService
+from apps.common.services.decorators import action
 
 
 class MessageService(ChatPermissionsMixin, CRUDService):

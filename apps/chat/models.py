@@ -1,6 +1,6 @@
 from tortoise import fields
 
-from common.models import TimeStampAbstract
+from apps.common.models import TimeStampAbstract
 
 
 class Dialog(TimeStampAbstract):

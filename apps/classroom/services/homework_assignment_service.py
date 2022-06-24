@@ -14,8 +14,8 @@ from apps.classroom.models import (
 )
 from apps.classroom.schemas import HomeworkAssignmentRequestChangesSchema
 from apps.classroom.services.room_post_service import RoomPostService
-from common.services.author import AuthorMixin
-from common.services.base import CRUDService
+from apps.common.services.author import AuthorMixin
+from apps.common.services.base import CRUDService
 
 
 class AssignmentService(AuthorMixin, CRUDService):

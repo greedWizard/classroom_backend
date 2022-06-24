@@ -6,12 +6,12 @@ from jinja2 import Environment
 from scheduler.app import huey_app
 from scheduler.tasks.subjects import USER_ACTIVATION_SUBJECT
 
-from apps.user.schemas import UserActivationEmailSchema
-from common.containers import (
+from apps.common.containers import (
     MainContainer,
     TemplatesContainer,
 )
-from common.services.email import EmailService
+from apps.common.services.email import EmailService
+from apps.user.schemas import UserActivationEmailSchema
 
 
 @huey_app.task()

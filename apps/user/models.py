@@ -1,8 +1,8 @@
 from tortoise import fields
 from tortoise.queryset import QuerySet
 
+from apps.common.models import TimeStampAbstract
 from apps.user.utils import hash_string
-from common.models import TimeStampAbstract
 
 
 class User(TimeStampAbstract):

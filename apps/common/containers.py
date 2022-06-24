@@ -7,10 +7,10 @@ from jinja2 import (
     FileSystemLoader,
 )
 
-from common.config import config
-from common.config.integrations import MailClientConnectionConfig
-from common.services.email import EmailService
-from common.services.email.clients import SMTPClient
+from apps.common.config import config
+from apps.common.config.integrations import MailClientConnectionConfig
+from apps.common.services.email import EmailService
+from apps.common.services.email.clients import SMTPClient
 
 
 class TemplatesContainer(containers.DeclarativeContainer):

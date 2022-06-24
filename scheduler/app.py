@@ -1,6 +1,6 @@
 from huey import RedisHuey
 
-from common.config.huey import huey_settings
+from apps.common.config.huey import huey_settings
 
 
 huey_app = RedisHuey(

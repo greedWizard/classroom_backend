@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
+from apps.common.schemas import NormalizedDatetimeModel
 from apps.user.schemas import AuthorSchema
-from common.schemas import NormalizedDatetimeModel
 
 
 class RoomBaseSchema(NormalizedDatetimeModel):

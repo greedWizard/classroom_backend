@@ -4,8 +4,8 @@ from typing import Optional
 from pydantic import BaseModel
 
 from apps.attachment.schemas import AttachmentListItemSchema
+from apps.common.schemas import NormalizedDatetimeModel
 from apps.user.schemas import AuthorSchema
-from common.schemas import NormalizedDatetimeModel
 
 
 class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):

@@ -4,8 +4,8 @@ from apps.classroom.constants import ParticipationRoleEnum
 from apps.classroom.models import RoomPost
 from apps.classroom.schemas import RoomPostEmailNotificationSchema
 from apps.classroom.services.base import AbstractRoomPostService
-from common.config import config
-from common.services.decorators import action
+from apps.common.config import config
+from apps.common.services.decorators import action
 
 
 class RoomPostService(AbstractRoomPostService):

@@ -1,6 +1,6 @@
 from tortoise import fields
 
-from common.models import (
+from apps.common.models import (
     AuthorAbstract,
     TimeStampAbstract,
 )

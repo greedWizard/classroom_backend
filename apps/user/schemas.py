@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from common.schemas import NormalizedDatetimeModel
+from apps.common.schemas import NormalizedDatetimeModel
 
 
 class AuthorSchema(BaseModel):

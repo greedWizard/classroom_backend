@@ -7,11 +7,11 @@ from scheduler.app import huey_app
 from scheduler.tasks.subjects import ROOM_POST_NOTIFICATION_CREATED
 
 from apps.classroom.schemas import RoomPostEmailNotificationSchema
-from common.containers import (
+from apps.common.containers import (
     MainContainer,
     TemplatesContainer,
 )
-from common.services.email import EmailService
+from apps.common.services.email import EmailService
 
 
 @huey_app.task()

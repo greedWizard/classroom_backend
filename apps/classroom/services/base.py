@@ -5,9 +5,9 @@ from apps.classroom.models import (
     Participation,
     Room,
 )
-from common.config import config
-from common.services.author import AuthorMixin
-from common.services.base import CRUDService
+from apps.common.config import config
+from apps.common.services.author import AuthorMixin
+from apps.common.services.base import CRUDService
 
 
 class AbstractRoomPostService(AuthorMixin, CRUDService):

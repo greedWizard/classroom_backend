@@ -7,8 +7,8 @@ from apps.classroom.schemas.common import (
     RoomBaseSchema,
     RoomPostListItemSchema,
 )
+from apps.common.schemas import NormalizedDatetimeModel
 from apps.user.schemas import AuthorSchema
-from common.schemas import NormalizedDatetimeModel
 
 
 class RoomCreateSchema(RoomBaseSchema):

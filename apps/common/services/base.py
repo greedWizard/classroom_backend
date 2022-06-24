@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from tortoise import models
 from tortoise.transactions import atomic
 
-from common.services.decorators import action
+from apps.common.services.decorators import action
 
 
 CreateSchema = NewType('CreateSchemaType', BaseModel)

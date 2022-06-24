@@ -7,18 +7,19 @@ import pytest
 import pytest_asyncio
 from faker.proxy import Faker
 from starlette import status
+
+from fastapi.applications import FastAPI
+from fastapi.testclient import TestClient
+
 from tortoise.contrib.test import (
     finalizer,
     initializer,
 )
 
-from fastapi.applications import FastAPI
-from fastapi.testclient import TestClient
-
+from apps.common.config import config
+from apps.common.factory import AppFactory
 from apps.user.models import User
 from apps.user.utils import hash_string
-from common.config import config
-from common.factory import AppFactory
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -54,7 +55,7 @@ async def user(fake: Faker):
         'first_name': fake.name(),
         'last_name': fake.name(),
         'middle_name': fake.name(),
-        'phone_number': f'+70000000000',
+        'phone_number': '+70000000000',
         'password': hash_string(password),
         'activation_token': uuid.uuid4().hex,
         'email': fake.email(),

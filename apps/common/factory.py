@@ -7,8 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from tortoise import Tortoise
 from tortoise.contrib.fastapi import register_tortoise
 
-from common.config import config
-from common.exception_handlers import authjwt_exception_handler
+from apps.common.config import config
+from apps.common.exception_handlers import authjwt_exception_handler
 
 
 Tortoise.init_models(config.MODELS_PATHS, config.MODELS_APP_LABEL)

@@ -8,7 +8,7 @@ from fastapi import WebSocket
 
 from apps.chat.models import Dialog
 from apps.chat.schemas import MessageSchema
-from common.utils import prepare_json_list
+from apps.common.utils import prepare_json_list
 
 
 ws_connection = NewType('WsConnection', list[dict[str, Any]])
