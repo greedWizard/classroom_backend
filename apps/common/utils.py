@@ -2,11 +2,16 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from apps.user.models import User
 from apps.user.schemas import AuthorSchema
 
 
-def get_author_data(user: User) -> BaseModel:
+def get_current_datetime():
+    # TODO: настроить таймзон
+    return datetime.utcnow()
+
+
+# TODO: выпилить
+def get_author_data(user) -> BaseModel:
     return AuthorSchema(
         id=user.id,
         first_name=user.first_name,

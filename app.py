@@ -1,6 +1,6 @@
-from apps.chat.containers import ChatContainer
+# from apps.chat.containers import ChatContainer
 from apps.common.factory import AppFactory
 
 
-ChatContainer()
+# ChatContainer()
 app = AppFactory.create_app()

@@ -4,14 +4,9 @@ from fastapi_pagination import add_pagination
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from tortoise import Tortoise
-from tortoise.contrib.fastapi import register_tortoise
-
 from apps.common.config import config
 from apps.common.exception_handlers import authjwt_exception_handler
 
-
-Tortoise.init_models(config.MODELS_PATHS, config.MODELS_APP_LABEL)
 
 API_V1_PREFIX = '/api/v1/'
 
@@ -31,14 +26,6 @@ class AppFactory:
             else config.DB_TEST_CONNECTION_STRING
         )
 
-        register_tortoise(
-            app,
-            db_url=DB_URL,
-            modules=config.APP_MODULES,
-            generate_schemas=True,
-            add_exception_handlers=True,
-        )
-
         app.add_middleware(
             CORSMiddleware,
             allow_origins=config.ALLOWED_CORS_ORIGINS,
@@ -55,24 +42,24 @@ class AppFactory:
 
     @classmethod
     def _register_views(cls, app: FastAPI):
-        from apps.attachment.views import router as attachment_router
-        from apps.chat.views import router as chat_router
-        from apps.classroom.views import router as classroom_router
+        # from apps.attachment.views import router as attachment_router
+        # from apps.chat.views import router as chat_router
+        # from apps.classroom.views import router as classroom_router
         from apps.user.views import router as user_router
 
         app.include_router(
             user_router,
             prefix=''.join([API_V1_PREFIX, 'auth/user']),
         )
-        app.include_router(
-            classroom_router,
-            prefix=''.join([API_V1_PREFIX, 'classroom']),
-        )
-        app.include_router(
-            attachment_router,
-            prefix=''.join([API_V1_PREFIX, 'attachments']),
-        )
-        app.include_router(
-            chat_router,
-            prefix=''.join([API_V1_PREFIX, 'chat']),
-        )
+        # app.include_router(
+        #     classroom_router,
+        #     prefix=''.join([API_V1_PREFIX, 'classroom']),
+        # )
+        # app.include_router(
+        #     attachment_router,
+        #     prefix=''.join([API_V1_PREFIX, 'attachments']),
+        # )
+        # app.include_router(
+        #     chat_router,
+        #     prefix=''.join([API_V1_PREFIX, 'chat']),
+        # )

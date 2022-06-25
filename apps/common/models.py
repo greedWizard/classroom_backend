@@ -1,28 +1,35 @@
-from tortoise import (
-    fields,
-    models,
-)
+import sqlalchemy as sa
+from sqlalchemy.orm import relationship
+
+from apps.common.utils import get_current_datetime
 
 
-class TimeStampAbstract(models.Model):
-    created_at = fields.DatetimeField(auto_now_add=True)
-    updated_at = fields.DatetimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-
-
-class AuthorAbstract(models.Model):
-    author = fields.ForeignKeyField(
-        'models.User',
-        on_delete=fields.RESTRICT,
-        related_name=False,
+class BaseMetaData:
+    id = sa.Column(
+        sa.Integer,
+        primary_key=True,
     )
-    updated_by = fields.ForeignKeyField(
-        'models.User',
-        on_delete=fields.RESTRICT,
-        related_name=False,
+    created_at = sa.Column(
+        sa.DateTime,
+        default=get_current_datetime,
+    )
+    updated_at = sa.Column(
+        sa.DateTime,
+        default=get_current_datetime,
+        onupdate=get_current_datetime,
     )
 
-    class Meta:
-        abstract = True
+
+class AuthorAbstract:
+    author = relationship('User')
+    author_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('users.id'),
+        nullable=False,
+    )
+    updated_by = relationship('User')
+    updated_by_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('users.id'),
+        nullable=False,
+    )

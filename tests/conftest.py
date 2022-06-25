@@ -11,12 +11,6 @@ from starlette import status
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
-from tortoise.contrib.test import (
-    finalizer,
-    initializer,
-)
-
-from apps.common.config import config
 from apps.common.factory import AppFactory
 from apps.user.models import User
 from apps.user.utils import hash_string
@@ -34,10 +28,8 @@ def fake() -> Generator:
 
 @pytest.fixture(autouse=True, scope='module')
 def client(app: FastAPI) -> Generator:
-    initializer(config.APP_MODULES['models'])
     with TestClient(app) as c:
         yield c
-    finalizer()
 
 
 @pytest.fixture(scope='session')

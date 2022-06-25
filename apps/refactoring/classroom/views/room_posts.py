@@ -1,12 +1,23 @@
 from typing import List
 
-from fastapi_pagination import Page, paginate
+from fastapi_pagination import (
+    Page,
+    paginate,
+)
 from starlette import status
 
-from fastapi import APIRouter, Depends, Query, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+    UploadFile,
+)
 from fastapi.exceptions import HTTPException
 
-from apps.attachment.schemas import AttachmentCreateSchema, AttachmentListItemSchema
+from apps.attachment.schemas import (
+    AttachmentCreateSchema,
+    AttachmentListItemSchema,
+)
 from apps.attachment.services.attachment_service import AttachmentService
 from apps.classroom.schemas import (
     RoomPostCreateSchema,
@@ -20,6 +31,7 @@ from apps.classroom.services.room_post_service import RoomPostService
 from apps.classroom.utils import make_room_post_schema
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
+
 
 room_posts_router = APIRouter()
 

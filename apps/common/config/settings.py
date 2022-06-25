@@ -27,9 +27,10 @@ class ProjectSettings(BaseModel):
     POSTGRES_USER_PASSWORD: str = env('POSTGRES_PASSWORD')
     POSTGRES_DB: str = env('POSTGRES_DB')
     POSTGRES_PORT: int = env('POSTGRES_PORT')
+    DB_PREFIX: str = 'postgresql+asyncpg'
 
     DB_CONNECTION_STRING: str = (
-        f'postgres://{POSTGRES_USER_NAME}:'
+        f'{DB_PREFIX}://{POSTGRES_USER_NAME}:'
         f'{POSTGRES_USER_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
     )
     DB_TEST_CONNECTION_STRING: str = 'sqlite://:memory:'
