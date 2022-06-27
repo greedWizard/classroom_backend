@@ -24,6 +24,13 @@ class AbstractBaseRepository(ABC):
     def get_session(self) -> AsyncSession:
         return self._session_factory()
 
+    # TODO: typehints
+    async def get_scalar(self, statement):
+        """Returns scalar value of statement query."""
+        async with self.get_session() as session:
+            result = await session.execute(statement)
+            return result.scalar()
+
     def __init__(self) -> None:
         test_mode = config
         if test_mode:

@@ -3,15 +3,19 @@ import inspect
 
 import factory
 
+from apps.common.repositories.base import CreateUpdateRepository
 
-class AsyncFactory(factory.Factory):
+
+class AsyncRepositoryFactory(factory.Factory):
+    __repository__: type[CreateUpdateRepository] = None
+
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         async def maker_coroutine():
             for key, value in kwargs.items():
                 if inspect.isawaitable(value):
                     kwargs[key] = await value
-            return await model_class.create_async(*args, **kwargs)
+            return await cls.__repository__.create(*args, **kwargs)
 
         return asyncio.create_task(maker_coroutine())
 

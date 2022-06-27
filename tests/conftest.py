@@ -38,7 +38,7 @@ def event_loop() -> Generator:
     loop.close()
 
 
-@pytest.fixture(autouse=True, scope='module')
+@pytest.fixture(autouse=True, scope='function')
 def client(app: FastAPI, event_loop: asyncio.AbstractEventLoop) -> Generator:
     connection = event_loop.run_until_complete(test_engine.connect())
     event_loop.run_until_complete(connection.run_sync(DBModel.metadata.create_all))

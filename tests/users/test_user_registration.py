@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from apps.user.models import User
 from apps.user.repositories.user_repository import UserRepository
 from apps.user.utils import hash_string
+from tests.factories.user import UserFactory
 
 
 @pytest.fixture(scope='session')
@@ -69,14 +70,14 @@ async def test_user_registration_phone_and_email_taken(
     app: FastAPI,
     client: TestClient,
     fake: Faker,
+    user_repository: UserRepository,
 ):
     url = app.router.url_path_for('register_user')
     password = 'Kjoisun41241kl19'
+    user = await UserFactory.create()
+    users_count = await user_repository.count()
 
-    user_count = await User.all().count()
-    user = await User.all().first()
-
-    assert user_count
+    assert await user_repository.count()
 
     user_creds = {
         'first_name': fake.name(),
@@ -98,7 +99,7 @@ async def test_user_registration_phone_and_email_taken(
         == 'User with that phone number is already registred.'
     )
     assert json_data['detail']['email'] == 'User with that email is already registred.'
-    assert await User.all().count() == user_count
+    assert await user_repository.count() == users_count
 
 
 @pytest.mark.asyncio
