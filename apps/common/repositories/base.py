@@ -26,7 +26,7 @@ class AbstractBaseRepository(ABC):
 
     # TODO: typehints
     async def get_scalar(self, statement):
-        """Returns scalar value of statement query."""
+        """Returns scalar value of statement query """
         async with self.get_session() as session:
             result = await session.execute(statement)
             return result.scalar()

@@ -111,16 +111,12 @@ async def test_user_registration_eula_is_not_accepted(
     url = app.router.url_path_for('register_user')
     password = 'Kjoisun41241kl19'
 
-    user_count = User.all().count()
-
-    assert user_count
-
     user_creds = {
         'first_name': fake.name(),
         'last_name': fake.name(),
         'middle_name': fake.name(),
         'phone_number': '+79997078922',
-        'email': 'jma@mail.ru',
+        'email': fake.email(),
         'password': password,
         'repeat_password': password,
         'accept_eula': False,
@@ -141,10 +137,6 @@ async def test_user_registration_eula_is_not_assigned(
 ):
     url = app.router.url_path_for('register_user')
     password = 'Kjoisun41241kl19'
-
-    user_count = await User.all().count()
-
-    assert user_count
 
     user_creds = {
         'first_name': fake.name(),
@@ -171,10 +163,6 @@ async def test_user_registration_passwords_dont_match(
 ):
     url = app.router.url_path_for('register_user')
     password = 'Kjoisun41241kl19'
-
-    user_count = await User.all().count()
-
-    assert user_count
 
     user_creds = {
         'first_name': fake.name(),
@@ -203,10 +191,7 @@ async def test_user_registration_multiple_errors(
     url = app.router.url_path_for('register_user')
     password = 'Kjoisun41241kl19'
 
-    user_count = await User.all().count()
-    user = await User.all().first()
-
-    assert user_count
+    user = await UserFactory.create()
 
     user_creds = {
         'first_name': fake.name(),
