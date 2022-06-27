@@ -1,9 +1,11 @@
 import sqlalchemy as sa
 
-from apps.common.database import BaseModel
+from apps.common.database import DBModel
+from apps.common.models import BaseMetaData
 
 
-class User(BaseModel):
+# TODO: info verbose name + translations
+class User(DBModel, BaseMetaData):
     __tablename__ = 'users'
 
     first_name = sa.Column(sa.String(length=100), nullable=False)

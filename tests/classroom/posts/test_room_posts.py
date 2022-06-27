@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 import pytest_asyncio
 from faker import Faker
@@ -67,7 +65,6 @@ async def test_room_post_create_success(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
     room: Room,
     room_post: RoomPost,
 ):
@@ -119,7 +116,6 @@ async def test_room_post_create_not_logged_in(
 async def test_room_post_create_not_a_moder(
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
     room: Room,
     authentication_token: str,
 ):
@@ -151,7 +147,6 @@ async def test_room_post_get(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
     room: Room,
 ):
     url = app.url_path_for('get_room_posts')
@@ -177,9 +172,7 @@ async def test_room_post_get(
 async def test_room_post_get_not_a_moder(
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
     room: Room,
-    room_post: RoomPost,
     authentication_token: str,
 ):
     url = app.url_path_for('get_room_posts')
@@ -237,7 +230,6 @@ async def test_update_room_post_success(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
     room: Room,
     room_post: RoomPost,
 ):
@@ -275,7 +267,6 @@ async def test_update_room_post_moderator(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
     room: Room,
     room_post: RoomPost,
 ):
@@ -315,7 +306,6 @@ async def test_update_room_post_participant(
     authentication_token: str,
     app: FastAPI,
     client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
     room: Room,
     room_post: RoomPost,
 ):

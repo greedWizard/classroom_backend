@@ -20,12 +20,6 @@ class AppFactory:
             title='Classroom API',
         )
 
-        DB_URL = (
-            config.DB_CONNECTION_STRING
-            if not test_mode
-            else config.DB_TEST_CONNECTION_STRING
-        )
-
         app.add_middleware(
             CORSMiddleware,
             allow_origins=config.ALLOWED_CORS_ORIGINS,

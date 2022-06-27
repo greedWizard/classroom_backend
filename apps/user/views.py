@@ -74,7 +74,7 @@ async def register_user(
                 activation_link=activation_link,
             ),
         )
-        return UserRegistrationCompleteSchema(status=config.USER_SUCCESS_STATUS)
+        return user
     raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 

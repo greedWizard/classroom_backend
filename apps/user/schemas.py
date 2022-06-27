@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from apps.common.config import config
 from apps.common.schemas import NormalizedDatetimeModel
 
 
@@ -30,8 +31,13 @@ class UserRegisterSchema(BaseModel):
 
 
 class UserRegistrationCompleteSchema(BaseModel):
-    status: str
+    status: str = config.USER_SUCCESS_STATUS
     is_active: bool = False
+    email: str
+    activation_token: str
+
+    class Config:
+        orm_mode = True
 
 
 class UserLoginSchema(BaseModel):

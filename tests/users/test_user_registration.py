@@ -7,6 +7,7 @@ from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
 from apps.user.models import User
+from apps.user.repositories.user_repository import UserRepository
 from apps.user.utils import hash_string
 
 
@@ -27,12 +28,12 @@ async def test_user_registration_success(
     phone_number: str,
     email: str,
     mocker: MockerFixture,
+    user_repository: UserRepository,
 ):
     url = app.router.url_path_for('register_user')
     password = 'KjoiunslAdjkl19'
 
-    user_count = await User.all().count()
-
+    user_count = len(await user_repository.fetch())
     assert not user_count
 
     user_creds = {
@@ -51,9 +52,9 @@ async def test_user_registration_success(
     response = client.post(url, json=user_creds)
 
     assert response.status_code == status.HTTP_201_CREATED, response.json()
-    assert await User.all().count() == user_count + 1
+    assert len(await user_repository.fetch()) == user_count + 1
 
-    user = await User.all().first()
+    user = (await user_repository.fetch())[0]
 
     assert user.first_name == user_creds['first_name']
     assert user.last_name == user_creds['last_name']

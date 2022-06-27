@@ -94,6 +94,8 @@ websockets = "10.3"
 wrapt = "1.14.0"
 huey = "^2.4.3"
 SQLAlchemy = "^1.4.37"
+factory-boy = "^3.2.1"
+pytest-env = "^0.6.2"
 
 
 [tool.poetry.dev-dependencies]

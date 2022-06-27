@@ -8,11 +8,16 @@ from typing import (
 )
 
 from pydantic import BaseModel
-
 from tortoise import models
 from tortoise.transactions import atomic
 
+from apps.common.database import DBModel
+from apps.common.repositories.base import (
+    AbstractBaseRepository,
+    CreateUpdateRepository,
+)
 from apps.common.services.decorators import action
+from apps.common.services.exceptions import ServiceMapException
 
 
 CreateSchema = NewType('CreateSchemaType', BaseModel)
@@ -22,31 +27,40 @@ ResultTuple = NewType('ResultTuple', Tuple[bool, Union[Dict, None]])
 
 
 class SchemaMapMixin:
-    schema_map: Dict = {}
+    schema_map: dict[str, BaseModel] = {}
     schema_class: Type[BaseModel] = None
+    action: str = None
 
-    async def get_schema_class(self) -> Type[BaseModel]:
+    def get_schema_class(self) -> Type[BaseModel]:
         return self.schema_map.get(self.action, self.schema_class)
 
-    async def get_schema(self, **kwargs) -> BaseModel:
-        """Returns pydantic schema of the action if it is in `schema_map` keys.
+    def wrap_object(self, obj: DBModel):
+        """Returns pydantic BaseModel object instanced with the provided obj.
 
-        Else returns async default `schema_class` instance.
+        The orm_mode object in schema_map with that action should be set
+        to True.
 
         """
-        return await self.get_schema_class()(**kwargs)
+        try:
+            return self.get_schema_class().from_orm(obj)
+        except AttributeError:
+            raise ServiceMapException(
+                f'{type(self)} did not define a schema for action {self.action}'
+            )
+
+    def wrap_objects(self, objects: list[DBModel]):
+        """Returns pydantic BaseModel objects instanced from the provieded list
+        of orm objects."""
+        return [self.wrap_object(obj) for obj in objects]
 
 
 class IServiceBase(SchemaMapMixin):
-    model: Type[models.Model] = None
+    _repository: AbstractBaseRepository = None
     _action_attributes: Dict = {}
 
     @property
     def current_action_attributes(self):
         return self._action_attributes.get(self.action, {})
-
-    async def get_queryset(self, management: bool = False):
-        return self.model.all()
 
     error_messages = {
         'does_not_exist': 'Not found.',
@@ -107,8 +121,9 @@ class IServiceBase(SchemaMapMixin):
         raise NotImplementedError()
 
 
-class CreateUpdateServiceMixin(IServiceBase):
+class CreateUpdateService(IServiceBase):
     required_fields_map: Dict[str, List] = {}
+    _repository: Type[CreateUpdateRepository]
 
     async def validate(self, attrs: Dict = {}) -> Dict:
         """Method for prevalidating attrs before action."""
@@ -117,12 +132,9 @@ class CreateUpdateServiceMixin(IServiceBase):
     async def _validate_values(self, **kwargs) -> None:
         """Validates values before creating or updating `model` field
         instances."""
+        # TODO: рефакторить
         errors = {}
         self._action_attributes[self.action] = kwargs
-
-        for required_field in self.required_fields_map.get(self.action, []):
-            if required_field not in kwargs:
-                errors[required_field] = 'This field is required.'
 
         for key, value in kwargs.items():
             validation_method = f'validate_{key}'
@@ -144,16 +156,16 @@ class CreateUpdateServiceMixin(IServiceBase):
         self,
         createSchema: CreateSchema,
         exclude_unset: bool = False,
-        fetch_related: List[str] = [],
     ) -> Tuple[models.Model, Dict]:
         schema_dict = createSchema.dict(exclude_unset=exclude_unset)
         attrs, errors = await self._validate_values(**schema_dict)
 
         if errors:
             return None, errors
-        obj = await self.model.create(**attrs)
-        await obj.fetch_related(*fetch_related)
-        return obj, {}
+
+        created_object = await self._repository.create(**attrs)
+        schema_object = self.wrap_object(created_object)
+        return schema_object, {}
 
     @action
     @atomic
@@ -161,21 +173,17 @@ class CreateUpdateServiceMixin(IServiceBase):
         self,
         listCreateSchema: List[CreateSchema],
     ):
-        obj_list = []
-
-        for createSchema in listCreateSchema:
-            obj_list.append(
-                await self.create(createSchema),
-            )
-        return obj_list
+        async with self._repository() as repo:
+            return [
+                self.create(createSchema=createSchema)
+                for createSchema in listCreateSchema
+            ]
 
     @action
     async def update(
         self,
-        id: int,
         updateSchema: UpdateSchema,
         exclude_unset: bool = True,
-        fetch_related: List = [],
     ) -> Tuple[models.Model, Dict]:
         schema_dict = updateSchema.dict(exclude_unset=exclude_unset)
         attrs, errors = await self._validate_values(**schema_dict)
@@ -183,19 +191,9 @@ class CreateUpdateServiceMixin(IServiceBase):
         if errors:
             return None, errors
 
-        queryset = await self.get_queryset(management=True)
-        queryset = queryset.filter(id=id).first()
-        obj = await queryset
-
-        if not obj:
-            return None, self.error_messages.get('does_not_exist')
-
-        for key, value in attrs.items():
-            setattr(obj, key, value)
-            await obj.save()
-
-        await obj.fetch_related(*fetch_related)
-        return obj, {}
+        async with self._repository() as repo:
+            updated_instance = await repo.update(**attrs)
+            return updated_instance, {}
 
     @action
     async def bulk_update(
@@ -208,40 +206,20 @@ class CreateUpdateServiceMixin(IServiceBase):
         schema_dict = updateSchema.dict(exclude_unset=exclude_unset)
         errors = await self._validate_values(**schema_dict)
 
-        queryset = await self.model.filter(**filters)
-
-        if not await queryset.exists():
-            return None, {'error': self.error_messages.get('does_not_exist')}
-
-        await queryset.update(schema_dict)
-
         if errors:
             return None, errors
-        return queryset, {}
+        async with self._repository() as repo:
+            return await repo.bulk_update(filters=filters, **schema_dict), {}
 
 
 class RetrieveFetchServiceMixin(IServiceBase):
-    # TODO: рефакторить, фильтры не должны передавать в дикте
-
     async def fetch(
         self,
-        _filters: Dict = {},
         _ordering: List = [],
-        _prefetch_related: List = [],
-        _select_related: List = [],
-        distinct: bool = True,
+        **filters,
     ):
-        qs = await self.get_queryset()
-        queryset = (
-            qs.filter(**_filters)
-            .order_by(*_ordering)
-            .select_related(*_select_related)
-            .prefetch_related(*_prefetch_related)
-        )
-
-        if distinct:
-            queryset = queryset.distinct()
-        return await queryset, None
+        async with self._repository() as repo:
+            return await repo.fetch(ordering=_ordering, **filters), None
 
     @action
     async def retrieve(
@@ -303,7 +281,7 @@ class DeleteMixin(IServiceBase):
         return None
 
 
-class CRUDService(CreateUpdateServiceMixin, RetrieveFetchServiceMixin, DeleteMixin):
+class CRUDService(CreateUpdateService, RetrieveFetchServiceMixin, DeleteMixin):
     """CrudService for performing CRUD operations and validation.
 
     ! All manager's operations only avaliable from that class and it's

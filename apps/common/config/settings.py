@@ -33,7 +33,8 @@ class ProjectSettings(BaseModel):
         f'{DB_PREFIX}://{POSTGRES_USER_NAME}:'
         f'{POSTGRES_USER_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
     )
-    DB_TEST_CONNECTION_STRING: str = 'sqlite://:memory:'
+    DB_TEST_CONNECTION_STRING: str = 'sqlite+aiosqlite://'
+    TEST_MODE: bool = bool(int(env('TEST_MODE', default=0)))
     # END DB SETTINGS
 
     # CLEANUP SETTINGS

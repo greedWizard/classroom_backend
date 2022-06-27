@@ -11,8 +11,13 @@ from starlette import status
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
+from apps.common.database import (
+    DBModel,
+    test_engine,
+)
 from apps.common.factory import AppFactory
 from apps.user.models import User
+from apps.user.repositories.user_repository import UserRepository
 from apps.user.utils import hash_string
 
 
@@ -26,17 +31,25 @@ def fake() -> Generator:
     yield Faker()
 
 
-@pytest.fixture(autouse=True, scope='module')
-def client(app: FastAPI) -> Generator:
-    with TestClient(app) as c:
-        yield c
-
-
 @pytest.fixture(scope='session')
 def event_loop() -> Generator:
     loop = asyncio.get_event_loop()
-    yield asyncio.get_event_loop()
+    yield loop
     loop.close()
+
+
+@pytest.fixture(autouse=True, scope='module')
+def client(app: FastAPI, event_loop: asyncio.AbstractEventLoop) -> Generator:
+    connection = event_loop.run_until_complete(test_engine.connect())
+    event_loop.run_until_complete(connection.run_sync(DBModel.metadata.create_all))
+    with TestClient(app) as c:
+        yield c
+    event_loop.run_until_complete(connection.run_sync(DBModel.metadata.drop_all))
+
+
+@pytest_asyncio.fixture
+async def user_repository():
+    return UserRepository()
 
 
 @pytest_asyncio.fixture
@@ -55,10 +68,11 @@ async def user(fake: Faker):
         'is_active': True,
     }
 
-    user, _ = await User.get_or_create(
-        defaults=default_user_data,
-    )
-    return user
+    async with UserRepository() as repo:
+        user, _ = await repo.get_or_create(
+            defaults=default_user_data,
+        )
+        return user
 
 
 @pytest.fixture

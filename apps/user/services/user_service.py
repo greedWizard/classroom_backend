@@ -8,7 +8,7 @@ from datetime import (
 from hashlib import md5
 from typing import Tuple
 
-from tortoise.expressions import Q
+from pydantic import BaseModel
 
 from apps.common.config import config
 from apps.common.services.base import (
@@ -21,22 +21,34 @@ from apps.user.constants import (
     PHONE_REGEX,
 )
 from apps.user.models import User
-from apps.user.schemas import UserLoginSchema
+from apps.user.repositories.user_repository import UserRepository
+from apps.user.schemas import (
+    UserLoginSchema,
+    UserRegistrationCompleteSchema,
+)
 from apps.user.utils import hash_string
 
 
 class UserService(CRUDService):
-    model = User
+    _repository: UserRepository = UserRepository()
     error_messages = {
         'already_exists': 'User with that credits is already registred.',
         'does_not_exist': 'User not found. He is either inactive or not registred yet.',
     }
-
-    async def get_queryset(self, management: bool = False):
-        return await self.model.active()
+    schema_map: dict[str, BaseModel] = {
+        'create': UserRegistrationCompleteSchema,
+    }
 
     def set_user(self, user: User):
         self.user = user
+
+    @property
+    def current_user_id(self):
+        user_id = None
+
+        if self.user:
+            user_id = self.user.id
+        return user_id
 
     def _hash_password(self, password: str) -> str:
         return md5(password.encode()).hexdigest()  # no qa
@@ -66,14 +78,12 @@ class UserService(CRUDService):
         return True, {}
 
     async def validate_email(self, value: str) -> ResultTuple:
-        exists_condition = Q(email=value)
-
-        if self.user:
-            exists_condition &= ~Q(id=self.user.id)
-
         if not re.match(EMAIL_REGEX, value):
             return False, 'Invalid email format.'
-        if await self.model.filter(exists_condition).exists():
+        if await self._repository.check_email_already_taken(
+            email=value,
+            user_id=self.current_user_id,
+        ):
             return False, 'User with that email is already registred.'
         return True, {}
 
@@ -83,14 +93,12 @@ class UserService(CRUDService):
         return True, {}
 
     async def validate_phone_number(self, value: str) -> ResultTuple:
-        exists_condition = Q(phone_number=value)
-
-        if self.user:
-            exists_condition &= ~Q(id=self.user.id)
-
         if not re.match(PHONE_REGEX, value):
             return False, 'Invalid phone format.'
-        if await self.model.filter(exists_condition).exists():
+        if await self._repository.check_phone_number_already_taken(
+            user_id=self.current_user_id,
+            phone_number=value,
+        ):
             return False, 'User with that phone number is already registred.'
         return True, {}
 
@@ -131,7 +139,7 @@ class UserService(CRUDService):
         self,
         userLoginSchema: UserLoginSchema,
     ) -> Tuple[User, str]:
-        user = await self.model.filter(
+        user = await self._repository.filter(
             Q(email=userLoginSchema.email)
             | Q(phone_number=userLoginSchema.phone_number),
             password=hash_string(userLoginSchema.password),
@@ -149,7 +157,7 @@ class UserService(CRUDService):
 
     @action
     async def activate_user(self, activation_token: str) -> Tuple[User, dict]:
-        user = await self.model.filter(
+        user = await self._repository.filter(
             is_active=False,
             activation_token=activation_token,
         ).first()
