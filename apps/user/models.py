@@ -26,10 +26,10 @@ class User(DBModel, BaseMetaData):
         table = 'users'
 
     def __str__(self) -> str:
-        return f'{self.first_name} {self.last_name} {self.email}'
+        return f'{self.first_name} {self.last_name} {self.email} active={self.is_active}'
 
     def __repr__(self) -> str:
-        return f'<User {self.first_name} {self.last_name} {self.email}>'
+        return f'<User {self.first_name} {self.last_name} {self.email} active={self.is_active}>'
 
     async def is_participating(self, room_id: int) -> bool:
         return await self.participations.filter(room_id=room_id).exists()

@@ -1,11 +1,13 @@
 from abc import ABC
-from dataclasses import field
-from typing import Callable
+from dataclasses import dataclass, field
+from typing import Any, Callable
 
 from sqlalchemy import (
     func,
     select,
+    update,
 )
+import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.common.config import config
@@ -18,7 +20,6 @@ from apps.common.database import (
 
 class AbstractBaseRepository(ABC):
     _model: DBModel = NotImplemented
-    _session: AsyncSession
     _session_factory: Callable = async_session
 
     def get_session(self) -> AsyncSession:
@@ -38,22 +39,74 @@ class AbstractBaseRepository(ABC):
 
 
 class ReadOnlyRepository(AbstractBaseRepository):
-    default_ordering: list[str] = field(default_factory=lambda: ['id'])
+    default_ordering: list[str] = ('id', )
+
+    def _get_column_recursive(self, string: str):
+        fields = string.split('.')
+        column = getattr(self._model, fields.pop(0))
+
+        for field in fields:
+            column = getattr(column, field)
+        return column
+
+    def _get_ordering_fields(
+        self,
+        ordering_strings: list[str]
+    ) -> list[sqlalchemy.Column]:
+        '''
+        Returns list of sqlalchemy columns to perform ordering.
+        '''
+        columns_list: list[sqlalchemy.Column] = []
+
+        for string in ordering_strings:
+            if string.startswith('-'):
+                column = self._get_column_recursive(string[1:])
+                columns_list.append(column.desc())
+                continue
+            columns_list.append(self._get_column_recursive(string))
+        return columns_list
+
+    # TODO: typehints
+    async def _order_query(self, query, ordering: list[str]):
+        if ordering:
+            ordering_fields = self._get_ordering_fields(ordering)
+            return query.order_by(*ordering_fields)
+        return query
 
     async def fetch(
         self,
         ordering: list[str] = None,
+        offset: int = 0,
+        limit: int = None,
         **filters,
     ) -> list[DBModel]:
         """Fetch list of object with the specific criteria."""
         if not ordering:
             ordering = self.default_ordering
 
-        statement = select(self._model).filter_by(**filters)
+        statement = await self._order_query(
+            query=select(self._model).filter_by(**filters),
+            ordering=ordering,
+        )
+        statement = statement.offset(offset)
+
+        if limit:
+            statement = statement.limit()
 
         async with self.get_session() as session:
             result = await session.execute(statement=statement)
             return [obj for obj in result.scalars()]
+
+    async def retrieve(self, ordering: list[str] = None, **filters):
+        if not ordering:
+            ordering = self.default_ordering
+        
+        async with self.get_session() as session:
+            statement = await self._order_query(
+                query=select(self._model).filter_by(**filters),
+                ordering=ordering,
+            )
+            return (await session.execute(statement)).scalars().first()
 
     async def exists(self, **filters) -> bool:
         return await self.count(**filters) > 0
@@ -65,6 +118,9 @@ class ReadOnlyRepository(AbstractBaseRepository):
             result = await session.execute(statement=statement)
             return result.scalar()
 
+    async def refresh(self, obj: DBModel):
+        return await self.retrieve(id=obj.id)
+    
 
 class CreateRepository(AbstractBaseRepository):
     async def create(self, **kwargs) -> DBModel:
@@ -82,6 +138,7 @@ class CreateRepository(AbstractBaseRepository):
             instance = await session.execute(
                 select(self._model).filter_by(**defaults),
             )
+            await session.commit()
 
         if not instance:
             instance = await self.create(**defaults)
@@ -90,8 +147,14 @@ class CreateRepository(AbstractBaseRepository):
 
 
 class UpdateRepository(AbstractBaseRepository):
-    async def update(self, filters: dict[str, any], **kwargs):
-        """Updated filtered queryset with provided kwargs."""
+    async def update(self, values: dict[str, any], **filters) -> int:
+        """ Updates filtered queryset with provided values """
+        statement = update(self._model).filter_by(**filters).values(**values)
+
+        async with self.get_session() as session:
+            result = await session.execute(statement)
+            await session.commit()
+            return result.rowcount
 
 
 class CreateUpdateRepository(CreateRepository, UpdateRepository):
@@ -104,4 +167,9 @@ class CRUDRepository(
     ReadOnlyRepository,
     # DeleteRepository,
 ):
-    pass
+    async def update_object(self, obj: DBModel, **values) -> DBModel:
+        '''
+        Updates specific object with values.
+        '''
+        await self.update(values=values, id=obj.id)
+        return await self.refresh(obj=obj)

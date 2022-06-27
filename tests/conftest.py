@@ -68,12 +68,6 @@ async def user(fake: Faker):
         'is_active': True,
     }
 
-    async with UserRepository() as repo:
-        user, _ = await repo.get_or_create(
-            defaults=default_user_data,
-        )
-        return user
-
 
 @pytest.fixture
 def authentication_token(

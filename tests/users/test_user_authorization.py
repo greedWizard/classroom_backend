@@ -9,7 +9,9 @@ from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
 from apps.user.models import User
+from apps.user.repositories.user_repository import UserRepository
 from apps.user.utils import hash_string
+from tests.factories.user import UserFactory
 
 
 USER_TEST_PASSWORD = 'testpPassword123'
@@ -17,9 +19,7 @@ USER_TEST_UPDATE_PASSWORD = 'testpAssword321'
 
 
 @pytest.fixture(scope='module')
-def user_data(
-    fake: Faker,
-):
+def user_data(fake: Faker):
     yield {
         'id': 1,
         'first_name': fake.name(),
@@ -34,18 +34,19 @@ def user_data(
 
 @pytest.mark.asyncio
 async def test_authentication_fail_not_active(
-    user: User,
     app: FastAPI,
     client: TestClient,
-    user_data: dict,
+    user_repository: UserRepository,
 ):
-    await User.update_or_create(
-        defaults=user_data,
-    )
-    await user.refresh_from_db()
+    user = await UserFactory.create(password=hash_string(USER_TEST_PASSWORD))
 
     url = app.url_path_for('authenticate_user')
-    await User.all().update(is_active=False, password=hash_string(USER_TEST_PASSWORD))
+    await user_repository.update(
+        values={
+            'is_active': False,
+            'password': hash_string(USER_TEST_PASSWORD),
+        }
+    )
 
     response = client.post(
         url,
@@ -63,19 +64,18 @@ async def test_authentication_fail_not_active(
 
 @pytest.mark.asyncio
 async def test_user_activation(
-    user: User,
     app: FastAPI,
     client: TestClient,
+    user_repository: UserRepository,
 ):
-    await User.all().update(is_active=False)
-    await user.refresh_from_db()
-    assert not user.is_active
+    user = await UserFactory.create(is_active=False)
+
+    assert not await user_repository.fetch(is_active=True)
 
     url = app.url_path_for('activate_user', activation_token=user.activation_token)
-
     client.get(url)
 
-    await user.refresh_from_db()
+    user = await user_repository.refresh(user)
     assert user.is_active
 
 

@@ -222,19 +222,8 @@ class RetrieveFetchServiceMixin(IServiceBase):
             return await repo.fetch(ordering=_ordering, **filters), None
 
     @action
-    async def retrieve(
-        self,
-        _fetch_related: list = [],
-        **filters,
-    ):
-        qs = await self.get_queryset()
-
-        # TODO: SELECT_RELATED
-        obj = await (qs.filter(**filters).prefetch_related(*_fetch_related).first())
-
-        if not obj:
-            return None, self.error_messages.get('does_not_exist')
-        return obj, {}
+    async def retrieve(self, **filters):
+        return await self._repository.retrieve(**filters), {}
 
     @action
     async def exists(self, **filters):

@@ -31,6 +31,7 @@ from apps.user.utils import hash_string
 
 class UserService(CRUDService):
     _repository: UserRepository = UserRepository()
+
     error_messages = {
         'already_exists': 'User with that credits is already registred.',
         'does_not_exist': 'User not found. He is either inactive or not registred yet.',
@@ -139,11 +140,14 @@ class UserService(CRUDService):
         self,
         userLoginSchema: UserLoginSchema,
     ) -> Tuple[User, str]:
-        user = await self._repository.filter(
-            Q(email=userLoginSchema.email)
-            | Q(phone_number=userLoginSchema.phone_number),
-            password=hash_string(userLoginSchema.password),
-        ).first()
+        if not any((userLoginSchema.email, userLoginSchema.phone_number)):
+            return None, { 'email': 'this field is required', 'phone_number': 'this field is required' }
+
+        user = await self._repository.get_user_by_auth_credentials(
+            password=userLoginSchema.password,
+            phone_number=userLoginSchema.phone_number,
+            email=userLoginSchema.email,
+        )
 
         if not user:
             return None, 'Bad credentials'
@@ -157,14 +161,8 @@ class UserService(CRUDService):
 
     @action
     async def activate_user(self, activation_token: str) -> Tuple[User, dict]:
-        user = await self._repository.filter(
-            is_active=False,
-            activation_token=activation_token,
-        ).first()
+        activated_user = await self._repository.activate_user(activation_token)
 
-        if not user:
-            return None, {'activation_token': 'User not found'}
-        user.is_active = True
-        await user.save()
-
-        return user, None
+        if not activated_user:
+            return False
+        return True
