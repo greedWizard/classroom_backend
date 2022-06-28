@@ -6,7 +6,7 @@ from sqlalchemy import (
 )
 
 from apps.common.repositories.base import CRUDRepository
-from apps.common.repositories.exceptions import RepositoryException
+from apps.common.utils import get_current_datetime
 from apps.user.models import User
 from apps.user.utils import hash_string
 
@@ -38,16 +38,21 @@ class UserRepository(CRUDRepository):
 
         return await self.get_scalar(statement)
 
+    async def update_last_login(self, user: User) -> User:
+        await self.update({'last_login': get_current_datetime()}, id=user.id)
+
     async def get_user_by_auth_credentials(
         self,
         password: str,
         phone_number: str = None,
-        email: str = None
+        email: str = None,
     ):
         async with self.get_session() as session:
             statement = select(self._model).filter(
                 self._model.password == hash_string(password),
-                (self._model.email == email) | (self._model.phone_number == phone_number)
+                self._model.is_active == True,
+                (self._model.email == email)
+                | (self._model.phone_number == phone_number),
             )
             return (await session.execute(statement)).scalars().first()
 
@@ -55,10 +60,11 @@ class UserRepository(CRUDRepository):
         self,
         activation_token: str,
     ) -> Union[User, None]:
-        '''
-        Activates inactive user with provided activation token.
+        """Activates inactive user with provided activation token.
+
         If user wasn't found returns None.
-        '''
+
+        """
         user = await self.retrieve(
             activation_token=activation_token,
             is_active=False,

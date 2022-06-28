@@ -21,6 +21,8 @@ class UserFactory(AsyncRepositoryFactory):
     email = factory.Faker('email')
     phone_number = factory.Sequence(lambda n: f'+7{10000000000 + n}')
     created_at = datetime.utcnow()
+    last_login = datetime.utcnow()
+    is_active = True
 
     class Meta:
         model = User

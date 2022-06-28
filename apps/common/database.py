@@ -15,7 +15,6 @@ engine = create_async_engine(config.DB_CONNECTION_STRING, future=True, echo=True
 test_engine = create_async_engine(
     config.DB_TEST_CONNECTION_STRING,
     future=True,
-    echo=True,
 )
 
 async_session = sessionmaker(

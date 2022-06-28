@@ -103,6 +103,7 @@ async def authenticate_user(
             detail=error_message,
         )
 
+    # TODO: отдельно создавать access_token и refresh_token
     access_token = Authorize.create_access_token(
         subject=user.id,
         expires_time=config.AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA,
@@ -157,14 +158,14 @@ async def update_current_user(
     user_service: UserService = Depends(),
 ):
     user_service.set_user(current_user)
-    user, errors = await user_service.update(current_user.id, userUpdateSchema)
-
-    if errors.get('confirm_password'):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
+    user, errors = await user_service.update(
+        id=current_user.id,
+        updateSchema=userUpdateSchema,
+    )
 
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=errors,
         )
-    return UserProfileSchema.from_orm(user)
+    return user

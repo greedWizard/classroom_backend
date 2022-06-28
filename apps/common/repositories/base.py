@@ -1,13 +1,16 @@
 from abc import ABC
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import (
+    Any,
+    Callable,
+    Union,
+)
 
+import sqlalchemy
 from sqlalchemy import (
     func,
     select,
     update,
 )
-import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.common.config import config
@@ -27,7 +30,7 @@ class AbstractBaseRepository(ABC):
 
     # TODO: typehints
     async def get_scalar(self, statement):
-        """Returns scalar value of statement query """
+        """Returns scalar value of statement query."""
         async with self.get_session() as session:
             result = await session.execute(statement)
             return result.scalar()
@@ -39,7 +42,7 @@ class AbstractBaseRepository(ABC):
 
 
 class ReadOnlyRepository(AbstractBaseRepository):
-    default_ordering: list[str] = ('id', )
+    default_ordering: list[str] = ('id',)
 
     def _get_column_recursive(self, string: str):
         fields = string.split('.')
@@ -51,11 +54,9 @@ class ReadOnlyRepository(AbstractBaseRepository):
 
     def _get_ordering_fields(
         self,
-        ordering_strings: list[str]
+        ordering_strings: list[str],
     ) -> list[sqlalchemy.Column]:
-        '''
-        Returns list of sqlalchemy columns to perform ordering.
-        '''
+        """Returns list of sqlalchemy columns to perform ordering."""
         columns_list: list[sqlalchemy.Column] = []
 
         for string in ordering_strings:
@@ -97,10 +98,14 @@ class ReadOnlyRepository(AbstractBaseRepository):
             result = await session.execute(statement=statement)
             return [obj for obj in result.scalars()]
 
-    async def retrieve(self, ordering: list[str] = None, **filters):
+    async def retrieve(
+        self,
+        ordering: list[str] = None,
+        **filters,
+    ) -> Union[DBModel, None]:
         if not ordering:
             ordering = self.default_ordering
-        
+
         async with self.get_session() as session:
             statement = await self._order_query(
                 query=select(self._model).filter_by(**filters),
@@ -118,9 +123,10 @@ class ReadOnlyRepository(AbstractBaseRepository):
             result = await session.execute(statement=statement)
             return result.scalar()
 
-    async def refresh(self, obj: DBModel):
+    async def refresh(self, obj: DBModel) -> DBModel:
+        """Refreshes object and returns actual version from database."""
         return await self.retrieve(id=obj.id)
-    
+
 
 class CreateRepository(AbstractBaseRepository):
     async def create(self, **kwargs) -> DBModel:
@@ -147,8 +153,8 @@ class CreateRepository(AbstractBaseRepository):
 
 
 class UpdateRepository(AbstractBaseRepository):
-    async def update(self, values: dict[str, any], **filters) -> int:
-        """ Updates filtered queryset with provided values """
+    async def update(self, values: dict[str, Any], **filters) -> int:
+        """Updates filtered queryset with provided values."""
         statement = update(self._model).filter_by(**filters).values(**values)
 
         async with self.get_session() as session:
@@ -168,8 +174,21 @@ class CRUDRepository(
     # DeleteRepository,
 ):
     async def update_object(self, obj: DBModel, **values) -> DBModel:
-        '''
-        Updates specific object with values.
-        '''
+        """Updates specific object with values."""
         await self.update(values=values, id=obj.id)
         return await self.refresh(obj=obj)
+
+    async def update_and_return(
+        self,
+        values: dict[str, Any],
+        ordering: list[str] = None,
+        **filters,
+    ) -> DBModel:
+        """Updates first object matching provided filters and returns it."""
+        updated_rows = await self.update(values=values, **filters)
+
+        if not ordering:
+            ordering = self.default_ordering
+
+        if updated_rows:
+            return await self.retrieve(ordering=ordering, **filters)

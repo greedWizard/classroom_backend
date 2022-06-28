@@ -14,7 +14,7 @@ from tortoise.transactions import atomic
 from apps.common.database import DBModel
 from apps.common.repositories.base import (
     AbstractBaseRepository,
-    CreateUpdateRepository,
+    CRUDRepository,
 )
 from apps.common.services.decorators import action
 from apps.common.services.exceptions import ServiceMapException
@@ -45,7 +45,7 @@ class SchemaMapMixin:
             return self.get_schema_class().from_orm(obj)
         except AttributeError:
             raise ServiceMapException(
-                f'{type(self)} did not define a schema for action {self.action}'
+                f'{type(self)} did not define a schema for action {self.action}',
             )
 
     def wrap_objects(self, objects: list[DBModel]):
@@ -123,7 +123,7 @@ class IServiceBase(SchemaMapMixin):
 
 class CreateUpdateService(IServiceBase):
     required_fields_map: Dict[str, List] = {}
-    _repository: Type[CreateUpdateRepository]
+    _repository: CRUDRepository
 
     async def validate(self, attrs: Dict = {}) -> Dict:
         """Method for prevalidating attrs before action."""
@@ -182,6 +182,7 @@ class CreateUpdateService(IServiceBase):
     @action
     async def update(
         self,
+        id: Union[int, str],
         updateSchema: UpdateSchema,
         exclude_unset: bool = True,
     ) -> Tuple[models.Model, Dict]:
@@ -191,9 +192,11 @@ class CreateUpdateService(IServiceBase):
         if errors:
             return None, errors
 
-        async with self._repository() as repo:
-            updated_instance = await repo.update(**attrs)
-            return updated_instance, {}
+        updated_instance = await self._repository.update_and_return(
+            values=attrs,
+            id=id,
+        )
+        return updated_instance, {}
 
     @action
     async def bulk_update(

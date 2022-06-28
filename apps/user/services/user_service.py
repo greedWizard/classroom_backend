@@ -26,7 +26,6 @@ from apps.user.schemas import (
     UserLoginSchema,
     UserRegistrationCompleteSchema,
 )
-from apps.user.utils import hash_string
 
 
 class UserService(CRUDService):
@@ -141,7 +140,10 @@ class UserService(CRUDService):
         userLoginSchema: UserLoginSchema,
     ) -> Tuple[User, str]:
         if not any((userLoginSchema.email, userLoginSchema.phone_number)):
-            return None, { 'email': 'this field is required', 'phone_number': 'this field is required' }
+            return None, {
+                'email': 'this field is required',
+                'phone_number': 'this field is required',
+            }
 
         user = await self._repository.get_user_by_auth_credentials(
             password=userLoginSchema.password,
@@ -150,13 +152,8 @@ class UserService(CRUDService):
         )
 
         if not user:
-            return None, 'Bad credentials'
-        if not user.is_active:
-            return None, 'User is not active. Please activate your profile.'
-
-        user.last_login = datetime.utcnow()
-        await user.save()
-
+            return None, 'User not found or inactive'
+        await self._repository.update_last_login(user)
         return user, None
 
     @action

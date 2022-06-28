@@ -13,7 +13,6 @@ async def _get_current_user(
 ):
     user_id = Authorize.get_jwt_subject()
     current_user, _ = await user_service.retrieve(id=user_id)
-
     return current_user
 
 
