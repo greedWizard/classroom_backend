@@ -1,4 +1,4 @@
-from .homework_assignments import (
+from .assignments import (
     HomeworkAssignmentCreateSchema,
     HomeworkAssignmentCreateSuccessSchema,
     HomeworkAssignmentDetailSchema,

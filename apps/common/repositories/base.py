@@ -18,7 +18,7 @@ from apps.common.database import (
     async_session,
     test_session,
 )
-from apps.common.models import BaseDBModel
+from apps.common.models.base import BaseDBModel
 
 
 class AbstractBaseRepository(ABC):

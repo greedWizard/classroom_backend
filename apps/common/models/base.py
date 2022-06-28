@@ -1,8 +1,5 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import (
-    as_declarative,
-    relationship,
-)
+from sqlalchemy.orm import as_declarative
 
 from apps.common.utils import get_current_datetime
 
@@ -21,19 +18,4 @@ class BaseDBModel:
         sa.DateTime,
         default=get_current_datetime,
         onupdate=get_current_datetime,
-    )
-
-
-class AuthorAbstract:
-    author = relationship('User')
-    author_id = sa.Column(
-        sa.Integer,
-        sa.ForeignKey('users.id'),
-        nullable=False,
-    )
-    updated_by = relationship('User')
-    updated_by_id = sa.Column(
-        sa.Integer,
-        sa.ForeignKey('users.id'),
-        nullable=False,
     )

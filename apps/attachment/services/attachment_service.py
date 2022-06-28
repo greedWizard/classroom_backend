@@ -31,7 +31,7 @@ class AttachmentService(AuthorMixin, CRUDService):
         moder_roles = self.participation_model.MODERATOR_ROLES
         expression = (
             Q(
-                homework_assignments__assigned_room_post__room__participations__role__in=moder_roles,  # no qa
+                assignments__assigned_room_post__room__participations__role__in=moder_roles,  # no qa
             )
             | Q(author_id=self.user.id)
             | Q(

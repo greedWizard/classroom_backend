@@ -1,16 +1,19 @@
-from typing import Union
+import uuid
 
 import sqlalchemy as sa
+from sqlalchemy.orm import (
+    backref,
+    relationship,
+    validates,
+)
 
 from apps.classroom.constants import (
     HomeWorkAssignmentStatus,
     ParticipationRoleEnum,
     RoomPostType,
 )
-from apps.common.models import (
-    AuthorAbstract,
-    BaseDBModel,
-)
+from apps.common.models.base import BaseDBModel
+from apps.common.models.mixins import AuthorAbstract
 
 
 class Room(BaseDBModel, AuthorAbstract):
@@ -18,7 +21,11 @@ class Room(BaseDBModel, AuthorAbstract):
 
     name = sa.Column(sa.String(100), nullable=False)
     description = sa.Column(sa.String(250))
-    join_slug = sa.Column(sa.String(256))
+    join_slug = sa.Column(
+        sa.String(256),
+        default=lambda: uuid.uuid4().hex,
+        unique=True,
+    )
 
     def __str__(self) -> str:
         return f'{self.name[:50]} {self.description}'
@@ -27,73 +34,41 @@ class Room(BaseDBModel, AuthorAbstract):
         return f'<{self.name[:50]} {self.description}>'
 
 
-class Participation(TimeStampAbstract, AuthorAbstract):
-    id = fields.IntField(pk=True)
-    room = fields.ForeignKeyField(
-        'models.Room',
-        related_name='participations',
-        on_delete=fields.CASCADE,
-    )
-    user = fields.ForeignKeyField(
-        'models.User',
-        related_name='participations',
-        on_delete=fields.CASCADE,
-    )
-    role = fields.CharEnumField(
-        enum_type=ParticipationRoleEnum,
-        default=ParticipationRoleEnum.participant,
-        max_length=25,
-    )
+class Participation(BaseDBModel, AuthorAbstract):
+    __tablename__ = 'participations'
+    __table_args__ = (sa.UniqueConstraint('user_id', 'room_id'),)
 
     MODERATOR_ROLES = (
         ParticipationRoleEnum.host,
         ParticipationRoleEnum.moderator,
     )
 
-    class Meta:
-        table = 'participations'
-        unique_together = ('room', 'user')
+    role = sa.Column(
+        sa.Enum(ParticipationRoleEnum),
+        default=ParticipationRoleEnum.participant,
+        nullable=False,
+    )
 
-    def can_moderate_room(self) -> bool:
-        return self.role in self.MODERATOR_ROLES
-
-    @classmethod
-    async def is_user_moderator(
-        cls,
-        user: Union[int, UserModel],
-        room: Union[int, Room],
-    ):
-        user_id = getattr(user, 'id', user)
-        room_id = getattr(room, 'id', room)
-
-        return await cls.filter(
-            user_id=user_id,
-            room_id=room_id,
-            role__in=cls.MODERATOR_ROLES,
-        )
-
-    @classmethod
-    async def can_moderate(
-        cls,
-        user: Union[int, UserModel],
-        room_post: Union[int, Room],
-    ):
-        user_id = getattr(user, 'id', user)
-        room_post_id = getattr(room_post, 'id', room_post)
-
-        return await cls.filter(
-            user_id=user_id,
-            room__room_posts__id=room_post_id,
-            role__in=cls.MODERATOR_ROLES,
-        ).exists()
-
-    @classmethod
-    async def is_participating(
-        cls,
-        user_id: int,
-        room_id: int,
-    ):
-        return await cls.filter(room_id=room_id, user_id=user_id).exists()
+    # relations
+    room_id: int = sa.Column(sa.Integer, sa.ForeignKey('rooms.id'), nullable=False)
+    room = relationship(
+        'Room',
+        backref=backref(
+            name='participations',
+            lazy='dynamic',
+            uselist=True,
+        ),
+    )
+    user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'), nullable=False)
+    user = relationship(
+        'User',
+        backref=backref(
+            name='participations',
+            lazy='dynamic',
+            uselist=True,
+        ),
+        foreign_keys=[user_id],
+    )
 
     @property
     def can_manage_posts(self) -> bool:
@@ -112,40 +87,41 @@ class Participation(TimeStampAbstract, AuthorAbstract):
         return self.role in self.MODERATOR_ROLES
 
 
-class RoomPostAbstract(AuthorAbstract, TimeStampAbstract):
-    id = fields.IntField(pk=True)
-    title = fields.CharField(max_length=1000)
-    description = fields.TextField(blank=True, null=True)
-
-    class Meta:
-        abstract = True
-
-
 class AttachmentsCountMixin:
     @property
     def attachments_count(self) -> int:
-        try:
-            return len(self.attachments)
-        except NoValuesFetched:
-            return 0
+        return len(self.attachments)
 
 
-class RoomPost(RoomPostAbstract, AttachmentsCountMixin):
-    text = fields.TextField(null=True, blank=True)
-    room = fields.ForeignKeyField(
-        'models.Room',
-        related_name='room_posts',
-        on_delete=fields.CASCADE,
-    )
-    attachments = fields.ManyToManyField(
-        'models.Attachment',
-        related_name='room_posts',
-        through='room_posts_attachments',
-    )
-    deadline_at = fields.DatetimeField(blank=True, null=True)
-    type = fields.CharEnumField(
-        enum_type=RoomPostType,
+class RoomPost(BaseDBModel, AttachmentsCountMixin):
+    __tablename__ = 'posts'
+
+    title = sa.Column(sa.String(200), nullable=False)
+    description = sa.Column(sa.String(500))
+    text = sa.Column(sa.Text())
+    deadline_at = sa.Column(sa.DateTime)
+    type = sa.Column(
+        sa.Enum(RoomPostType),
         default=RoomPostType.material,
+    )
+
+    # relations
+    room_id: int = sa.Column(sa.Integer, sa.ForeignKey('rooms.id'), nullable=False)
+    room = relationship(
+        'Room',
+        backref=backref(
+            name='posts',
+            lazy='dynamic',
+            uselist=True,
+        ),
+    )
+    attachments = relationship(
+        'Attachment',
+        backref=backref(
+            name='post',
+        ),
+        lazy='joined',
+        uselist=True,
     )
 
     def __str__(self) -> str:
@@ -154,60 +130,48 @@ class RoomPost(RoomPostAbstract, AttachmentsCountMixin):
     def __repr__(self) -> str:
         return f'<RoomPost {str(self)}>'
 
-    async def get_assignment_for_user(
-        self,
-        user_id: int,
-        prefetch_related: list = None,
-    ):
-        if not prefetch_related:
-            prefetch_related = []
 
-        return (
-            await self.assignments.filter(
-                author_id=user_id,
-            )
-            .prefetch_related('author')
-            .first()
-        )
+class HomeworkAssignment(BaseDBModel, AuthorAbstract):
+    __tablename__ = 'assignments'
+    __table_args__ = (sa.UniqueConstraint('post_id', 'author_id'),)
 
-    class Meta:
-        table = 'room_posts'
-
-
-class HomeworkAssignment(TimeStampAbstract, AuthorAbstract, AttachmentsCountMixin):
-    id = fields.IntField(pk=True)
-    attachments = fields.ManyToManyField(
-        'models.Attachment',
-        related_name='homework_assignments',
-        through='homeworkassignments_attachments',
-    )
-    assigned_room_post = fields.ForeignKeyField(
-        'models.RoomPost',
-        related_name='assignments',
-        on_delete=fields.CASCADE,
-    )
-    status = fields.CharEnumField(
-        enum_type=HomeWorkAssignmentStatus,
+    status = sa.Column(
+        sa.Enum(HomeWorkAssignmentStatus),
         default=HomeWorkAssignmentStatus.assigned,
     )
-    rate = fields.IntField(
-        validators=[
-            MinValueValidator(0),
-            MaxValueValidator(5),
-        ],
-        null=True,
-        blank=True,
+    rate = sa.Column(sa.Integer, nullable=False)
+    comment = sa.Column(sa.Text)
+
+    # relations
+    post_id = sa.Column(sa.Integer, sa.ForeignKey('posts.id'), nullable=False)
+    post: RoomPost = relationship(
+        'RoomPost',
+        backref=backref(
+            name='assignments',
+            lazy='joined',
+            uselist=True,
+        ),
     )
-    comment = fields.TextField(null=True, blank=True)
+
+    attachments = relationship(
+        'Attachment',
+        backref=backref(
+            name='assignment',
+        ),
+        uselist=True,
+    )
+
+    @validates('rate')
+    def validate_rate_range(self, key, rate):
+        if not 0 <= rate <= 5:
+            raise ValueError('Rate should be in a range {0, 5}')
+        return rate
 
     def __str__(self) -> str:
         return f'HomeworkAssignment {self.created_at} by {self.author_id}'
 
     def __repr__(self) -> str:
         return f'<{self}>'
-
-    class Meta:
-        table = 'homework_assignments'
 
     @property
     def status_assigned(self):

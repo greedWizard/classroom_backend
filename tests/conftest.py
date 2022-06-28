@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from apps.common.database import test_engine
 from apps.common.factory import AppFactory
-from apps.common.models import BaseDBModel
+from apps.common.models.base import BaseDBModel
 from apps.user.models import User
 from apps.user.repositories.user_repository import UserRepository
 from apps.user.utils import hash_string

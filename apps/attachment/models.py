@@ -1,22 +1,20 @@
-from tortoise import fields
+import sqlalchemy as sa
 
-from apps.common.models import (
-    AuthorAbstract,
-    TimeStampAbstract,
-)
+from apps.common.models.base import BaseDBModel
 
 
-class Attachment(AuthorAbstract, TimeStampAbstract):
-    id = fields.IntField(pk=True)
-    source = fields.BinaryField()
-    filename = fields.CharField(max_length=256)
+class Attachment(BaseDBModel):
+    __tablename__ = 'attachments'
 
-    @property
-    def download_link(self):
-        return f'api/v1/attachments/{self.id}'
+    source = sa.Column(sa.LargeBinary(), nullable=False)
+    filename = sa.Column(sa.String(256), nullable=False)
+
+    # post
+    post_id: int = sa.Column(sa.Integer, sa.ForeignKey('posts.id'))
+    assignment_id: int = sa.Column(sa.Integer, sa.ForeignKey('assignments.id'))
 
     def __str__(self) -> str:
-        return f'Attachment: "{self.filename}" {self.download_link}'
+        return f'Attachment: "{self.filename}"'
 
     def __repr__(self) -> str:
         return f'<{str(self)}>'

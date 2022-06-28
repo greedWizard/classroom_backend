@@ -1,6 +1,6 @@
 import sqlalchemy as sa
 
-from apps.common.models import BaseDBModel
+from apps.common.models.base import BaseDBModel
 
 
 # TODO: info verbose name + translations
@@ -20,8 +20,6 @@ class User(BaseDBModel):
     gender = sa.Column(sa.String(50))
     is_banned = sa.Column(sa.Boolean, default=False)
     last_login = sa.Column(sa.DateTime)
-
-    # relations
 
     class Meta:
         table = 'users'

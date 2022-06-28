@@ -86,12 +86,11 @@ async def fetch_post_assignments(
 ):
     service = AssignmentService(user)
 
-    homework_assignments, _ = await service.fetch_for_teacher(
+    assignments, _ = await service.fetch_for_teacher(
         assigned_room_post_id=assigned_room_post_id,
     )
     return [
-        await make_homework_assignment_schema(assignment)
-        for assignment in homework_assignments
+        await make_homework_assignment_schema(assignment) for assignment in assignments
     ]
 
 

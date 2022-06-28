@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
+from .assignments import router as assignments_router
 from .classroom import classroom_router
-from .homework_assignments import router as homework_assignments_router
 from .participations import participations_router
 from .room_posts import room_posts_router
 
@@ -16,7 +16,7 @@ router.include_router(
     tags=['participation'],
 )
 router.include_router(
-    router=homework_assignments_router,
+    router=assignments_router,
     prefix='/homework-assignment',
     tags=['assignment'],
 )
