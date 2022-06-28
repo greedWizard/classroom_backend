@@ -1,11 +1,10 @@
 import sqlalchemy as sa
 
-from apps.common.database import DBModel
-from apps.common.models import BaseMetaData
+from apps.common.models import BaseDBModel
 
 
 # TODO: info verbose name + translations
-class User(DBModel, BaseMetaData):
+class User(BaseDBModel):
     __tablename__ = 'users'
 
     first_name = sa.Column(sa.String(length=100), nullable=False)
@@ -21,6 +20,8 @@ class User(DBModel, BaseMetaData):
     gender = sa.Column(sa.String(50))
     is_banned = sa.Column(sa.Boolean, default=False)
     last_login = sa.Column(sa.DateTime)
+
+    # relations
 
     class Meta:
         table = 'users'

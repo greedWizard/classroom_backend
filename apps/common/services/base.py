@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from tortoise import models
 from tortoise.transactions import atomic
 
-from apps.common.database import DBModel
 from apps.common.repositories.base import (
     AbstractBaseRepository,
     CRUDRepository,
@@ -34,7 +33,7 @@ class SchemaMapMixin:
     def get_schema_class(self) -> Type[BaseModel]:
         return self.schema_map.get(self.action, self.schema_class)
 
-    def wrap_object(self, obj: DBModel):
+    def wrap_object(self, obj: BaseModel):
         """Returns pydantic BaseModel object instanced with the provided obj.
 
         The orm_mode object in schema_map with that action should be set
@@ -48,7 +47,7 @@ class SchemaMapMixin:
                 f'{type(self)} did not define a schema for action {self.action}',
             )
 
-    def wrap_objects(self, objects: list[DBModel]):
+    def wrap_objects(self, objects: list[BaseModel]):
         """Returns pydantic BaseModel objects instanced from the provieded list
         of orm objects."""
         return [self.wrap_object(obj) for obj in objects]

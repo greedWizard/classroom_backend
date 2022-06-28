@@ -11,11 +11,9 @@ from starlette import status
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
-from apps.common.database import (
-    DBModel,
-    test_engine,
-)
+from apps.common.database import test_engine
 from apps.common.factory import AppFactory
+from apps.common.models import BaseDBModel
 from apps.user.models import User
 from apps.user.repositories.user_repository import UserRepository
 from apps.user.utils import hash_string
@@ -41,10 +39,10 @@ def event_loop() -> Generator:
 @pytest.fixture(autouse=True, scope='function')
 def client(app: FastAPI, event_loop: asyncio.AbstractEventLoop) -> Generator:
     connection = event_loop.run_until_complete(test_engine.connect())
-    event_loop.run_until_complete(connection.run_sync(DBModel.metadata.create_all))
+    event_loop.run_until_complete(connection.run_sync(BaseDBModel.metadata.create_all))
     with TestClient(app) as c:
         yield c
-    event_loop.run_until_complete(connection.run_sync(DBModel.metadata.drop_all))
+    event_loop.run_until_complete(connection.run_sync(BaseDBModel.metadata.drop_all))
 
 
 @pytest_asyncio.fixture

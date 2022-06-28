@@ -38,17 +38,17 @@ class AppFactory:
     def _register_views(cls, app: FastAPI):
         # from apps.attachment.views import router as attachment_router
         # from apps.chat.views import router as chat_router
-        # from apps.classroom.views import router as classroom_router
+        from apps.classroom.views import router as classroom_router
         from apps.user.views import router as user_router
 
         app.include_router(
             user_router,
             prefix=''.join([API_V1_PREFIX, 'auth/user']),
         )
-        # app.include_router(
-        #     classroom_router,
-        #     prefix=''.join([API_V1_PREFIX, 'classroom']),
-        # )
+        app.include_router(
+            classroom_router,
+            prefix=''.join([API_V1_PREFIX, 'classroom']),
+        )
         # app.include_router(
         #     attachment_router,
         #     prefix=''.join([API_V1_PREFIX, 'attachments']),

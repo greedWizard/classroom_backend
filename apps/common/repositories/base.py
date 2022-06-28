@@ -16,13 +16,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from apps.common.config import config
 from apps.common.database import (
     async_session,
-    DBModel,
     test_session,
 )
+from apps.common.models import BaseDBModel
 
 
 class AbstractBaseRepository(ABC):
-    _model: DBModel = NotImplemented
+    _model: BaseDBModel = NotImplemented
     _session_factory: Callable = async_session
 
     def get_session(self) -> AsyncSession:
@@ -80,7 +80,7 @@ class ReadOnlyRepository(AbstractBaseRepository):
         offset: int = 0,
         limit: int = None,
         **filters,
-    ) -> list[DBModel]:
+    ) -> list[BaseDBModel]:
         """Fetch list of object with the specific criteria."""
         if not ordering:
             ordering = self.default_ordering
@@ -102,7 +102,7 @@ class ReadOnlyRepository(AbstractBaseRepository):
         self,
         ordering: list[str] = None,
         **filters,
-    ) -> Union[DBModel, None]:
+    ) -> Union[BaseDBModel, None]:
         if not ordering:
             ordering = self.default_ordering
 
@@ -123,13 +123,13 @@ class ReadOnlyRepository(AbstractBaseRepository):
             result = await session.execute(statement=statement)
             return result.scalar()
 
-    async def refresh(self, obj: DBModel) -> DBModel:
+    async def refresh(self, obj: BaseDBModel) -> BaseDBModel:
         """Refreshes object and returns actual version from database."""
         return await self.retrieve(id=obj.id)
 
 
 class CreateRepository(AbstractBaseRepository):
-    async def create(self, **kwargs) -> DBModel:
+    async def create(self, **kwargs) -> BaseDBModel:
         created_object = self._model(**kwargs)
 
         async with self.get_session() as session:
@@ -137,7 +137,7 @@ class CreateRepository(AbstractBaseRepository):
             await session.commit()
             return created_object
 
-    async def get_or_create(self, **defaults) -> tuple[DBModel, bool]:
+    async def get_or_create(self, **defaults) -> tuple[BaseDBModel, bool]:
         created = False
 
         async with self.get_session() as session:
@@ -173,7 +173,7 @@ class CRUDRepository(
     ReadOnlyRepository,
     # DeleteRepository,
 ):
-    async def update_object(self, obj: DBModel, **values) -> DBModel:
+    async def update_object(self, obj: BaseDBModel, **values) -> BaseDBModel:
         """Updates specific object with values."""
         await self.update(values=values, id=obj.id)
         return await self.refresh(obj=obj)
@@ -183,7 +183,7 @@ class CRUDRepository(
         values: dict[str, Any],
         ordering: list[str] = None,
         **filters,
-    ) -> DBModel:
+    ) -> BaseDBModel:
         """Updates first object matching provided filters and returns it."""
         updated_rows = await self.update(values=values, **filters)
 

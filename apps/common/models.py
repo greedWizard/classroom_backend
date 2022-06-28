@@ -1,10 +1,14 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import (
+    as_declarative,
+    relationship,
+)
 
 from apps.common.utils import get_current_datetime
 
 
-class BaseMetaData:
+@as_declarative()
+class BaseDBModel:
     id = sa.Column(
         sa.Integer,
         primary_key=True,

@@ -1,17 +1,6 @@
-from typing import (
-    NewType,
-    Union,
-)
+from typing import Union
 
-from tortoise import (
-    fields,
-    models,
-)
-from tortoise.exceptions import NoValuesFetched
-from tortoise.validators import (
-    MaxValueValidator,
-    MinValueValidator,
-)
+import sqlalchemy as sa
 
 from apps.classroom.constants import (
     HomeWorkAssignmentStatus,
@@ -20,38 +9,22 @@ from apps.classroom.constants import (
 )
 from apps.common.models import (
     AuthorAbstract,
-    TimeStampAbstract,
+    BaseDBModel,
 )
 
 
-UserModel = NewType('UserModel', models.Model)
+class Room(BaseDBModel, AuthorAbstract):
+    __tablename__ = 'rooms'
 
-
-class Room(TimeStampAbstract, AuthorAbstract):
-    id = fields.IntField(pk=True)
-    name = fields.CharField(max_length=1000)
-    description = fields.TextField(blank=True, null=True)
-    join_slug = fields.CharField(max_length=256)
-
-    class Meta:
-        table = 'rooms'
+    name = sa.Column(sa.String(100), nullable=False)
+    description = sa.Column(sa.String(250))
+    join_slug = sa.Column(sa.String(256))
 
     def __str__(self) -> str:
         return f'{self.name[:50]} {self.description}'
 
     def __repr__(self) -> str:
         return f'<{self.name[:50]} {self.description}>'
-
-    @property
-    def participations_count(self) -> int:
-        try:
-            return len(self.participations)
-        except NoValuesFetched:
-            return 0
-
-    @property
-    def join_full_link(self) -> str:
-        return f'/api/v1/classroom/join/{self.join_slug}'
 
 
 class Participation(TimeStampAbstract, AuthorAbstract):
