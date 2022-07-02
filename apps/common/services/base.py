@@ -167,8 +167,7 @@ class CreateUpdateService(IServiceBase):
             created_object = await self._repository.create(**attrs)
         except ObjectAlreadyExistsException:
             return None, {'error': self.error_messages['create']}
-        schema_object = self.wrap_object(created_object)
-        return schema_object, {}
+        return created_object, {}
 
     @action
     @atomic
@@ -224,10 +223,13 @@ class RetrieveFetchServiceMixin(IServiceBase):
     async def fetch(
         self,
         _ordering: List = [],
+        join: list[str] = None,
         **filters,
     ):
-        async with self._repository() as repo:
-            return await repo.fetch(ordering=_ordering, **filters), None
+        return (
+            await self._repository.fetch(join=join, ordering=_ordering, **filters),
+            None,
+        )
 
     @action
     async def retrieve(self, _join: Optional[list[str]] = None, **filters):
@@ -249,16 +251,6 @@ class DeleteMixin(IServiceBase):
     @action
     async def delete(self, **filters):
         return await self._repository.delete(**filters), None
-
-    @action
-    async def delete_by_id(self, id: int):
-        queryset = await self.get_queryset(management=True)
-
-        if not len(await queryset):
-            return False, {'id': 'Operation not allowed'}
-
-        await queryset.filter(id=id).first().delete()
-        return True, None
 
     @action
     async def bulk_delete(

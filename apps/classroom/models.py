@@ -114,7 +114,7 @@ class AttachmentsCountMixin:
         return len(self.attachments)
 
 
-class RoomPost(BaseDBModel, AttachmentsCountMixin):
+class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
     __tablename__ = 'posts'
 
     title = sa.Column(sa.String(200), nullable=False)

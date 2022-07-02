@@ -51,7 +51,7 @@ async def create_new_room_post(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return RoomPostCreateSuccessSchema.from_orm(room_post)
+    return room_post
 
 
 @room_posts_router.put(
@@ -69,12 +69,12 @@ async def update_room_post(
     room_post, errors = await room_post_service.update(
         room_post_id,
         room_postUpdateSchema,
-        fetch_related=['author', 'room', 'room__author'],
+        join=['author', 'room'],
     )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return await make_room_post_schema(room_post)
+    return room_post
 
 
 @room_posts_router.get(
@@ -90,19 +90,14 @@ async def get_room_posts(
 ):
     room_post_service = RoomPostService(user)
     room_posts, errors = await room_post_service.fetch(
-        {
-            'room_id': room_id,
-        },
         _ordering=ordering,
-        _select_related=['author'],
-        _prefetch_related=['attachments'],
+        room_id=room_id,
+        join=['author'],
     )
 
     if errors:
-        raise HTTPException(status=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return paginate(
-        [RoomPostListItemSchema.from_orm(room_post) for room_post in room_posts],
-    )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
+    return paginate(room_posts)
 
 
 @room_posts_router.get(
@@ -184,7 +179,9 @@ async def delete_room_post(
     user: User = Depends(get_current_user),
 ):
     room_post_service = RoomPostService(user)
-    success, error_messages = await room_post_service.delete_by_id(room_post_id)
+    success, error_messages = await room_post_service.delete(
+        id=room_post_id,
+    )
 
     if not success:
         raise HTTPException(

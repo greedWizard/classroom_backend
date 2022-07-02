@@ -11,6 +11,7 @@ from fastapi.applications import FastAPI
 
 from apps.classroom.repositories import RoomRepository
 from apps.classroom.repositories.participation_repository import ParticipationRepository
+from apps.classroom.repositories.post_repository import RoomPostRepository
 from apps.common.database import test_engine
 from apps.common.factory import AppFactory
 from apps.common.models.base import BaseDBModel
@@ -58,6 +59,11 @@ async def room_repository():
 @pytest_asyncio.fixture
 async def participation_repository():
     return ParticipationRepository()
+
+
+@pytest_asyncio.fixture
+async def room_post_repository():
+    return RoomPostRepository()
 
 
 @pytest_asyncio.fixture

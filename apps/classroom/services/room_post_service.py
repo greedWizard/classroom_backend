@@ -1,15 +1,50 @@
 from scheduler.tasks.classroom import notify_room_post_created
 
 from apps.classroom.constants import ParticipationRoleEnum
-from apps.classroom.models import RoomPost
+from apps.classroom.models import (
+    Participation,
+    RoomPost,
+)
+from apps.classroom.repositories.participation_repository import ParticipationRepository
+from apps.classroom.repositories.post_repository import RoomPostRepository
+from apps.classroom.repositories.room_repository import RoomRepository
 from apps.classroom.schemas import RoomPostEmailNotificationSchema
-from apps.classroom.services.base import AbstractRoomPostService
+from apps.classroom.schemas.room_posts import RoomPostCreateSuccessSchema
 from apps.common.config import config
+from apps.common.services.author import AuthorMixin
+from apps.common.services.base import CRUDService
 from apps.common.services.decorators import action
 
 
-class RoomPostService(AbstractRoomPostService):
-    model = RoomPost
+class RoomPostService(AuthorMixin, CRUDService):
+    _repository: RoomPostRepository = RoomPostRepository()
+    _participation_repository: ParticipationRepository = ParticipationRepository()
+    _room_repository: RoomRepository = RoomRepository()
+
+    schema_map = {
+        'create': RoomPostCreateSuccessSchema,
+    }
+
+    async def validate_description(self, value: str):
+        if not value:
+            return True, None
+        if len(value) > config.DESCRIPTION_MAX_LENGTH:
+            return (
+                False,
+                f'Description should be less than {config.TITLE_MAX_LENGTH}'
+                ' characters.',
+            )
+        return True, None
+
+    async def validate_title(self, value: str):
+        if not value:
+            return False, 'This field is required'
+        if len(value) > config.TITLE_MAX_LENGTH:
+            return (
+                False,
+                f'Title should be less than {config.TITLE_MAX_LENGTH} characters.',
+            )
+        return True, None
 
     async def _notify_room_post_create(self, room_post: RoomPost):
         emails = await room_post.room.participations.filter(
@@ -30,14 +65,67 @@ class RoomPostService(AbstractRoomPostService):
                 room_post=email_subject,
             )
 
-    @action
-    async def create(self, *args, **kwargs):
-        room_post, errors = await super().create(
-            *args,
-            fetch_related=['author', 'room', 'room__author'],
-            **kwargs,
+    async def _check_participant_permission(
+        self,
+        participation: Participation,
+    ):
+        if not participation:
+            return False
+        if not participation.can_manage_posts:
+            return False
+        return True
+
+    async def _get_participation_by_room_post(
+        self,
+        room_post_id: int,
+    ) -> Participation:
+        room_post: RoomPost = await self._repository.retrieve(id=room_post_id)
+        return await self._participation_repository.retrieve(
+            room_id=room_post.room_id,
+            user_id=self.user.id,
         )
 
-        if room_post:
-            await self._notify_room_post_create(room_post)
-        return room_post, errors
+    @action
+    async def fetch(self, _ordering, join: list[str] = None, **filters):
+        if 'room_id' in filters:
+            if not await self._participation_repository.count(
+                room_id=filters['room_id'],
+                user_id=self.user.id,
+            ):
+                return None, {'error': 'Access denied!'}
+        return await super().fetch(_ordering, join, **filters)
+
+    @action
+    async def update(
+        self,
+        id,
+        updateSchema,
+        join: list[str] = None,
+        exclude_unset: bool = True,
+    ):
+        participation = await self._get_participation_by_room_post(id)
+
+        if not await self._check_participant_permission(participation):
+            return None, {'error': 'You are not allowed to do that.'}
+        return await super().update(id, updateSchema, join, exclude_unset)
+
+    @action
+    async def create(self, createSchema, exclude_unset: bool = False):
+        participation: Participation = await self._participation_repository.retrieve(
+            user_id=self.user.id,
+            room_id=createSchema.room_id,
+        )
+
+        if not await self._check_participant_permission(participation):
+            return None, {'error': 'You are not allowed to do that.'}
+        return await super().create(createSchema, exclude_unset)
+
+    @action
+    async def delete(self, **filters):
+        if 'id' in filters:
+            id = filters['id']
+            participation = await self._get_participation_by_room_post(id)
+
+            if not await self._check_participant_permission(participation):
+                return None, {'error': 'You are not allowed to do that.'}
+        return await super().delete(**filters)

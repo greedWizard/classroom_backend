@@ -79,10 +79,19 @@ class ReadOnlyRepository(AbstractBaseRepository):
             return query.order_by(*ordering_fields)
         return query
 
+    async def _get_join_options_recursive(self, column: str):
+        fields = column.split('.')
+        option = joinedload(fields.pop(0))
+
+        for nested_field in fields:
+            option = option.joinedload(nested_field)
+        return option
+
     async def _join_statement(self, statement, columns: list[str]):
-        columns = [self._get_column_recursive(column) for column in columns]
-        for column in columns:
-            statement = statement.options(joinedload(column))
+        load_options = [
+            await self._get_join_options_recursive(column) for column in columns
+        ]
+        statement = statement.options(*load_options)
         return statement
 
     async def _fetch_statement(
@@ -98,7 +107,10 @@ class ReadOnlyRepository(AbstractBaseRepository):
         if not ordering:
             ordering = self.default_ordering
         if join:
-            statement = await self._join_statement(statement=statement, columns=join)
+            statement = await self._join_statement(
+                statement=statement,
+                columns=join,
+            )
 
         statement = statement.filter_by(**filters)
         statement = await self._order_query(
@@ -130,8 +142,8 @@ class ReadOnlyRepository(AbstractBaseRepository):
         )
 
         async with self.get_session() as session:
-            result = await session.execute(statement=statement)
-            return result.scalars().all()
+            result = await session.execute(statement)
+            return result.unique().scalars().all()
 
     async def retrieve(
         self,

@@ -23,7 +23,6 @@ class RoomNestedSchema(RoomBaseSchema, NormalizedDatetimeModel):
     id: int
     name: str
     created_at: datetime
-    author: AuthorSchema
 
     class Config:
         orm_mode = True
