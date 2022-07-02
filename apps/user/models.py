@@ -21,9 +21,6 @@ class User(BaseDBModel):
     is_banned = sa.Column(sa.Boolean, default=False)
     last_login = sa.Column(sa.DateTime)
 
-    class Meta:
-        table = 'users'
-
     def __str__(self) -> str:
         return (
             f'{self.first_name} {self.last_name} {self.email} active={self.is_active}'
@@ -31,9 +28,6 @@ class User(BaseDBModel):
 
     def __repr__(self) -> str:
         return f'<User {self.first_name} {self.last_name} {self.email} active={self.is_active}>'
-
-    async def is_participating(self, room_id: int) -> bool:
-        return await self.participations.filter(room_id=room_id).exists()
 
     @property
     def full_name(self):

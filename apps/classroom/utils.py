@@ -2,16 +2,11 @@ from apps.classroom.schemas import (
     HomeworkAssignmentDetailSchema,
     RoomPostDetailSchema,
 )
-from apps.classroom.schemas.common import (
-    RoomNestedSchema,
-    RoomPostListItemSchema,
-)
-from apps.classroom.schemas.rooms import RoomDetailSchema
+from apps.classroom.schemas.common import RoomNestedSchema
 from apps.user.schemas import AuthorSchema
 
 from .models import (
     HomeworkAssignment,
-    Room,
     RoomPost,
 )
 
@@ -52,30 +47,4 @@ async def make_room_post_schema(room_post: RoomPost):
         updated_at=room_post.updated_at,
         attachments_count=room_post.attachments_count,
         type=room_post.type,
-    )
-
-
-async def make_room_detail_schema(
-    room: Room,
-    fetch_posts: bool = True,
-):
-    if not room:
-        return None
-
-    room_posts = []
-    if fetch_posts:
-        room_posts = [
-            RoomPostListItemSchema.from_orm(room_post) for room_post in room.room_posts
-        ]
-
-    return RoomDetailSchema(
-        name=room.name,
-        description=room.description,
-        id=room.id,
-        participations_count=room.participations_count,
-        created_at=room.created_at,
-        updated_at=room.updated_at,
-        author=AuthorSchema.from_orm(room.author),
-        join_slug=room.join_slug,
-        room_posts=room_posts,
     )

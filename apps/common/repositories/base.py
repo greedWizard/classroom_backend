@@ -7,11 +7,14 @@ from typing import (
 
 import sqlalchemy
 from sqlalchemy import (
+    delete,
     func,
     select,
     update,
 )
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from apps.common.config import config
 from apps.common.database import (
@@ -19,11 +22,13 @@ from apps.common.database import (
     test_session,
 )
 from apps.common.models.base import BaseDBModel
+from apps.common.repositories.exceptions import ObjectAlreadyExistsException
 
 
 class AbstractBaseRepository(ABC):
     _model: BaseDBModel = NotImplemented
     _session_factory: Callable = async_session
+    _integrity_error: Exception = IntegrityError
 
     def get_session(self) -> AsyncSession:
         return self._session_factory()
@@ -74,25 +79,55 @@ class ReadOnlyRepository(AbstractBaseRepository):
             return query.order_by(*ordering_fields)
         return query
 
+    async def _join_statement(self, statement, columns: list[str]):
+        columns = [self._get_column_recursive(column) for column in columns]
+        for column in columns:
+            statement = statement.options(joinedload(column))
+        return statement
+
+    async def _fetch_statement(
+        self,
+        ordering: list[str] = None,
+        join: list[str] = None,
+        offset: int = None,
+        limit: int = None,
+        **filters,
+    ):
+        statement = select(self._model)
+
+        if not ordering:
+            ordering = self.default_ordering
+        if join:
+            statement = await self._join_statement(statement=statement, columns=join)
+
+        statement = statement.filter_by(**filters)
+        statement = await self._order_query(
+            query=statement,
+            ordering=ordering,
+        )
+
+        if offset:
+            statement = statement.offset(offset)
+        if limit:
+            statement = statement.limit(limit)
+        return statement
+
     async def fetch(
         self,
         ordering: list[str] = None,
+        join: list[str] = None,
         offset: int = 0,
         limit: int = None,
         **filters,
     ) -> list[BaseDBModel]:
         """Fetch list of object with the specific criteria."""
-        if not ordering:
-            ordering = self.default_ordering
-
-        statement = await self._order_query(
-            query=select(self._model).filter_by(**filters),
+        statement = await self._fetch_statement(
             ordering=ordering,
+            join=join,
+            offset=offset,
+            limit=limit,
+            **filters,
         )
-        statement = statement.offset(offset)
-
-        if limit:
-            statement = statement.limit()
 
         async with self.get_session() as session:
             result = await session.execute(statement=statement)
@@ -101,16 +136,16 @@ class ReadOnlyRepository(AbstractBaseRepository):
     async def retrieve(
         self,
         ordering: list[str] = None,
+        join: list[str] = None,
         **filters,
     ) -> Union[BaseDBModel, None]:
-        if not ordering:
-            ordering = self.default_ordering
+        statement = await self._fetch_statement(
+            ordering=ordering,
+            join=join,
+            **filters,
+        )
 
         async with self.get_session() as session:
-            statement = await self._order_query(
-                query=select(self._model).filter_by(**filters),
-                ordering=ordering,
-            )
             return (await session.execute(statement)).scalars().first()
 
     async def exists(self, **filters) -> bool:
@@ -123,9 +158,10 @@ class ReadOnlyRepository(AbstractBaseRepository):
             result = await session.execute(statement=statement)
             return result.scalar()
 
-    async def refresh(self, obj: BaseDBModel) -> BaseDBModel:
+    async def refresh(self, obj: BaseDBModel, join: list[str] = None) -> BaseDBModel:
         """Refreshes object and returns actual version from database."""
-        return await self.retrieve(id=obj.id)
+        if isinstance(obj, self._model):
+            return await self.retrieve(id=obj.id, join=join)
 
 
 class CreateRepository(AbstractBaseRepository):
@@ -134,7 +170,10 @@ class CreateRepository(AbstractBaseRepository):
 
         async with self.get_session() as session:
             session.add(created_object)
-            await session.commit()
+            try:
+                await session.commit()
+            except self._integrity_error as e:
+                raise ObjectAlreadyExistsException(e)
             return created_object
 
     async def get_or_create(self, **defaults) -> tuple[BaseDBModel, bool]:
@@ -167,11 +206,21 @@ class CreateUpdateRepository(CreateRepository, UpdateRepository):
     pass
 
 
+class DeleteRepository(AbstractBaseRepository):
+    async def delete(self, **filters):
+        statement = delete(self._model).filter_by(**filters)
+
+        async with self.get_session() as session:
+            result = await session.execute(statement)
+            await session.commit()
+            return result.rowcount
+
+
 class CRUDRepository(
     CreateRepository,
     UpdateRepository,
     ReadOnlyRepository,
-    # DeleteRepository,
+    DeleteRepository,
 ):
     async def update_object(self, obj: BaseDBModel, **values) -> BaseDBModel:
         """Updates specific object with values."""
@@ -181,14 +230,11 @@ class CRUDRepository(
     async def update_and_return(
         self,
         values: dict[str, Any],
-        ordering: list[str] = None,
+        join: list[str] = None,
         **filters,
     ) -> BaseDBModel:
         """Updates first object matching provided filters and returns it."""
         updated_rows = await self.update(values=values, **filters)
 
-        if not ordering:
-            ordering = self.default_ordering
-
         if updated_rows:
-            return await self.retrieve(ordering=ordering, **filters)
+            return await self.retrieve(join=join, **filters)

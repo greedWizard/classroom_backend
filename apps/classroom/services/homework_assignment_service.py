@@ -12,6 +12,7 @@ from apps.classroom.models import (
     HomeworkAssignment,
     Participation,
 )
+from apps.classroom.repositories.assignment import HomeworkAssignmentRepository
 from apps.classroom.schemas import HomeworkAssignmentRequestChangesSchema
 from apps.classroom.services.room_post_service import RoomPostService
 from apps.common.services.author import AuthorMixin
@@ -19,7 +20,7 @@ from apps.common.services.base import CRUDService
 
 
 class AssignmentService(AuthorMixin, CRUDService):
-    model = HomeworkAssignment
+    _repository: HomeworkAssignmentRepository = HomeworkAssignmentRepository
 
     @property
     def room_post_service(self):

@@ -3,10 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from apps.classroom.schemas.common import (
-    RoomBaseSchema,
-    RoomPostListItemSchema,
-)
+from apps.classroom.schemas.common import RoomBaseSchema
 from apps.common.schemas import NormalizedDatetimeModel
 from apps.user.schemas import AuthorSchema
 
@@ -28,7 +25,6 @@ class RoomDetailSchema(RoomBaseSchema, NormalizedDatetimeModel):
     updated_at: Optional[datetime]
     author: AuthorSchema
     join_slug: str
-    room_posts: list[RoomPostListItemSchema]
 
 
 class RoomListItemSchema(RoomBaseSchema, NormalizedDatetimeModel):

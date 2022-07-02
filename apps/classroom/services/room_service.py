@@ -1,95 +1,122 @@
 import uuid
-from typing import Dict
+from typing import (
+    Dict,
+    Union,
+)
 
-from tortoise.expressions import Q
-from tortoise.transactions import atomic
+from pydantic import BaseModel
 
 from apps.classroom.constants import ParticipationRoleEnum
-from apps.classroom.models import Room
+from apps.classroom.models import Participation
+from apps.classroom.repositories.participation_repository import ParticipationRepository
+from apps.classroom.repositories.room_repository import RoomRepository
 from apps.classroom.schemas import ParticipationCreateSchema
-from apps.classroom.services.participation_service import ParticipationService
+from apps.classroom.schemas.rooms import (
+    RoomCreateSuccessSchema,
+    RoomDetailSchema,
+)
 from apps.common.services.author import AuthorMixin
 from apps.common.services.base import CRUDService
 from apps.common.services.decorators import action
-from apps.user.models import User
 
 
 class RoomService(AuthorMixin, CRUDService):
-    model = Room
+    _repository: RoomRepository = RoomRepository()
+    _participation_repository: ParticipationRepository = ParticipationRepository()
 
-    def __init__(self, user: User, *args, **kwargs) -> None:
-        self.user = user
-        super().__init__(user, *args, **kwargs)
-
-    async def get_queryset(self, management: bool = False):
-        expression = Q(participations__user_id=self.user.id)
-
-        if management:
-            expression &= Q(participations__role=ParticipationRoleEnum.host) | Q(
-                participations__role=ParticipationRoleEnum.moderator,
-            )
-        return self.model.filter(expression).distinct()
+    schema_map: dict[str, BaseModel] = {
+        'create': RoomCreateSuccessSchema,
+        'retrieve_detailed': RoomDetailSchema,
+    }
 
     def generate_join_slug(self):
         return uuid.uuid4().hex
 
-    @property
-    def participation_service(self):
-        return ParticipationService(user=self.user)
-
     async def validate(self, attrs: Dict) -> Dict:
         attrs = await super().validate(attrs)
-
         attrs['join_slug'] = uuid.uuid4().hex
         return attrs
 
     @action
-    @atomic()
     async def create(self, createSchema, exclude_unset: bool = False):
         created_room, errors = await super().create(createSchema, exclude_unset)
 
-        if not errors:
-            await self.participation_service.create(
-                ParticipationCreateSchema(
-                    user_id=self.user.id,
-                    room_id=created_room.id,
-                    role=ParticipationRoleEnum.host,
-                    author_id=self.user.id,
-                ),
-            )
+        if errors:
+            return None, errors
 
-        # TODO: логировать создание комнаты
+        participations_schema = ParticipationCreateSchema(
+            user_id=self.user.id,
+            room_id=created_room.id,
+            role=ParticipationRoleEnum.host,
+            author_id=self.user.id,
+        )
+        await self._participation_repository.create(
+            **participations_schema.dict(),
+        )
         return created_room, errors
 
     @action
     async def refresh_join_slug(self, room_id: int) -> Dict:
         """Create or refresh join link."""
-        participation, errors = await self.participation_service.retrieve(
+        participation: Participation = await self._participation_repository.retrieve(
             user_id=self.user.id,
             room_id=room_id,
-            _fetch_related=['room', 'user'],
         )
 
-        if errors:
-            return None, errors
-        if not participation.can_moderate_room():
+        if not participation:
+            return None, 'You are not allowed to perform this operation.'
+        if not participation.can_refresh_join_slug:
             return {}, 'You are not allowed to perform this operation.'
 
-        room, _ = await self.retrieve(id=room_id)
-        room.join_slug = self.generate_join_slug()
-        await room.save()
-
+        room = await self._repository.update_and_return(
+            values={'join_slug': self.generate_join_slug()},
+            id=room_id,
+        )
         return room.join_slug, None
 
-    async def _validate_delete(self, deleteSchema):
-        if not await self.participation_service.can_moderate_room(
-            room_id=self.current_action_attributes.get('id'),
+    @action
+    async def delete(self, **filters):
+        room_id = filters.pop('id')
+
+        participation: Participation = await self._participation_repository.retrieve(
             user_id=self.user.id,
-        ):
-            return None, 'You can not moderate this room'
-        return await super()._validate_delete(deleteSchema)
+            room_id=room_id,
+        )
+        permission_error = 'You are not allowed to do that.'
+
+        if not participation:
+            return None, permission_error
+        if not participation.can_delete_room:
+            return None, permission_error
+        deleted_rooms_count = await self._repository.delete(**filters)
+
+        await self._participation_repository.delete(
+            room_id=participation.room_id,
+        )
+        return deleted_rooms_count, None
 
     async def validate_name(self, value):
         if not value:
             return False, 'This field is required'
         return True, None
+
+    async def update(
+        self,
+        id: Union[str, None],
+        updateSchema,
+        exclude_unset: bool = True,
+        join: list[str] = None,
+    ):
+        participation: Participation = await self._participation_repository.retrieve(
+            room_id=id,
+            user_id=self.user.id,
+        )
+
+        if participation.can_update_room:
+            return await super().update(
+                id=id,
+                updateSchema=updateSchema,
+                join=join,
+                exclude_unset=exclude_unset,
+            )
+        return None, {'error': 'You are not allowed to do that.'}

@@ -27,6 +27,10 @@ class Room(BaseDBModel, AuthorAbstract):
         unique=True,
     )
 
+    @property
+    def participations_count(self):
+        return len(self.participations)
+
     def __str__(self) -> str:
         return f'{self.name[:50]} {self.description}'
 
@@ -50,13 +54,18 @@ class Participation(BaseDBModel, AuthorAbstract):
     )
 
     # relations
-    room_id: int = sa.Column(sa.Integer, sa.ForeignKey('rooms.id'), nullable=False)
+    room_id: int = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('rooms.id', ondelete='CASCADE'),
+        nullable=False,
+    )
     room = relationship(
         'Room',
         backref=backref(
             name='participations',
-            lazy='dynamic',
+            lazy='joined',
             uselist=True,
+            passive_deletes=True,
         ),
     )
     user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'), nullable=False)
@@ -64,7 +73,7 @@ class Participation(BaseDBModel, AuthorAbstract):
         'User',
         backref=backref(
             name='participations',
-            lazy='dynamic',
+            lazy='joined',
             uselist=True,
         ),
         foreign_keys=[user_id],
@@ -84,6 +93,18 @@ class Participation(BaseDBModel, AuthorAbstract):
 
     @property
     def can_remove_participants(self) -> bool:
+        return self.role in self.MODERATOR_ROLES
+
+    @property
+    def can_refresh_join_slug(self) -> bool:
+        return self.role in self.MODERATOR_ROLES
+
+    @property
+    def can_delete_room(self) -> bool:
+        return self.role == ParticipationRoleEnum.host
+
+    @property
+    def can_update_room(self):
         return self.role in self.MODERATOR_ROLES
 
 
@@ -111,7 +132,7 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin):
         'Room',
         backref=backref(
             name='posts',
-            lazy='dynamic',
+            lazy='joined',
             uselist=True,
         ),
     )

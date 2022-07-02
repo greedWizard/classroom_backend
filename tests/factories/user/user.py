@@ -5,8 +5,7 @@ import factory
 from apps.user.models import User
 from apps.user.repositories.user_repository import UserRepository
 from apps.user.utils import hash_string
-
-from .base import AsyncRepositoryFactory
+from tests.factories.base import AsyncRepositoryFactory
 
 
 class UserFactory(AsyncRepositoryFactory):

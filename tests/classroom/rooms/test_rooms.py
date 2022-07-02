@@ -1,55 +1,60 @@
-import asyncio
-
 import pytest
-import pytest_asyncio
 
 from fastapi import status
 from fastapi.applications import FastAPI
-from fastapi.testclient import TestClient
 
 from apps.classroom.constants import ParticipationRoleEnum
-from apps.classroom.models import (
-    Participation,
-    Room,
-)
-
-
-@pytest_asyncio.fixture
-async def room():
-    yield await Room.first()
+from apps.classroom.repositories.participation_repository import ParticipationRepository
+from apps.classroom.repositories.room_repository import RoomRepository
+from tests.client import FastAPITestClient
+from tests.factories.classroom.participation import ParticipationFactory
+from tests.factories.classroom.room import RoomFactory
+from tests.factories.user import UserFactory
 
 
 @pytest.mark.asyncio
 async def test_room_create_success(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    event_loop: asyncio.AbstractEventLoop,
-    room: Room,
+    client: FastAPITestClient,
+    room_repository: RoomRepository,
+    participation_repository: ParticipationRepository,
 ):
     url = app.url_path_for('create_new_room')
+    user = await UserFactory.create()
 
-    assert not room
+    assert not await room_repository.fetch()
 
+    room_name = 'fake name'
+    description = 'test description'
+
+    client.authorize(user=user)
     response = client.post(
         url,
         json={
-            'name': 'fake name',
-            'description': 'test description',
-        },
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
+            'name': room_name,
+            'description': description,
         },
     )
+    json_data = response.json()
 
-    assert response.status_code == status.HTTP_201_CREATED
-    await Room.first()
+    assert response.status_code == status.HTTP_201_CREATED, json_data
+    room = await room_repository.retrieve(
+        name=room_name,
+        description=description,
+        author_id=user.id,
+    )
+    assert room
+    assert await participation_repository.retrieve(
+        user_id=user.id,
+        room_id=room.id,
+        role=ParticipationRoleEnum.host,
+    )
 
 
 @pytest.mark.asyncio
 async def test_room_create_not_logged_in(
     app: FastAPI,
-    client: TestClient,
+    client: FastAPITestClient,
 ):
     url = app.url_path_for('create_new_room')
 
@@ -59,86 +64,79 @@ async def test_room_create_not_logged_in(
             'name': 'fake name',
             'description': 'test description',
         },
-        headers={
-            'Authorization': f'Bearer fake_token',
-        },
     )
-
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio
 async def test_room_refresh_invite_link(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
+    room_repository: RoomRepository,
 ):
-    url = app.url_path_for('refresh_join_slug', room_id=room.id)
-    previous_join_slug = room.join_slug
+    participation = await ParticipationFactory.create(role=ParticipationRoleEnum.host)
+    url = app.url_path_for('refresh_join_slug', room_id=participation.room.id)
+    previous_join_slug = participation.room.join_slug
 
-    response = client.post(
-        url,
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
-    )
+    client.authorize(participation.user)
+    response = client.post(url)
 
-    await room.refresh_from_db()
+    room = await room_repository.refresh(participation.room)
     assert response.status_code == status.HTTP_200_OK
     assert previous_join_slug != room.join_slug
 
 
 @pytest.mark.asyncio
 async def test_join_room_by_link_success(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
+    participation_repository: ParticipationRepository,
 ):
-    await Participation.all().delete()
-    url = app.url_path_for('join_room_by_link', join_slug=room.join_slug)
+    room = await RoomFactory.create()
+    user = await UserFactory.create()
 
-    response = client.get(
-        url,
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
+    client.authorize(user)
+    url = app.url_path_for('join_room_by_link', join_slug=room.join_slug)
+    response = client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+
+    participation = await participation_repository.retrieve(
+        user_id=user.id,
+        room_id=room.id,
     )
 
-    participation = await Participation.filter(room_id=room.id).first()
-    assert response.status_code == status.HTTP_200_OK
+    assert participation
     assert participation.room_id == room.id
     assert participation.role == ParticipationRoleEnum.participant
 
 
 @pytest.mark.asyncio
 async def test_join_room_by_link_already_in_room(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
+    participation_repository: ParticipationRepository,
 ):
+    participation = await ParticipationFactory.create()
+    room = participation.room
+
     url = app.url_path_for('join_room_by_link', join_slug=room.join_slug)
-    participations_count = await Participation.all().count()
+    client.authorize(participation.user)
 
-    response = client.get(
-        url,
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
-    )
+    participations_count = await participation_repository.count()
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert participations_count == await Participation.all().count()
+    response = client.get(url)
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
+    assert await participation_repository.count() == participations_count
 
 
 @pytest.mark.asyncio
 async def test_join_room_by_link_not_logged_in(
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
 ):
+    room = await RoomFactory.create()
     url = app.url_path_for('join_room_by_link', join_slug=room.join_slug)
 
     response = client.get(url)
@@ -147,29 +145,30 @@ async def test_join_room_by_link_not_logged_in(
 
 @pytest.mark.asyncio
 async def test_update_room_success(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
+    room_repository: RoomRepository,
 ):
-    await Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.host)
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.host,
+    )
+    room = participation.room
     url = app.url_path_for('update_room', room_id=room.id)
 
     new_room_name = 'Updated name'
     new_room_description = 'Updated description'
+
+    client.authorize(participation.user)
     response = client.put(
         url,
         json={
             'name': new_room_name,
             'description': new_room_description,
         },
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
     )
 
     assert response.status_code == status.HTTP_200_OK
-    await room.refresh_from_db()
+    room = await room_repository.refresh(room)
 
     assert room.name == new_room_name
     assert room.description == new_room_description
@@ -177,31 +176,30 @@ async def test_update_room_success(
 
 @pytest.mark.asyncio
 async def test_update_room_moderator(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
+    room_repository: RoomRepository,
 ):
-    await Participation.filter(room_id=room.id).update(
+    participation = await ParticipationFactory.create(
         role=ParticipationRoleEnum.moderator,
     )
-    url = app.url_path_for('update_room', room_id=room.id)
+    room = participation.room
 
+    url = app.url_path_for('update_room', room_id=room.id)
     new_room_name = 'Updated name'
     new_room_description = 'Updated description'
+
+    client.authorize(participation.user)
     response = client.put(
         url,
         json={
             'name': new_room_name,
             'description': new_room_description,
         },
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
     )
 
     assert response.status_code == status.HTTP_200_OK
-    await room.refresh_from_db()
+    room = await room_repository.refresh(room)
 
     assert room.name == new_room_name
     assert room.description == new_room_description
@@ -209,45 +207,47 @@ async def test_update_room_moderator(
 
 @pytest.mark.asyncio
 async def test_update_room_participant(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
+    room_repository: RoomRepository,
 ):
-    await Participation.filter(room_id=room.id).update(
+    participation = await ParticipationFactory.create(
         role=ParticipationRoleEnum.participant,
     )
+    room = participation.room
     url = app.url_path_for('update_room', room_id=room.id)
 
     new_room_name = 'Updated name'
     new_room_description = 'Updated description'
+
+    client.authorize(participation.user)
     response = client.put(
         url,
         json={
             'name': new_room_name,
             'description': new_room_description,
         },
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
     )
 
+    updated_room = await room_repository.refresh(room)
+
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert updated_room.name == room.name
+    assert updated_room.description == room.description
 
 
 @pytest.mark.asyncio
 async def test_update_room_not_logged_in(
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
 ):
-    await Participation.filter(room_id=room.id).update(
-        role=ParticipationRoleEnum.participant,
-    )
-    url = app.url_path_for('update_room', room_id=room.id)
+    participation = await ParticipationFactory.create()
+    room = participation.room
 
     new_room_name = 'Updated name'
     new_room_description = 'Updated description'
+
+    url = app.url_path_for('update_room', room_id=room.id)
     response = client.put(
         url,
         json={
@@ -261,22 +261,17 @@ async def test_update_room_not_logged_in(
 
 @pytest.mark.asyncio
 async def test_delete_room_participant(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
 ):
-    await Participation.filter(room_id=room.id).update(
+    participation = await ParticipationFactory.create(
         role=ParticipationRoleEnum.participant,
     )
-    url = app.url_path_for('delete_room', room_id=room.id)
+    room = participation.room
 
-    response = client.delete(
-        url,
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
-    )
+    url = app.url_path_for('delete_room', room_id=room.id)
+    client.authorize(participation.user)
+    response = client.delete(url)
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -284,9 +279,9 @@ async def test_delete_room_participant(
 @pytest.mark.asyncio
 async def test_delete_room_not_logged_in(
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
 ):
+    room = await RoomFactory.create()
     url = app.url_path_for('delete_room', room_id=room.id)
 
     response = client.delete(url)
@@ -295,38 +290,42 @@ async def test_delete_room_not_logged_in(
 
 @pytest.mark.asyncio
 async def test_room_get_detail(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
 ):
+    room = await RoomFactory.create()
+    participation = await ParticipationFactory.create(
+        room=room,
+        author=room.author,
+        user=room.author,
+        role=ParticipationRoleEnum.host,
+    )
+    client.authorize(participation.user)
     url = app.url_path_for('get_room', room_id=room.id)
 
-    response = client.get(
-        url,
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
-    )
+    response = client.get(url)
+    json_data = response.json()
 
     assert response.status_code == status.HTTP_200_OK
+    assert json_data['author']['id'] == room.author.id
 
 
 @pytest.mark.asyncio
 async def test_delete_room_success(
-    authentication_token: str,
     app: FastAPI,
-    client: TestClient,
-    room: Room,
+    client: FastAPITestClient,
+    participation_repository: ParticipationRepository,
+    room_repository: RoomRepository,
 ):
-    await Participation.filter(room_id=room.id).update(role=ParticipationRoleEnum.host)
-    url = app.url_path_for('delete_room', room_id=room.id)
-
-    response = client.delete(
-        url,
-        headers={
-            'Authorization': f'Bearer {authentication_token}',
-        },
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.host,
     )
+    room = participation.room
+    client.authorize(participation.user)
+    url = app.url_path_for('delete_room', room_id=room.id)
+    print(f'{participation.room_id=} {participation.user_id=}')
+    response = client.delete(url)
 
-    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.status_code == status.HTTP_204_NO_CONTENT, response.json()
+    assert not await room_repository.count()
+    assert not await participation_repository.count()

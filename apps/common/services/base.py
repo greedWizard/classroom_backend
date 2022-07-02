@@ -2,6 +2,7 @@ from typing import (
     Dict,
     List,
     NewType,
+    Optional,
     Tuple,
     Type,
     Union,
@@ -16,6 +17,7 @@ from apps.common.repositories.base import (
     AbstractBaseRepository,
     CRUDRepository,
 )
+from apps.common.repositories.exceptions import ObjectAlreadyExistsException
 from apps.common.services.decorators import action
 from apps.common.services.exceptions import ServiceMapException
 
@@ -62,10 +64,8 @@ class IServiceBase(SchemaMapMixin):
     def current_action_attributes(self):
         return self._action_attributes.get(self.action, {})
 
-    error_messages = {
-        'does_not_exist': 'Not found.',
-        'no_values_found': 'No values were found {values}.',
-        'already_exists': 'Already exists.',
+    error_messages: dict[str, str] = {
+        'create': f'Could not create new instance',
     }
     required_fields_map = {}
     _errors: Dict = {}
@@ -163,7 +163,10 @@ class CreateUpdateService(IServiceBase):
         if errors:
             return None, errors
 
-        created_object = await self._repository.create(**attrs)
+        try:
+            created_object = await self._repository.create(**attrs)
+        except ObjectAlreadyExistsException:
+            return None, {'error': self.error_messages['create']}
         schema_object = self.wrap_object(created_object)
         return schema_object, {}
 
@@ -184,6 +187,7 @@ class CreateUpdateService(IServiceBase):
         self,
         id: Union[int, str],
         updateSchema: UpdateSchema,
+        join: list[str] = None,
         exclude_unset: bool = True,
     ) -> Tuple[models.Model, Dict]:
         schema_dict = updateSchema.dict(exclude_unset=exclude_unset)
@@ -194,6 +198,7 @@ class CreateUpdateService(IServiceBase):
 
         updated_instance = await self._repository.update_and_return(
             values=attrs,
+            join=join,
             id=id,
         )
         return updated_instance, {}
@@ -225,8 +230,8 @@ class RetrieveFetchServiceMixin(IServiceBase):
             return await repo.fetch(ordering=_ordering, **filters), None
 
     @action
-    async def retrieve(self, **filters):
-        return await self._repository.retrieve(**filters), {}
+    async def retrieve(self, _join: Optional[list[str]] = None, **filters):
+        return await self._repository.retrieve(join=_join, **filters), {}
 
     @action
     async def exists(self, **filters):
@@ -242,14 +247,8 @@ class DeleteMixin(IServiceBase):
         return await qs.filter(**kwargs).exists()
 
     @action
-    async def delete(self, deleteSchema: DeleteSchema, exclude_unset: bool = True):
-        delete_schema_dict = deleteSchema.dict(exclude_unset=exclude_unset)
-        self._action_attributes[self.action] = delete_schema_dict
-        attrs, errors = await self._validate_delete(self.current_action_attributes)
-
-        if errors:
-            return None, errors
-        return await self.model.filter(**attrs).delete(), None
+    async def delete(self, **filters):
+        return await self._repository.delete(**filters), None
 
     @action
     async def delete_by_id(self, id: int):

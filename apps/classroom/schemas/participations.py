@@ -66,3 +66,6 @@ class ParticipationSuccessSchema(BaseModel):
     user_id: int
     role: Optional[str]
     author_id: int
+
+    class Config:
+        orm_mode = True
