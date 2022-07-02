@@ -15,49 +15,6 @@ from apps.classroom.models import (
     Room,
     RoomPost,
 )
-from apps.user.models import User
-
-
-@pytest_asyncio.fixture
-async def room(fake: Faker):
-    user = await User.first()
-    room, _ = await Room.get_or_create(
-        defaults={
-            'id': 1,
-            'name': fake.text(),
-            'description': fake.text()[:50],
-            'text': fake.text(),
-            'join_slug': fake.md5(),
-            'author': user,
-            'updated_by': user,
-        },
-    )
-    await Participation.get_or_create(
-        defaults={
-            'id': 1,
-            'role': ParticipationRoleEnum.host,
-            'room': room,
-            'author': user,
-            'user': user,
-            'updated_by': user,
-        },
-    )
-    await room.fetch_related('room_posts')
-    yield room
-
-
-@pytest_asyncio.fixture
-async def room_post(user, room):
-    room_post = await RoomPost.first()
-
-    if not room_post:
-        await RoomPost.create(
-            author=user,
-            room=room,
-            updated_by=user,
-            title='empty title',
-        )
-    yield room_post
 
 
 @pytest.mark.asyncio

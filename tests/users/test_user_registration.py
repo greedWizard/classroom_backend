@@ -1,3 +1,4 @@
+from datetime import datetime
 import pytest
 from faker import Faker
 from pytest_mock import MockerFixture
@@ -53,16 +54,17 @@ async def test_user_registration_success(
     response = client.post(url, json=user_creds)
 
     assert response.status_code == status.HTTP_201_CREATED, response.json()
-    assert len(await user_repository.fetch()) == user_count + 1
+    assert await user_repository.count() == user_count + 1
 
-    user = (await user_repository.fetch())[0]
+    user = await user_repository.retrieve(email=email)
 
     assert user.first_name == user_creds['first_name']
     assert user.last_name == user_creds['last_name']
     assert user.middle_name == user_creds['middle_name']
     assert user.password == hash_string(password)
     assert user.activation_token
-    assert user.created_at.date()
+    assert user.created_at.date() == datetime.utcnow().date()
+    assert not user.is_active
 
 
 @pytest.mark.asyncio

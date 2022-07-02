@@ -131,7 +131,7 @@ class ReadOnlyRepository(AbstractBaseRepository):
 
         async with self.get_session() as session:
             result = await session.execute(statement=statement)
-            return [obj for obj in result.scalars()]
+            return result.scalars().all()
 
     async def retrieve(
         self,
