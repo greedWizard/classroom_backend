@@ -206,7 +206,7 @@ async def test_update_room_post_success(
     new_room_post_description = 'Updated description'
     new_room_post_text = 'updated text'
 
-    url = app.url_path_for('update_room_post', room_post_id=room_post.id)
+    url = app.url_path_for('update_room_post', post_id=room_post.id)
     client.authorize(user)
     response = client.put(
         url,
@@ -245,7 +245,7 @@ async def test_update_room_post_moderator(
     new_room_post_description = 'Updated description'
     new_room_post_text = 'updated text'
 
-    url = app.url_path_for('update_room_post', room_post_id=room_post.id)
+    url = app.url_path_for('update_room_post', post_id=room_post.id)
     client.authorize(user)
     response = client.put(
         url,
@@ -284,7 +284,7 @@ async def test_update_room_post_participant(
     new_room_post_description = 'Updated description'
     new_room_post_text = 'updated text'
 
-    url = app.url_path_for('update_room_post', room_post_id=room_post.id)
+    url = app.url_path_for('update_room_post', post_id=room_post.id)
     client.authorize(user)
     response = client.put(
         url,
@@ -314,7 +314,7 @@ async def test_update_room_post_not_logged_in(
 ):
     room_post = await RoomPostFactory.create()
 
-    url = app.url_path_for('update_room_post', room_post_id=room_post.id)
+    url = app.url_path_for('update_room_post', post_id=room_post.id)
 
     new_room_post_title = 'Updated title2'
     new_room_post_description = 'Updated description2'
@@ -349,7 +349,7 @@ async def test_delete_room_post_participant(
         room=participation.room,
     )
 
-    url = app.url_path_for('delete_room_post', room_post_id=room_post.id)
+    url = app.url_path_for('delete_room_post', post_id=room_post.id)
 
     client.authorize(participation.user)
     response = client.delete(url)
@@ -365,7 +365,7 @@ async def test_delete_room_post_not_logged_in(
 ):
     room_post = await RoomPostFactory.create()
 
-    url = app.url_path_for('delete_room_post', room_post_id=room_post.id)
+    url = app.url_path_for('delete_room_post', post_id=room_post.id)
 
     response = client.delete(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -384,7 +384,7 @@ async def test_delete_room_success(
         room=participation.room,
     )
 
-    url = app.url_path_for('delete_room_post', room_post_id=room_post.id)
+    url = app.url_path_for('delete_room_post', post_id=room_post.id)
     client.authorize(participation.user)
     response = client.delete(url)
 

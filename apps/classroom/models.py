@@ -63,7 +63,7 @@ class Participation(BaseDBModel, AuthorAbstract):
         'Room',
         backref=backref(
             name='participations',
-            lazy='joined',
+            
             uselist=True,
             passive_deletes=True,
         ),
@@ -73,7 +73,7 @@ class Participation(BaseDBModel, AuthorAbstract):
         'User',
         backref=backref(
             name='participations',
-            lazy='joined',
+            
             uselist=True,
         ),
         foreign_keys=[user_id],
@@ -107,6 +107,10 @@ class Participation(BaseDBModel, AuthorAbstract):
     def can_update_room(self):
         return self.role in self.MODERATOR_ROLES
 
+    @property
+    def can_manage_assignments(self):
+        return self.role in self.MODERATOR_ROLES
+
 
 class AttachmentsCountMixin:
     @property
@@ -132,7 +136,7 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
         'Room',
         backref=backref(
             name='posts',
-            lazy='joined',
+            
             uselist=True,
         ),
     )
@@ -141,7 +145,7 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
         backref=backref(
             name='post',
         ),
-        lazy='joined',
+        
         uselist=True,
     )
 
@@ -160,7 +164,7 @@ class HomeworkAssignment(BaseDBModel, AuthorAbstract):
         sa.Enum(HomeWorkAssignmentStatus),
         default=HomeWorkAssignmentStatus.assigned,
     )
-    rate = sa.Column(sa.Integer, nullable=False)
+    rate = sa.Column(sa.Integer)
     comment = sa.Column(sa.Text)
 
     # relations
@@ -169,7 +173,7 @@ class HomeworkAssignment(BaseDBModel, AuthorAbstract):
         'RoomPost',
         backref=backref(
             name='assignments',
-            lazy='joined',
+            
             uselist=True,
         ),
     )

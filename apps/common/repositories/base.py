@@ -47,7 +47,7 @@ class AbstractBaseRepository(ABC):
 
 
 class ReadOnlyRepository(AbstractBaseRepository):
-    default_ordering: list[str] = ('id',)
+    default_ordering: list[str] = []
 
     def _get_column_recursive(self, string: str):
         fields = string.split('.')
@@ -177,7 +177,7 @@ class ReadOnlyRepository(AbstractBaseRepository):
 
 
 class CreateRepository(AbstractBaseRepository):
-    async def create(self, **kwargs) -> BaseDBModel:
+    async def create(self, join: list[str] = None, **kwargs) -> BaseDBModel:
         created_object = self._model(**kwargs)
 
         async with self.get_session() as session:
@@ -186,6 +186,10 @@ class CreateRepository(AbstractBaseRepository):
                 await session.commit()
             except self._integrity_error as e:
                 raise ObjectAlreadyExistsException(e)
+
+            # Имеет ли это смысл?
+            if join:
+                return await self.retrieve(id=created_object.id, join=join)
             return created_object
 
     async def get_or_create(self, **defaults) -> tuple[BaseDBModel, bool]:

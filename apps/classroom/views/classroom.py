@@ -64,7 +64,7 @@ async def update_room(
     room, errors = await room_service.update(
         room_id,
         roomUpdateSchema,
-        join=['author'],
+        join=['author', 'participations'],
     )
 
     if errors:

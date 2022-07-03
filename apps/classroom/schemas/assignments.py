@@ -12,7 +12,7 @@ class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
     id: int
     created_at: datetime
     updated_at: datetime
-    assigned_room_post_id: int
+    post_id: int
     author: AuthorSchema
     status: str
     status_assigned: bool
@@ -26,8 +26,25 @@ class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
         orm_mode = True
 
 
+class HomeworkAssignmentCreateSuccessSchema(NormalizedDatetimeModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    post_id: int
+    author_id: int
+    status: str
+    status_assigned: bool
+    status_done: bool
+    status_request_changes: bool
+    comment: Optional[str] = ''
+    rate: Optional[int] = None
+
+    class Config(NormalizedDatetimeModel.Config):
+        orm_mode = True
+
+
 class HomeworkAssignmentCreateSchema(BaseModel):
-    assigned_room_post_id: int
+    post_id: int
 
 
 class HomeworkAssignmentRequestChangesSchema(BaseModel):

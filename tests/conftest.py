@@ -10,6 +10,7 @@ from faker.proxy import Faker
 from fastapi.applications import FastAPI
 
 from apps.classroom.repositories import RoomRepository
+from apps.classroom.repositories.assignment import HomeworkAssignmentRepository
 from apps.classroom.repositories.participation_repository import ParticipationRepository
 from apps.classroom.repositories.post_repository import RoomPostRepository
 from apps.common.database import test_engine
@@ -64,6 +65,11 @@ async def participation_repository():
 @pytest_asyncio.fixture
 async def room_post_repository():
     return RoomPostRepository()
+
+
+@pytest_asyncio.fixture
+async def assignment_repository():
+    return HomeworkAssignmentRepository()
 
 
 @pytest_asyncio.fixture

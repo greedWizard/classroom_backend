@@ -51,8 +51,8 @@ class AttachmentService(AuthorMixin, CRUDService):
             id__in=await self.model.filter(expression).values_list('id', flat=True),
         )
 
-    async def _can_attach_to_room_post(self, room_post_id: int):
-        return await self.participation_model.can_moderate(self.user, room_post_id)
+    async def _can_attach_to_room_post(self, post_id: int):
+        return await self.participation_model.can_moderate(self.user, post_id)
 
     async def validate_room_post_id(self, value: int):
         if not await self._can_attach_to_room_post(value):
@@ -87,10 +87,10 @@ class AttachmentService(AuthorMixin, CRUDService):
     async def create_for_room_post(
         self,
         attachmentCreateSchemaList: List[AttachmentCreateSchema],
-        room_post_id: int,
+        post_id: int,
     ):
         # TODO: как-то можно обощить все методы для присоединения файлов
-        room_post = await self.room_post_model.get(id=room_post_id)
+        room_post = await self.room_post_model.get(id=post_id)
 
         try:
             attachments = await self._create_attachable_files(
@@ -100,9 +100,9 @@ class AttachmentService(AuthorMixin, CRUDService):
             return False, {'attachment': str(e)}
 
         if not room_post:
-            return False, {'room_post_id': 'Room post not found'}
-        if not await self._can_attach_to_room_post(room_post_id):
-            return False, {'room_post_id': 'You can not moderate this room.'}
+            return False, {'post_id': 'Room post not found'}
+        if not await self._can_attach_to_room_post(post_id):
+            return False, {'post_id': 'You can not moderate this room.'}
 
         await room_post.attachments.add(*attachments)
         return attachments, None

@@ -75,6 +75,7 @@ class IServiceBase(SchemaMapMixin):
         self,
         createSchema: CreateSchema,
         exclude_unset: bool = False,
+        join: list[str] = None,
     ) -> Tuple[models.Model, Dict]:
         raise NotImplementedError()
 
@@ -156,6 +157,7 @@ class CreateUpdateService(IServiceBase):
         self,
         createSchema: CreateSchema,
         exclude_unset: bool = False,
+        join: list[str] = None,
     ) -> Tuple[models.Model, Dict]:
         schema_dict = createSchema.dict(exclude_unset=exclude_unset)
         attrs, errors = await self._validate_values(**schema_dict)
@@ -164,9 +166,9 @@ class CreateUpdateService(IServiceBase):
             return None, errors
 
         try:
-            created_object = await self._repository.create(**attrs)
-        except ObjectAlreadyExistsException:
-            return None, {'error': self.error_messages['create']}
+            created_object = await self._repository.create(join=join, **attrs)
+        except ObjectAlreadyExistsException as e:
+            return None, {'error': self.error_messages['create'] + str(e)}
         return created_object, {}
 
     @action

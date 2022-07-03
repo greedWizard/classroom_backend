@@ -38,7 +38,7 @@ class RoomService(AuthorMixin, CRUDService):
         return attrs
 
     @action
-    async def create(self, createSchema, exclude_unset: bool = False):
+    async def create(self, createSchema, exclude_unset: bool = False, join: list[str] = None):
         created_room, errors = await super().create(createSchema, exclude_unset)
 
         if errors:
@@ -51,6 +51,7 @@ class RoomService(AuthorMixin, CRUDService):
             author_id=self.user.id,
         )
         await self._participation_repository.create(
+            join=join,
             **participations_schema.dict(),
         )
         return created_room, errors

@@ -55,21 +55,21 @@ async def create_new_room_post(
 
 
 @room_posts_router.put(
-    '/{room_post_id}',
+    '/{post_id}',
     response_model=RoomPostDetailSchema,
     status_code=status.HTTP_200_OK,
     operation_id='updateRoomPost',
 )
 async def update_room_post(
-    room_post_id: int,
+    post_id: int,
     room_postUpdateSchema: RoomPostUpdateSchema,
     user: User = Depends(get_current_user),
 ):
     room_post_service = RoomPostService(user)
     room_post, errors = await room_post_service.update(
-        room_post_id,
+        post_id,
         room_postUpdateSchema,
-        join=['author', 'room'],
+        join=['author', 'room', 'attachments'],
     )
 
     if errors:
@@ -92,7 +92,7 @@ async def get_room_posts(
     room_posts, errors = await room_post_service.fetch(
         _ordering=ordering,
         room_id=room_id,
-        join=['author'],
+        join=['author', 'attachments'],
     )
 
     if errors:
@@ -101,19 +101,19 @@ async def get_room_posts(
 
 
 @room_posts_router.get(
-    '/{room_post_id}',
+    '/{post_id}',
     response_model=RoomPostDetailSchema,
     status_code=status.HTTP_200_OK,
     operation_id='getRoomPost',
 )
 async def get_room_post(
-    room_post_id: int,
+    post_id: int,
     user: User = Depends(get_current_user),
 ):
     room_post_service = RoomPostService(user)
     room_post, errors = await room_post_service.retrieve(
-        ['author', 'attachments', 'room__author'],
-        id=room_post_id,
+        ['author', 'attachments'],
+        id=post_id,
     )
 
     if errors:
@@ -122,13 +122,13 @@ async def get_room_post(
 
 
 @room_posts_router.post(
-    '/{room_post_id}/attachments',
+    '/{post_id}/attachments',
     response_model=List[AttachmentListItemSchema],
     status_code=status.HTTP_201_CREATED,
     operation_id='attachFilesToRoomPost',
 )
 async def attach_files_to_room_post(
-    room_post_id: int,
+    post_id: int,
     attachments: List[UploadFile],
     user: User = Depends(get_current_user),
 ):
@@ -144,7 +144,7 @@ async def attach_files_to_room_post(
         )
     attachments, errors = await attachment_service.create_for_room_post(
         attachments_list,
-        room_post_id,
+        post_id,
     )
 
     if errors:
@@ -170,17 +170,17 @@ async def bulk_delete_room_posts(
 
 
 @room_posts_router.delete(
-    '/{room_post_id}',
+    '/{post_id}',
     status_code=status.HTTP_204_NO_CONTENT,
     operation_id='deleteRoomPost',
 )
 async def delete_room_post(
-    room_post_id: int,
+    post_id: int,
     user: User = Depends(get_current_user),
 ):
     room_post_service = RoomPostService(user)
     success, error_messages = await room_post_service.delete(
-        id=room_post_id,
+        id=post_id,
     )
 
     if not success:

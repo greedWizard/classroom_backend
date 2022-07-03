@@ -16,3 +16,26 @@ class HomeWorkAssignmentStatus(str, Enum):
 class RoomPostType(str, Enum):
     material = 'material'
     homework = 'homework'
+
+ASSIGNMENTS_MANAGER = 'moderator'
+ASSIGNMENT_AUTHOR = 'author'
+
+ASSIGNMENT_STATUS_MUTATIONS: dict[str, dict[str, list[str]]] = {
+    HomeWorkAssignmentStatus.assigned: {
+        ASSIGNMENTS_MANAGER: [
+            HomeWorkAssignmentStatus.done,
+            HomeWorkAssignmentStatus.request_changes,
+        ],
+        ASSIGNMENT_AUTHOR: [
+            HomeWorkAssignmentStatus.assigned,
+        ],
+    },
+    HomeWorkAssignmentStatus.request_changes: {
+        ASSIGNMENTS_MANAGER: [
+            HomeWorkAssignmentStatus.done,
+        ],
+        ASSIGNMENT_AUTHOR: [
+            HomeWorkAssignmentStatus.assigned,
+        ],
+    }
+}

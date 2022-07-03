@@ -1,3 +1,4 @@
+from ntpath import join
 from scheduler.tasks.classroom import notify_room_post_created
 
 from apps.classroom.constants import ParticipationRoleEnum
@@ -55,7 +56,7 @@ class RoomPostService(AuthorMixin, CRUDService):
         )
         email_subject = RoomPostEmailNotificationSchema.from_orm(room_post)
         email_subject.subject_link = config.FRONTEND_ROOM_POST_URL.format(
-            room_post_id=room_post.id,
+            post_id=room_post.id,
             room_id=room_post.room_id,
         )
 
@@ -77,9 +78,9 @@ class RoomPostService(AuthorMixin, CRUDService):
 
     async def _get_participation_by_room_post(
         self,
-        room_post_id: int,
+        post_id: int,
     ) -> Participation:
-        room_post: RoomPost = await self._repository.retrieve(id=room_post_id)
+        room_post: RoomPost = await self._repository.retrieve(id=post_id)
         return await self._participation_repository.retrieve(
             room_id=room_post.room_id,
             user_id=self.user.id,
@@ -110,7 +111,7 @@ class RoomPostService(AuthorMixin, CRUDService):
         return await super().update(id, updateSchema, join, exclude_unset)
 
     @action
-    async def create(self, createSchema, exclude_unset: bool = False):
+    async def create(self, createSchema, exclude_unset: bool = False, join: list[str] = None):
         participation: Participation = await self._participation_repository.retrieve(
             user_id=self.user.id,
             room_id=createSchema.room_id,
@@ -118,7 +119,11 @@ class RoomPostService(AuthorMixin, CRUDService):
 
         if not await self._check_participant_permission(participation):
             return None, {'error': 'You are not allowed to do that.'}
-        return await super().create(createSchema, exclude_unset)
+        return await super().create(
+            createSchema=createSchema,
+            exclude_unset=exclude_unset,
+            join=join,
+        )
 
     @action
     async def delete(self, **filters):

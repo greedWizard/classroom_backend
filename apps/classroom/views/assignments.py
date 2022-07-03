@@ -20,6 +20,7 @@ from apps.classroom.schemas import (
     HomeworkAssignmentRateSchema,
     HomeworkAssignmentRequestChangesSchema,
 )
+from apps.classroom.schemas.assignments import HomeworkAssignmentCreateSuccessSchema
 from apps.classroom.services.homework_assignment_service import AssignmentService
 from apps.classroom.utils import make_homework_assignment_schema
 from apps.user.dependencies import get_current_user
@@ -31,7 +32,7 @@ router = APIRouter()
 
 @router.post(
     '',
-    response_model=HomeworkAssignmentDetailSchema,
+    response_model=HomeworkAssignmentCreateSuccessSchema,
     operation_id='assignHomework',
     status_code=status.HTTP_201_CREATED,
 )
@@ -40,15 +41,11 @@ async def assign_homework(
     user: User = Depends(get_current_user),
 ):
     service = AssignmentService(user)
-
-    homework_assignment, errors = await service.create(
-        create_schema,
-        fetch_related=['author'],
-    )
+    homework_assignment, errors = await service.create(create_schema)
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return await make_homework_assignment_schema(homework_assignment)
+    return homework_assignment
 
 
 @router.post(
@@ -71,7 +68,7 @@ async def request_homework_assignment_changes(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return await make_homework_assignment_schema(homework_assignment)
+    return homework_assignment
 
 
 @router.get(
@@ -81,13 +78,13 @@ async def request_homework_assignment_changes(
     status_code=status.HTTP_200_OK,
 )
 async def fetch_post_assignments(
-    assigned_room_post_id: int,
+    post_id: int,
     user: User = Depends(get_current_user),
 ):
     service = AssignmentService(user)
 
     assignments, _ = await service.fetch_for_teacher(
-        assigned_room_post_id=assigned_room_post_id,
+        post_id=post_id,
     )
     return [
         await make_homework_assignment_schema(assignment) for assignment in assignments
@@ -124,20 +121,20 @@ async def get_assignment(
 
 # TODO: тесты на эту вьюху
 @router.get(
-    '/my/{room_post_id}',
+    '/my/{post_id}',
     response_model=Optional[HomeworkAssignmentDetailSchema],
     operation_id='myInPost',
     status_code=status.HTTP_200_OK,
 )
 async def get_my_assignment(
-    room_post_id: int,
+    post_id: int,
     user: User = Depends(get_current_user),
 ):
     service = AssignmentService(user)
 
     assignment, _ = await service.retrieve(
         ['assigned_room_post', 'author', 'assigned_room_post__author'],
-        assigned_room_post_id=room_post_id,
+        post_id=post_id,
         author=user,
     )
 
