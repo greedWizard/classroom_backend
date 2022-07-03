@@ -11,24 +11,6 @@ from .models import (
 )
 
 
-async def make_homework_assignment_schema(assignment: HomeworkAssignment):
-    if not assignment:
-        return None
-
-    return HomeworkAssignmentDetailSchema(
-        id=assignment.id,
-        created_at=assignment.created_at,
-        updated_at=assignment.updated_at,
-        post_id=assignment.post_id,
-        author=assignment.author,
-        attachments=await assignment.attachments,
-        status=assignment.status,
-        comment=assignment.comment,
-        rate=assignment.rate,
-        status_assigned=assignment.status_assigned,
-        status_request_changes=assignment.status_request_changes,
-        status_done=assignment.status_done,
-    )
 
 
 async def make_room_post_schema(room_post: RoomPost):

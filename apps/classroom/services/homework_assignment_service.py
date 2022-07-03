@@ -121,10 +121,9 @@ class AssignmentService(AuthorMixin, CRUDService):
         except AttributeError:
             pass
 
-        is_author = assignment.post.author_id == self.user.id
+        is_author = assignment.author_id == self.user.id
         current_status = assignment.status
         status_mutations = []
-
 
         if is_author:
             status_mutations = ASSIGNMENT_STATUS_MUTATIONS.get(
@@ -137,7 +136,6 @@ class AssignmentService(AuthorMixin, CRUDService):
                 {},
             ).get(ASSIGNMENTS_MANAGER, [])
 
-        # raise Exception(current_status, status_mutations)
         if status in status_mutations:
             return True, None
         return False, f"Can't change status from '{current_status}' to '{status}'."
@@ -148,7 +146,6 @@ class AssignmentService(AuthorMixin, CRUDService):
         status: str,
         changes_schema: HomeworkAssignmentRequestChangesSchema = None,
     ) -> tuple[HomeworkAssignment, Union[dict[str, str], None]]:
-
         assignment = await self._repository.retrieve(
             id=assignment_id,
             join=['post'],

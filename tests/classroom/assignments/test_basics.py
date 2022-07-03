@@ -318,7 +318,7 @@ async def test_mark_success(
 
     client.authorize(participation.user)
     url = app.url_path_for(
-        'request_homework_assignment_changes',
+        'mark_assignment_as_done',
         assignment_id=assignment.id,
     )
     response = client.post(
@@ -332,7 +332,7 @@ async def test_mark_success(
     updated_assignment = await assignment_repository.refresh(assignment)
     assert response.status_code == status.HTTP_200_OK, json_data
     assert updated_assignment.status != assignment.status
-    assert updated_assignment.status == HomeWorkAssignmentStatus.request_changes
+    assert updated_assignment.status == HomeWorkAssignmentStatus.done
     assert json_data['comment'] == comment
 
 
@@ -401,6 +401,55 @@ async def test_get_post_assignments_teacher(
 
     assert response.status_code == status.HTTP_200_OK, json_data
     assert json_data['total'] == assignments_count
+
+
+@pytest.mark.asyncio
+async def test_reassign_homework_success(
+    app: FastAPI,
+    client: FastAPITestClient,
+    assignment_repository: HomeworkAssignmentRepository,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.host,
+    )
+    post = await RoomPostFactory.create(room=participation.room)
+    assignment = await AssignmentFactory.create(
+        post=post,
+        author=participation.user,
+        status=HomeWorkAssignmentStatus.request_changes,
+    )
+
+    client.authorize(participation.user)
+    url = app.url_path_for('reassign_homework', assignment_id=assignment.id)
+    response = client.post(url)
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+    updated_assignment = await assignment_repository.refresh(assignment)
+    assert updated_assignment.status == HomeWorkAssignmentStatus.assigned
+
+
+@pytest.mark.asyncio
+async def test_reassign_homework_did_not_request_changes(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.host,
+    )
+    post = await RoomPostFactory.create(room=participation.room)
+    assignment = await AssignmentFactory.create(
+        post=post,
+        author=participation.user,
+        status=HomeWorkAssignmentStatus.done,
+    )
+
+    client.authorize(participation.user)
+    url = app.url_path_for('reassign_homework', assignment_id=assignment.id)
+    response = client.post(url)
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
 
 
 @pytest.mark.asyncio

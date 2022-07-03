@@ -23,7 +23,6 @@ from apps.classroom.schemas import (
 )
 from apps.classroom.schemas.assignments import HomeworkAssignmentCreateSuccessSchema
 from apps.classroom.services.homework_assignment_service import AssignmentService
-from apps.classroom.utils import make_homework_assignment_schema
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
 
@@ -159,7 +158,7 @@ async def reassign_homework(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return await make_homework_assignment_schema(homework_assignment)
+    return homework_assignment
 
 
 @router.post(
@@ -182,7 +181,7 @@ async def mark_assignment_as_done(
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return await make_homework_assignment_schema(homework_assignment)
+    return homework_assignment
 
 
 @router.post(
