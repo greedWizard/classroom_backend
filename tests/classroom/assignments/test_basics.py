@@ -463,7 +463,7 @@ async def test_get_room_assignments_participant(
         await AssignmentFactory.create(post=post)
 
     client.authorize(participation.user)
-    url = app.url_path_for('fetch_assignments', post_id=post.id)
+    url = app.url_path_for('fetch_assignments')
     response = client.get(url, params={ 'room_id': participation.room.id })
     json_data = response.json()
 

@@ -90,8 +90,8 @@ class AssignmentService(AuthorMixin, CRUDService):
         is_moderator = participation.can_manage_assignments
         join = ['author', 'attachments']
 
-        if not participation or not is_moderator:
-            return None, { 'error': 'You are not allowed to do that.'}
+        if not participation and not is_moderator:
+            return None, { 'error': 'You are not allowed to do that.' }
         if is_moderator:
             return await self._repository.fetch_by_room_id(
                 room_id=room_id,
@@ -100,7 +100,7 @@ class AssignmentService(AuthorMixin, CRUDService):
         return await self._repository.fetch_by_room_id(
             join=join,
             room_id=room_id,
-            user_id=self.user.id,
+            author_id=self.user.id,
         ), None
 
 
@@ -125,6 +125,7 @@ class AssignmentService(AuthorMixin, CRUDService):
         current_status = assignment.status
         status_mutations = []
 
+
         if is_author:
             status_mutations = ASSIGNMENT_STATUS_MUTATIONS.get(
                 current_status,
@@ -136,6 +137,7 @@ class AssignmentService(AuthorMixin, CRUDService):
                 {},
             ).get(ASSIGNMENTS_MANAGER, [])
 
+        # raise Exception(current_status, status_mutations)
         if status in status_mutations:
             return True, None
         return False, f"Can't change status from '{current_status}' to '{status}'."
