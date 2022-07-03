@@ -1,4 +1,5 @@
 from typing import List
+from fastapi_pagination import Page, paginate
 
 from starlette import status
 
@@ -18,6 +19,7 @@ from apps.classroom.schemas import (
     RoomDetailSchema,
     RoomListItemSchema,
 )
+from apps.classroom.schemas.participations import ParticipationDetailSchema, ParticipationListItemSchema
 from apps.classroom.services.participation_service import ParticipationService
 from apps.classroom.services.room_service import RoomService
 from apps.user.dependencies import get_current_user
@@ -118,45 +120,27 @@ async def get_room(
     return room
 
 
+# TODO: перенести в participations
 @classroom_router.get(
     '',
-    response_model=List[RoomListItemSchema],
+    response_model=Page[ParticipationDetailSchema],
     operation_id='getCurrentUserRooms',
 )
-async def current_user_room_list(
+async def participations_room_list(
     user: User = Depends(get_current_user),
     ordering: List[str] = Query(['-created_at']),
 ):
-    room_service = RoomService(user)
-    rooms, errors = await room_service.fetch(_ordering=ordering)
+    participation_service = ParticipationService(user)
+    participations, errors = await participation_service.fetch_for_user(
+        _ordering=ordering,
+    )
 
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=errors,
+            errors=errors,
         )
-
-    room_response_list = []
-    participation_service = ParticipationService(user)
-
-    for room in rooms:
-        await room.fetch_related('participations', 'author')
-
-        room_response_list.append(
-            RoomListItemSchema(
-                id=room.id,
-                name=room.name,
-                description=room.description,
-                participations_count=room.participations_count,
-                created_at=room.created_at,
-                author=AuthorSchema.from_orm(room.author),
-                is_moderator=await participation_service.is_user_moderator(
-                    room_id=room.id,
-                    user_id=user.id,
-                ),
-            ),
-        )
-    return room_response_list
+    return paginate(participations)
 
 
 @classroom_router.post(

@@ -63,11 +63,11 @@ class UserRepository(CRUDRepository):
         """Activates inactive user with provided activation token.
 
         If user wasn't found returns None.
-
         """
         user = await self.retrieve(
             activation_token=activation_token,
             is_active=False,
         )
-        user = await self.update_object(user, is_active=True)
+        if user:
+            user = await self.update_object(user, is_active=True)
         return user

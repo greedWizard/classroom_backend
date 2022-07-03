@@ -30,7 +30,6 @@ class RoomDetailSchema(RoomBaseSchema, NormalizedDatetimeModel):
 class RoomListItemSchema(RoomBaseSchema, NormalizedDatetimeModel):
     id: int
     participations_count: int = 0
-    is_moderator: bool
     created_at: datetime
     author: AuthorSchema
 

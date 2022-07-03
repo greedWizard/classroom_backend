@@ -1,13 +1,14 @@
 from typing import List
+from fastapi_pagination import Page, paginate
 
 from starlette import status
 
-from fastapi import Depends
+from fastapi import Depends, Query
 from fastapi.exceptions import HTTPException
 from fastapi.routing import APIRouter
 
 from apps.classroom.schemas import ParticipationListItemSchema
-from apps.classroom.schemas.participations import ParticipationDetailSchema
+from apps.classroom.schemas.participations import ParticipationCurrentUserSchema, ParticipationDetailSchema, ParticipationDetailSchema
 from apps.classroom.services.participation_service import ParticipationService
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
@@ -19,36 +20,29 @@ participations_router = APIRouter()
 @participations_router.get(
     '',
     operation_id='getParticipations',
-    response_model=List[ParticipationListItemSchema],
+    response_model=Page[ParticipationListItemSchema],
 )
 async def get_participations(
     room_id: int,
     user: User = Depends(get_current_user),
+    ordering: List[str] = Query(['-created_at']),
 ):
     participation_service = ParticipationService(user)
-
-    participations, errors = await participation_service.fetch(
-        {
-            'room_id': room_id,
-        },
-        _select_related=['user', 'room'],
-        _ordering=['created_at'],
+    participations, errors = await participation_service.fetch_by_room(
+        room_id=room_id,
+        _ordering=ordering,
+        join=['room', 'room.participations', 'user'],
     )
-
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    return [
-        ParticipationListItemSchema.from_orm(participation)
-        for participation in participations
-    ]
+    return paginate(participations)
 
 
 # TODO: обязательно тесты на эту вьюху
 @participations_router.get(
     '/my',
     operation_id='my',
-    response_model=ParticipationDetailSchema,
+    response_model=ParticipationCurrentUserSchema,
 )
 async def current_user_participation(
     room_id: int,
@@ -63,7 +57,7 @@ async def current_user_participation(
 
     if not participation:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    return ParticipationDetailSchema.from_orm(participation)
+    return participation
 
 
 # TODO: обязательно тесты на эту вьюху

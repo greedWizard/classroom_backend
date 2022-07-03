@@ -10,7 +10,6 @@ from typing import (
 
 from pydantic import BaseModel
 from tortoise import models
-from tortoise.transactions import atomic
 
 from apps.common.models.base import BaseDBModel
 from apps.common.repositories.base import (
@@ -80,7 +79,6 @@ class IServiceBase(SchemaMapMixin):
         raise NotImplementedError()
 
     @action
-    @atomic()
     async def bulk_update(
         self,
         updateSchema: UpdateSchema,
@@ -90,7 +88,6 @@ class IServiceBase(SchemaMapMixin):
         raise NotImplementedError()
 
     @action
-    @atomic()
     async def bulk_delete(
         self,
         deleteSchema: DeleteSchema,
@@ -100,7 +97,6 @@ class IServiceBase(SchemaMapMixin):
         raise NotImplementedError()
 
     @action
-    @atomic()
     async def bulk_create(
         self,
         listCreateSchema: List[CreateSchema],
@@ -172,16 +168,12 @@ class CreateUpdateService(IServiceBase):
         return created_object, {}
 
     @action
-    @atomic
     async def bulk_create(
         self,
         listCreateSchema: List[CreateSchema],
     ):
-        async with self._repository() as repo:
-            return [
-                self.create(createSchema=createSchema)
-                for createSchema in listCreateSchema
-            ]
+        return [await self.create(createSchema=createSchema)
+                    for createSchema in listCreateSchema]
 
     @action
     async def update(

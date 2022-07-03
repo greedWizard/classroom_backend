@@ -311,6 +311,29 @@ async def test_room_get_detail(
 
 
 @pytest.mark.asyncio
+async def test_current_user_rooms_list(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    user = await UserFactory.create()
+    rooms_count = 10
+
+    await ParticipationFactory.create_batch(
+        size=rooms_count,
+        user=user,
+    )
+
+    url = app.url_path_for('participations_room_list')
+    client.authorize(user)
+
+    response = client.get(url)
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+    assert json_data['total'] == rooms_count
+
+
+@pytest.mark.asyncio
 async def test_delete_room_success(
     app: FastAPI,
     client: FastAPITestClient,
@@ -329,3 +352,28 @@ async def test_delete_room_success(
     assert response.status_code == status.HTTP_204_NO_CONTENT, response.json()
     assert not await room_repository.count()
     assert not await participation_repository.count()
+
+
+@pytest.mark.asyncio
+async def test_participations_list(
+    app: FastAPI,
+    client: FastAPITestClient,
+    participation_repository: ParticipationRepository,
+    room_repository: RoomRepository,
+):
+    room = await RoomFactory.create()
+    participations_count = 10
+    participations = await ParticipationFactory.create_batch(
+        participations_count,
+        room=room,
+    )
+    user = participations[0].user
+
+    client.authorize(user)
+    url = app.url_path_for('get_participations')
+    response = client.get(url, params={ 'room_id': room.id })
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK, response.json()
+    assert await participation_repository.count(room_id=room.id) == \
+        json_data['total'] == participations_count

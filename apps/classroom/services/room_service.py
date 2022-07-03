@@ -77,7 +77,7 @@ class RoomService(AuthorMixin, CRUDService):
 
     @action
     async def delete(self, **filters):
-        room_id = filters.pop('id')
+        room_id = filters.get('id')
 
         participation: Participation = await self._participation_repository.retrieve(
             user_id=self.user.id,

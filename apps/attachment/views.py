@@ -1,13 +1,15 @@
+from typing import Optional
 from starlette import status
 
 from fastapi import (
     APIRouter,
     Depends,
+    UploadFile,
 )
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
-from apps.attachment.schemas import AttachmentDeleteSchema
+from apps.attachment.schemas import AttachmentCreateSchema, AttachmentCreateSuccessSchema
 from apps.attachment.services.attachment_service import AttachmentService
 from apps.attachment.utils import stream_file
 from apps.user.dependencies import get_current_user
@@ -41,20 +43,41 @@ async def get_attachment(
     )
 
 
-@router.delete(
-    '',
-    status_code=status.HTTP_204_NO_CONTENT,
-    operation_id='deleteAttachments',
+@router.post(
+    '/',
+    response_model=list[AttachmentCreateSuccessSchema],
+    status_code=status.HTTP_201_CREATED,
+    operation_id='attachFilesToRoomPost',
 )
-async def delete_attachments(
-    attachmentDeleteSchema: AttachmentDeleteSchema,
+async def attach_files_to_room_post(
+    attachments: list[UploadFile],
+    post_id: Optional[int] = None,
+    assignment_id: Optional[int] = None,
     user: User = Depends(get_current_user),
 ):
+    attachments_list = []
     attachment_service = AttachmentService(user)
-    errors = await attachment_service.bulk_delete(id__in=attachmentDeleteSchema.ids)
+
+    for attachment in attachments:
+        attachments_list.append(
+            AttachmentCreateSchema(
+                filename=attachment.filename,
+                source=await attachment.read(),
+                assignment_id=assignment_id,
+                post_id=post_id,
+            ),
+        )
+    attachment_service = AttachmentService(user)
+    attachments, errors = await attachment_service.bulk_create(
+        attachments_list,
+    )
 
     if errors:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            errors=errors,
+        )
+    return attachments
 
 
 @router.delete(

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict
 
 from apps.classroom.constants import ParticipationRoleEnum
 from apps.classroom.repositories.participation_repository import ParticipationRepository
@@ -69,3 +69,27 @@ class ParticipationService(AuthorMixin, CRUDService):
             return False, errors
         await self.model.filter(user_id=user_id, room_id=room_id).delete()
         return True, None
+
+    @action
+    async def fetch_for_user(
+        self,
+        _ordering: dict[str, Any] = None,
+        **filters,
+    ):
+        return await self.fetch(
+            _ordering=_ordering,
+            join=['room', 'room.author', 'room.participations'],
+            user_id=self.user.id,
+            **filters,
+        )
+
+    @action
+    async def fetch_by_room(
+        self,
+        room_id: int,
+        _ordering: list = ..., join: list[str] = None,
+        **filters,
+    ):
+        if await self._repository.count(room_id=room_id, user_id=self.user.id):
+            return await super().fetch(_ordering, join, **filters)
+        return None, { 'error': 'Access denied.' }

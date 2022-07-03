@@ -1,4 +1,5 @@
 from typing import Optional
+from fastapi_pagination import Page, paginate
 
 from starlette import status
 
@@ -73,25 +74,33 @@ async def request_homework_assignment_changes(
 
 @router.get(
     '',
-    response_model=list[HomeworkAssignmentDetailSchema],
-    operation_id='getAssignmentsForRoomPost',
+    response_model=Page[HomeworkAssignmentDetailSchema],
+    operation_id='fetchAssignments',
     status_code=status.HTTP_200_OK,
 )
-async def fetch_post_assignments(
-    post_id: int,
+async def fetch_assignments(
+    post_id: Optional[int] = None,
+    room_id: Optional[int] = None,
     user: User = Depends(get_current_user),
 ):
     service = AssignmentService(user)
+    errors = None
+    assignments = []
 
-    assignments, _ = await service.fetch_for_teacher(
-        post_id=post_id,
-    )
-    return [
-        await make_homework_assignment_schema(assignment) for assignment in assignments
-    ]
+    if post_id is not None:
+        assignments, errors = await service.fetch_post_assignments(
+            post_id=post_id,
+        )
+    elif room_id is not None:
+        assignments, errors = await service.fetch_room_assignments(
+            room_id=room_id,
+        )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return paginate(assignments)
 
 
-# TODO: тесты на эту вьюху
 @router.get(
     '/{assignment_id}',
     response_model=HomeworkAssignmentDetailSchema,
@@ -104,22 +113,16 @@ async def get_assignment(
 ):
     service = AssignmentService(user)
 
-    assignment, _ = await service.retrieve(
-        ['assigned_room_post', 'author', 'assigned_room_post__author'],
-        id=assignment_id,
-    )
+    assignment, errors = await service.retrieve_detail(assignment_id)
 
     if not assignment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                'assignment_id': 'not found',
-            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=errors,
         )
-    return await make_homework_assignment_schema(assignment)
+    return assignment
 
 
-# TODO: тесты на эту вьюху
 @router.get(
     '/my/{post_id}',
     response_model=Optional[HomeworkAssignmentDetailSchema],
@@ -132,13 +135,10 @@ async def get_my_assignment(
 ):
     service = AssignmentService(user)
 
-    assignment, _ = await service.retrieve(
-        ['assigned_room_post', 'author', 'assigned_room_post__author'],
+    assignment = await service.retrieve_user_assignment_for_post(
         post_id=post_id,
-        author=user,
     )
-
-    return await make_homework_assignment_schema(assignment)
+    return assignment
 
 
 @router.post(

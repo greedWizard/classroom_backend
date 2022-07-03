@@ -112,13 +112,13 @@ async def get_room_post(
 ):
     room_post_service = RoomPostService(user)
     room_post, errors = await room_post_service.retrieve(
-        ['author', 'attachments'],
+        ['author', 'attachments', 'room'],
         id=post_id,
     )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
-    return await make_room_post_schema(room_post)
+    return room_post
 
 
 @room_posts_router.post(

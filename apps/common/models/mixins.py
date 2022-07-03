@@ -22,7 +22,7 @@ class AuthorAbstract:
             backref=backref(
                 f'created_{cls.__tablename__}',
                 uselist=True,
-                
+
             ),
             foreign_keys=[cls.author_id],
         )
@@ -46,7 +46,7 @@ class AuthorAbstract:
             backref=backref(
                 f'updated_{cls.__tablename__}',
                 uselist=True,
-                
+
             ),
             foreign_keys=[cls.updated_by_id],
         )

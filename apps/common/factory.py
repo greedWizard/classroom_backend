@@ -13,7 +13,7 @@ API_V1_PREFIX = '/api/v1/'
 
 class AppFactory:
     @classmethod
-    def create_app(cls, test_mode: bool = False) -> FastAPI:
+    def create_app(cls) -> FastAPI:
         """Returns the FastAPI app with instantiated DB."""
         app = FastAPI(
             debug=config.DEBUG_MODE,
@@ -28,6 +28,7 @@ class AppFactory:
             allow_headers=['*'],
         )
         cls._register_views(app)
+        cls._connect_db()
 
         app.exception_handler(AuthJWTException)(authjwt_exception_handler)
 
@@ -57,3 +58,7 @@ class AppFactory:
         #     chat_router,
         #     prefix=''.join([API_V1_PREFIX, 'chat']),
         # )
+
+    @classmethod
+    def _connect_db(cls):
+        pass

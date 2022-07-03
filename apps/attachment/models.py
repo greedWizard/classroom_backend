@@ -19,8 +19,5 @@ class Attachment(BaseDBModel):
     def __repr__(self) -> str:
         return f'<{str(self)}>'
 
-    class Meta:
-        table = 'attachments'
-
     async def stream(self):
         yield self.source

@@ -41,7 +41,7 @@ class AbstractBaseRepository(ABC):
             return result.scalar()
 
     def __init__(self) -> None:
-        test_mode = config
+        test_mode = config.TEST_MODE
         if test_mode:
             self._session_factory = test_session
 

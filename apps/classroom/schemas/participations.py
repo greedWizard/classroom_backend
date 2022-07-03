@@ -2,8 +2,10 @@ from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
+from apps.classroom.schemas.rooms import RoomDetailSchema
 
 from apps.common.schemas import NormalizedDatetimeModel
+from apps.user.schemas import AuthorSchema
 
 
 class ParticipationNestedSchema(BaseModel):
@@ -35,6 +37,9 @@ class ParticipationUserSchema(BaseModel):
     email: str
     middle_name: Optional[str]
 
+    class Config:
+        orm_mode = True
+
 
 class ParticipationListItemSchema(NormalizedDatetimeModel):
     id: int
@@ -47,6 +52,37 @@ class ParticipationListItemSchema(NormalizedDatetimeModel):
         orm_mode = True
 
 
+
+class ParticipationCurrentUserSchema(NormalizedDatetimeModel):
+    id: int
+    role: str
+    created_at: datetime
+    can_manage_posts: bool
+    can_examine: bool
+    can_assign_homeworks: bool
+    can_remove_participants: bool
+    can_manage_assignments: bool
+    is_moderator: bool
+    room_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class ParticipationMemberListSchema(BaseModel):
+    id: int
+    role: str
+    created_at: datetime
+    can_manage_posts: bool
+    can_examine: bool
+    can_assign_homeworks: bool
+    can_remove_participants: bool
+    can_manage_assignments: bool
+    is_moderator: bool
+    room: RoomDetailSchema
+    user: AuthorSchema
+
+
 class ParticipationDetailSchema(NormalizedDatetimeModel):
     id: int
     role: str
@@ -55,7 +91,9 @@ class ParticipationDetailSchema(NormalizedDatetimeModel):
     can_examine: bool
     can_assign_homeworks: bool
     can_remove_participants: bool
-    room_id: int
+    can_manage_assignments: bool
+    is_moderator: bool
+    room: RoomDetailSchema
 
     class Config:
         orm_mode = True

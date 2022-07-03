@@ -23,7 +23,7 @@ from tests.client import FastAPITestClient
 
 @pytest.fixture(scope='module', autouse=True)
 def app() -> FastAPI:
-    yield AppFactory.create_app(test_mode=True)
+    yield AppFactory.create_app()
 
 
 @pytest.fixture(scope='session')

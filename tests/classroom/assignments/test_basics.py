@@ -8,13 +8,7 @@ from apps.classroom.constants import (
     ParticipationRoleEnum,
     RoomPostType,
 )
-from apps.classroom.models import (
-    HomeworkAssignment,
-    Participation,
-    RoomPost,
-)
 from apps.classroom.repositories.assignment import HomeworkAssignmentRepository
-from apps.user.models import User
 from tests.client import FastAPITestClient
 from tests.factories.classroom.assignments import AssignmentFactory
 from tests.factories.classroom.participation import ParticipationFactory
@@ -340,3 +334,138 @@ async def test_mark_success(
     assert updated_assignment.status != assignment.status
     assert updated_assignment.status == HomeWorkAssignmentStatus.request_changes
     assert json_data['comment'] == comment
+
+
+@pytest.mark.asyncio
+async def test_get_assignment_success(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.host,
+    )
+    post = await RoomPostFactory.create(room=participation.room)
+    assignment = await AssignmentFactory.create(
+        post=post,
+    )
+
+    client.authorize(participation.user)
+    url = app.url_path_for('get_assignment', assignment_id=assignment.id)
+    response = client.get(url)
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+
+
+@pytest.mark.asyncio
+async def test_get_my_assignment_in_post_success(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.participant,
+    )
+    post = await RoomPostFactory.create(room=participation.room)
+    assignment = await AssignmentFactory.create(
+        post=post,
+        author=participation.user,
+    )
+
+    client.authorize(participation.user)
+    url = app.url_path_for('get_my_assignment', post_id=post.id)
+    response = client.get(url)
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+    assert json_data['id'] == assignment.id
+
+
+@pytest.mark.asyncio
+async def test_get_post_assignments_teacher(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.host,
+    )
+    assignments_count = 10
+    post = await RoomPostFactory.create(room=participation.room)
+
+    for _ in range(assignments_count):
+        await AssignmentFactory.create(post=post)
+
+    client.authorize(participation.user)
+    url = app.url_path_for('fetch_assignments')
+    response = client.get(url, params={ 'post_id': post.id })
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+    assert json_data['total'] == assignments_count
+
+
+@pytest.mark.asyncio
+async def test_get_post_assignments_participant(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.participant,
+    )
+    post = await RoomPostFactory.create(room=participation.room)
+    await AssignmentFactory.create(post=post)
+
+    client.authorize(participation.user)
+    url = app.url_path_for('fetch_assignments')
+    response = client.get(url, params={ 'post_id': post.id })
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
+
+
+@pytest.mark.asyncio
+async def test_get_room_assignments_teacher(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.host,
+    )
+    assignments_count = 10
+
+    for _ in range(assignments_count):
+        post = await RoomPostFactory.create(room=participation.room)
+        await AssignmentFactory.create(post=post)
+
+    client.authorize(participation.user)
+    url = app.url_path_for('fetch_assignments')
+    response = client.get(url, params={ 'room_id': participation.room.id })
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+    assert json_data['total'] == assignments_count
+
+
+@pytest.mark.asyncio
+async def test_get_room_assignments_participant(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.participant,
+    )
+    student_assignments_count = 5
+
+    for _ in range(student_assignments_count):
+        post = await RoomPostFactory.create(room=participation.room)
+        await AssignmentFactory.create(post=post, author=participation.user)
+    for _ in range(student_assignments_count):
+        post = await RoomPostFactory.create(room=participation.room)
+        await AssignmentFactory.create(post=post)
+
+    client.authorize(participation.user)
+    url = app.url_path_for('fetch_assignments', post_id=post.id)
+    response = client.get(url, params={ 'room_id': participation.room.id })
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+    assert json_data['total'] == student_assignments_count

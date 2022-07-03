@@ -63,7 +63,7 @@ class Participation(BaseDBModel, AuthorAbstract):
         'Room',
         backref=backref(
             name='participations',
-            
+
             uselist=True,
             passive_deletes=True,
         ),
@@ -73,7 +73,7 @@ class Participation(BaseDBModel, AuthorAbstract):
         'User',
         backref=backref(
             name='participations',
-            
+
             uselist=True,
         ),
         foreign_keys=[user_id],
@@ -111,6 +111,10 @@ class Participation(BaseDBModel, AuthorAbstract):
     def can_manage_assignments(self):
         return self.role in self.MODERATOR_ROLES
 
+    @property
+    def is_moderator(self):
+        return self.role in self.MODERATOR_ROLES
+
 
 class AttachmentsCountMixin:
     @property
@@ -136,7 +140,7 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
         'Room',
         backref=backref(
             name='posts',
-            
+
             uselist=True,
         ),
     )
@@ -145,7 +149,7 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
         backref=backref(
             name='post',
         ),
-        
+
         uselist=True,
     )
 
@@ -173,7 +177,7 @@ class HomeworkAssignment(BaseDBModel, AuthorAbstract):
         'RoomPost',
         backref=backref(
             name='assignments',
-            
+
             uselist=True,
         ),
     )

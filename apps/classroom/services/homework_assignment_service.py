@@ -14,6 +14,7 @@ from apps.classroom.constants import (
 from apps.classroom.models import (
     HomeworkAssignment,
     Participation,
+    RoomPost,
 )
 from apps.classroom.repositories.assignment import HomeworkAssignmentRepository
 from apps.classroom.repositories.participation_repository import ParticipationRepository
@@ -30,7 +31,6 @@ class AssignmentService(AuthorMixin, CRUDService):
     _room_repository: RoomRepository = RoomRepository()
     _room_post_repository: RoomPostRepository = RoomPostRepository()
     _participation_repository: ParticipationRepository = ParticipationRepository()
-
 
     def _check_is_status_restricted(self, assignment: HomeworkAssignment):
         return assignment.status == HomeWorkAssignmentStatus.done
@@ -60,21 +60,49 @@ class AssignmentService(AuthorMixin, CRUDService):
             return None, "You can't assign the homework."
         return True, None
 
-    async def fetch_for_teacher(
+    @action
+    async def fetch_post_assignments(
         self,
         post_id: int,
-        prefetch_related: list[str] = None,
+        **extra_filters,
     ) -> tuple[HomeworkAssignment, Union[dict[str, str], None]]:
-        if not prefetch_related:
-            prefetch_related = ['author']
+        post: RoomPost = await self._room_post_repository.retrieve(
+            join=['assignments', 'assignments.author', 'assignments.attachments'],
+            id=post_id,
+        )
+        participation: Participation = await self._participation_repository.retrieve(
+            room_id=post.room_id,
+            user_id=self.user.id,
+        )
 
-        # TODO: рефакторить, после того как поправлю fetch
-        queryset = await self.get_queryset()
-        assignments = await queryset.filter(
-            post_id=post_id,
-        ).prefetch_related(*prefetch_related)
+        if not participation:
+            return None, { 'error': 'You are not allowed to do that'}
+        if not participation.can_manage_assignments:
+            return None, { 'error': 'You are not allowed to do that'}
+        return post.assignments, None
 
-        return assignments, None
+    @action
+    async def fetch_room_assignments(self, room_id: int, **filters):
+        participation: Participation = await self._participation_repository.retrieve(
+            room_id=room_id,
+            user_id=self.user.id,
+        )
+        is_moderator = participation.can_manage_assignments
+        join = ['author', 'attachments']
+
+        if not participation or not is_moderator:
+            return None, { 'error': 'You are not allowed to do that.'}
+        if is_moderator:
+            return await self._repository.fetch_by_room_id(
+                room_id=room_id,
+                join=join,
+            ), None
+        return await self._repository.fetch_by_room_id(
+            join=join,
+            room_id=room_id,
+            user_id=self.user.id,
+        ), None
+
 
     async def _check_assignment_rights(
         self,
@@ -139,6 +167,32 @@ class AssignmentService(AuthorMixin, CRUDService):
         )
 
         return assignment, None
+
+    @action
+    async def retrieve_detail(self, id: int):
+        assignment: HomeworkAssignment = await self._repository.retrieve(
+            join=['attachments', 'author', 'post'],
+            id=id,
+        )
+        participation: Participation = await self._participation_repository.retrieve(
+            user_id=self.user.id,
+            room_id=assignment.post.room_id,
+        )
+        if not participation.can_manage_assignments and \
+            assignment.author_id != self.user.id:
+            return None, { 'error': 'You are not allowed to do that.'}
+        return assignment, None
+
+    @action
+    async def retrieve_user_assignment_for_post(
+        self,
+        post_id: int,
+    ) -> HomeworkAssignment:
+        return await self._repository.retrieve(
+            join=['author', 'attachments'],
+            author_id=self.user.id,
+            post_id=post_id,
+        )
 
     request_changes = partialmethod(
         change_assignment_status,
