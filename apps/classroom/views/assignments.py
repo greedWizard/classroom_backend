@@ -1,6 +1,9 @@
 from typing import Optional
-from fastapi_pagination import Page, paginate
 
+from fastapi_pagination import (
+    Page,
+    paginate,
+)
 from starlette import status
 
 from fastapi import (
@@ -60,7 +63,6 @@ async def request_homework_assignment_changes(
     user: User = Depends(get_current_user),
 ):
     service = AssignmentService(user)
-
     homework_assignment, errors = await service.request_changes(
         assignment_id=assignment_id,
         changes_schema=changes_schema,
@@ -111,7 +113,6 @@ async def get_assignment(
     user: User = Depends(get_current_user),
 ):
     service = AssignmentService(user)
-
     assignment, errors = await service.retrieve_detail(assignment_id)
 
     if not assignment:

@@ -1,4 +1,7 @@
-from typing import Any, Dict
+from typing import (
+    Any,
+    Dict,
+)
 
 from apps.classroom.constants import ParticipationRoleEnum
 from apps.classroom.repositories.participation_repository import ParticipationRepository
@@ -42,7 +45,7 @@ class ParticipationService(AuthorMixin, CRUDService):
         if 'join_slug' in attrs:
             join_slug = attrs.pop('join_slug')
             room = await self._room_repository.get_room_by_join_slug(
-                join_slug=join_slug
+                join_slug=join_slug,
             )
             attrs['room_id'] = room.id
 
@@ -87,9 +90,10 @@ class ParticipationService(AuthorMixin, CRUDService):
     async def fetch_by_room(
         self,
         room_id: int,
-        _ordering: list = ..., join: list[str] = None,
+        _ordering: list = ...,
+        join: list[str] = None,
         **filters,
     ):
         if await self._repository.count(room_id=room_id, user_id=self.user.id):
-            return await super().fetch(_ordering, join, **filters)
-        return None, { 'error': 'Access denied.' }
+            return await super().fetch(_ordering, join, room_id=room_id, **filters)
+        return None, {'error': 'Access denied.'}
