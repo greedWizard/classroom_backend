@@ -14,12 +14,14 @@ class User(BaseDBModel):
     activation_token = sa.Column(sa.String(256), nullable=False)
     activation_deadline_dt = sa.Column(sa.DateTime)
     is_active = sa.Column(sa.Boolean, default=False)
-    is_reset_needed = sa.Column(sa.Boolean, default=False)
     phone_number = sa.Column(sa.String(15), unique=True, nullable=False)
     email = sa.Column(sa.String(255), unique=True, nullable=False)
     gender = sa.Column(sa.String(50))
     is_banned = sa.Column(sa.Boolean, default=False)
     last_login = sa.Column(sa.DateTime)
+
+    is_reset_needed = sa.Column(sa.Boolean, default=False)
+    password_reset_deadline = sa.Column(sa.DateTime)
 
     def __str__(self) -> str:
         return (

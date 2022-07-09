@@ -21,6 +21,8 @@ class ProjectSettings(BaseModel):
     DEBUG_MODE: bool = env('DEBUG_MODE')
     # END DEBUG SETTINGS
 
+    APP_SECRET_KEY: str = env('APP_SECRET_KEY')
+
     # DB SETTINGS
     POSTGRES_HOST: str = env('POSTGRES_HOST')
     POSTGRES_USER_NAME: str = env('POSTGRES_USER')
@@ -58,7 +60,9 @@ class ProjectSettings(BaseModel):
         MODELS_APP_LABEL: MODELS_PATHS,
     }
     MINIMAL_DAYS_DELTA: int = int(env('MINIMAL_DAYS_DELTA'))
-    # APP SETTINGS
+    PASSWORD_RESET_SALT: str = 'reset'
+    RESET_PASSWORD_TIMEDELTA: timedelta = timedelta(minutes=30)
+    # END APP SETTINGS
 
     # USER SETTINGS
     MINIMAL_PASSWORD_LENGTH: int = 10
@@ -70,6 +74,9 @@ class ProjectSettings(BaseModel):
     # ETERNAL SETTINGS
     FRONTEND_LOGIN_URL: str = os.environ.get('FRONTEND_LOGIN_URL')
     FRONTEND_ROOM_POST_URL: str = os.environ.get('FRONTEND_ROOM_POST_URL')
+    FRONTEND_USER_RESET_PASSWORD_URL: str = os.environ.get(
+        'FRONTEND_USER_RESET_PASSWORD_URL'
+    )
 
     # FILE SETTINGS
     MAX_FILE_SIZE: int = 64 * 1024 * 1024

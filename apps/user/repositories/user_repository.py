@@ -5,6 +5,7 @@ from sqlalchemy import (
     select,
 )
 
+from apps.common.config import config
 from apps.common.repositories.base import CRUDRepository
 from apps.common.utils import get_current_datetime
 from apps.user.models import User
@@ -63,6 +64,7 @@ class UserRepository(CRUDRepository):
         """Activates inactive user with provided activation token.
 
         If user wasn't found returns None.
+
         """
         user = await self.retrieve(
             activation_token=activation_token,
@@ -71,3 +73,20 @@ class UserRepository(CRUDRepository):
         if user:
             user = await self.update_object(user, is_active=True)
         return user
+
+    async def retrieve_active_user(
+        self,
+        **filters,
+    ):
+        filters['is_active'] = True
+        return await self.retrieve(**filters)
+
+    async def set_reset_flag(self, user_id: int):
+        return await self.update(
+            values={
+                'is_reset_needed': True,
+                'password_reset_deadline': get_current_datetime()
+                + config.RESET_PASSWORD_TIMEDELTA,
+            },
+            id=user_id,
+        )

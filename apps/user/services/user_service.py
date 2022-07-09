@@ -6,11 +6,21 @@ from datetime import (
     timedelta,
 )
 from hashlib import md5
-from typing import Tuple
+from typing import (
+    Optional,
+    Tuple,
+)
 
+from dependency_injector.wiring import (
+    inject,
+    Provide,
+)
+from itsdangerous import TimedSerializer
 from pydantic import BaseModel
+from scheduler.tasks.user import send_password_reset_email
 
 from apps.common.config import config
+from apps.common.containers import MainContainer
 from apps.common.services.base import (
     CRUDService,
     ResultTuple,
@@ -23,6 +33,7 @@ from apps.user.constants import (
 from apps.user.models import User
 from apps.user.repositories.user_repository import UserRepository
 from apps.user.schemas import (
+    UserHyperlinkEmailSchema,
     UserLoginSchema,
     UserRegistrationCompleteSchema,
 )
@@ -163,3 +174,33 @@ class UserService(CRUDService):
         if not activated_user:
             return False
         return True
+
+    @staticmethod
+    @inject
+    async def _get_user_reset_token(
+        user_id: int,
+        timed_serializer: TimedSerializer = Provide[MainContainer.timed_serializer],
+    ):
+        return timed_serializer.dumps(obj=user_id, salt=config.PASSWORD_RESET_SALT)
+
+    @action
+    async def initiate_user_password_reset(
+        self,
+        email: str,
+        redirect_url: str,
+    ) -> Tuple[bool, Optional[str]]:
+        user = await self._repository.retrieve_active_user(email=email)
+
+        if not user:
+            return None, 'User not found'
+
+        await self._repository.set_reset_flag(user_id=user.id)
+        token = await self._get_user_reset_token(user_id=user.id)
+
+        send_password_reset_email(
+            user=UserHyperlinkEmailSchema(
+                email=user.email,
+                hyperlink=redirect_url,
+            ),
+        )
+        return token, None

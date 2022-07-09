@@ -77,6 +77,10 @@ class UserProfileUpdateSchema(BaseModel):
     middle_name: Optional[str]
 
 
-class UserActivationEmailSchema(BaseModel):
+class UserHyperlinkEmailSchema(BaseModel):
     email: str
-    activation_link: str
+    hyperlink: str
+
+
+class UserPasswordResetInitiationSchema(BaseModel):
+    email: str

@@ -2,6 +2,7 @@ from dependency_injector import (
     containers,
     providers,
 )
+from itsdangerous import TimedSerializer
 from jinja2 import (
     Environment,
     FileSystemLoader,
@@ -33,6 +34,7 @@ class MainContainer(containers.DeclarativeContainer):
     wiring_config: containers.WiringConfiguration = containers.WiringConfiguration(
         modules=[
             'scheduler.tasks.classroom',
+            'apps.user.services.user_service',
         ],
     )
 
@@ -44,4 +46,8 @@ class MainContainer(containers.DeclarativeContainer):
     email_service = providers.Singleton(
         EmailService,
         mail_client=mail_client,
+    )
+    timed_serializer = providers.Singleton(
+        TimedSerializer,
+        secret_key=config.APP_SECRET_KEY,
     )

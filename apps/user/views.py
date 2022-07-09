@@ -10,18 +10,24 @@ from fastapi import (
     Request,
 )
 from fastapi.exceptions import HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import (
+    JSONResponse,
+    RedirectResponse,
+)
 
 from apps.common.config import config
+from apps.common.enums import OperationResultStatusEnum
+from apps.common.schemas import OperationResultSchema
 from apps.user.dependencies import (
     get_current_user,
     get_current_user_optional,
 )
 from apps.user.models import User
 from apps.user.schemas import (
-    UserActivationEmailSchema,
+    UserHyperlinkEmailSchema,
     UserLoginSchema,
     UserLoginSuccessSchema,
+    UserPasswordResetInitiationSchema,
     UserProfileSchema,
     UserProfileUpdateSchema,
     UserRegisterSchema,
@@ -69,9 +75,9 @@ async def register_user(
             ),
         )
         send_activation_email(
-            user=UserActivationEmailSchema(
+            user=UserHyperlinkEmailSchema(
                 email=user.email,
-                activation_link=activation_link,
+                hyperlink=activation_link,
             ),
         )
         return user
@@ -169,3 +175,46 @@ async def update_current_user(
             detail=errors,
         )
     return user
+
+
+@router.post(
+    '/request-reset-password',
+    response_model=OperationResultSchema,
+    operation_id='initiateUserPasswordReset',
+)
+async def initiate_user_password_reset(
+    request: Request,
+    schema: UserPasswordResetInitiationSchema,
+    user_service: UserService = Depends(),
+):
+    """Initiates the user password reset operation.
+
+    Returns operation result and token cookie. To proceed with password
+    reset the request to change password itself should be sent with the
+    same token.
+
+    """
+    token, error = await user_service.initiate_user_password_reset(
+        email=schema.email,
+        redirect_url=config.FRONTEND_USER_RESET_PASSWORD_URL,
+    )
+
+    if token:
+        response_schema = OperationResultSchema(
+            status=OperationResultStatusEnum.SUCCESS,
+            message='The password resed message has been sent to your email.',
+        )
+        response = JSONResponse(content=response_schema.dict())
+        response.set_cookie(key='token', value=token)
+        return response
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=error,
+    )
+
+
+@router.post(
+    '/reset-password',
+)
+async def reset_password():
+    pass
