@@ -1,14 +1,11 @@
 from functools import partialmethod
 from typing import Union
 
-from tortoise.expressions import Q
-
 from apps.classroom.constants import (
     ASSIGNMENT_AUTHOR,
     ASSIGNMENT_STATUS_MUTATIONS,
     ASSIGNMENTS_MANAGER,
     HomeWorkAssignmentStatus,
-    ParticipationRoleEnum,
     RoomPostType,
 )
 from apps.classroom.models import (
@@ -22,7 +19,7 @@ from apps.classroom.repositories.post_repository import RoomPostRepository
 from apps.classroom.repositories.room_repository import RoomRepository
 from apps.classroom.schemas import HomeworkAssignmentRequestChangesSchema
 from apps.common.services.author import AuthorMixin
-from apps.common.services.base import CRUDService, CreateSchema
+from apps.common.services.base import CRUDService
 from apps.common.services.decorators import action
 
 
@@ -76,9 +73,9 @@ class AssignmentService(AuthorMixin, CRUDService):
         )
 
         if not participation:
-            return None, { 'error': 'You are not allowed to do that'}
+            return None, {'error': 'You are not allowed to do that'}
         if not participation.can_manage_assignments:
-            return None, { 'error': 'You are not allowed to do that'}
+            return None, {'error': 'You are not allowed to do that'}
         return post.assignments, None
 
     @action
@@ -91,18 +88,23 @@ class AssignmentService(AuthorMixin, CRUDService):
         join = ['author', 'attachments']
 
         if not participation and not is_moderator:
-            return None, { 'error': 'You are not allowed to do that.' }
+            return None, {'error': 'You are not allowed to do that.'}
         if is_moderator:
-            return await self._repository.fetch_by_room_id(
-                room_id=room_id,
+            return (
+                await self._repository.fetch_by_room_id(
+                    room_id=room_id,
+                    join=join,
+                ),
+                None,
+            )
+        return (
+            await self._repository.fetch_by_room_id(
                 join=join,
-            ), None
-        return await self._repository.fetch_by_room_id(
-            join=join,
-            room_id=room_id,
-            author_id=self.user.id,
-        ), None
-
+                room_id=room_id,
+                author_id=self.user.id,
+            ),
+            None,
+        )
 
     async def _check_assignment_rights(
         self,
@@ -140,6 +142,7 @@ class AssignmentService(AuthorMixin, CRUDService):
             return True, None
         return False, f"Can't change status from '{current_status}' to '{status}'."
 
+    @action
     async def change_assignment_status(
         self,
         assignment_id: int,
@@ -163,6 +166,7 @@ class AssignmentService(AuthorMixin, CRUDService):
                 **changes_dict,
             },
             join=['post', 'author', 'attachments'],
+            id=assignment_id,
         )
 
         return assignment, None
@@ -177,9 +181,11 @@ class AssignmentService(AuthorMixin, CRUDService):
             user_id=self.user.id,
             room_id=assignment.post.room_id,
         )
-        if not participation.can_manage_assignments and \
-            assignment.author_id != self.user.id:
-            return None, { 'error': 'You are not allowed to do that.'}
+        if (
+            not participation.can_manage_assignments
+            and assignment.author_id != self.user.id
+        ):
+            return None, {'error': 'You are not allowed to do that.'}
         return assignment, None
 
     @action
