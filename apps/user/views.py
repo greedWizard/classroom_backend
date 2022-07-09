@@ -1,5 +1,6 @@
 from urllib.parse import urljoin
 
+from dependency_injector.wiring import inject
 from fastapi_jwt_auth import AuthJWT
 from scheduler.tasks.user import send_activation_email
 from starlette import status
@@ -28,6 +29,7 @@ from apps.user.schemas import (
     UserLoginSchema,
     UserLoginSuccessSchema,
     UserPasswordResetInitiationSchema,
+    UserPasswordResetSchema,
     UserProfileSchema,
     UserProfileUpdateSchema,
     UserRegisterSchema,
@@ -215,6 +217,25 @@ async def initiate_user_password_reset(
 
 @router.post(
     '/reset-password',
+    response_model=OperationResultSchema,
+    operation_id='resetUserPassword',
 )
-async def reset_password():
-    pass
+@inject
+async def reset_user_password(
+    request: Request,
+    schema: UserPasswordResetSchema,
+    user_service: UserService = Depends(),
+):
+    """Resets user password."""
+    token = request.cookies.get('token')
+    _, errors = await user_service.reset_user_password(
+        password_schema=schema,
+        token=token,
+    )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return OperationResultSchema(
+        status=OperationResultStatusEnum.SUCCESS,
+        message='Password has been reset! Please relogin to start a new session!',
+    )

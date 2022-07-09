@@ -90,3 +90,13 @@ class UserRepository(CRUDRepository):
             },
             id=user_id,
         )
+
+    async def retrieve_password_reset_needed_user(self, id: int) -> _model:
+        async with self.get_session() as session:
+            statement = select(self._model).filter(
+                self._model.id == id,
+                self._model.is_reset_needed == True,
+                self._model.password_reset_deadline >= get_current_datetime(),
+            )
+            user = (await session.execute(statement)).scalars().first()
+        return user

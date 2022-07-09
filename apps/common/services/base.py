@@ -122,8 +122,16 @@ class CreateUpdateService(IServiceBase):
     required_fields_map: Dict[str, List] = {}
     _repository: CRUDRepository
 
-    async def validate(self, attrs: Dict = {}) -> Dict:
+    async def validate(self, attrs: Dict = None) -> Dict:
         """Method for prevalidating attrs before action."""
+        if not attrs:
+            attrs = {}
+
+        attrs = {
+            field: value
+            for field, value in attrs.items()
+            if field in self._repository.model_fields
+        }
         return attrs
 
     async def _validate_values(self, **kwargs) -> None:
@@ -172,8 +180,10 @@ class CreateUpdateService(IServiceBase):
         self,
         listCreateSchema: List[CreateSchema],
     ):
-        return [await self.create(createSchema=createSchema)
-                    for createSchema in listCreateSchema]
+        return [
+            await self.create(createSchema=createSchema)
+            for createSchema in listCreateSchema
+        ]
 
     @action
     async def update(

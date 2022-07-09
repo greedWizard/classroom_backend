@@ -84,3 +84,8 @@ class UserHyperlinkEmailSchema(BaseModel):
 
 class UserPasswordResetInitiationSchema(BaseModel):
     email: str
+
+
+class UserPasswordResetSchema(BaseModel):
+    password: str
+    repeat_password: str

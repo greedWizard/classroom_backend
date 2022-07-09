@@ -16,6 +16,7 @@ from dependency_injector.wiring import (
     Provide,
 )
 from itsdangerous import TimedSerializer
+from itsdangerous.exc import BadSignature
 from pydantic import BaseModel
 from scheduler.tasks.user import send_password_reset_email
 
@@ -35,8 +36,10 @@ from apps.user.repositories.user_repository import UserRepository
 from apps.user.schemas import (
     UserHyperlinkEmailSchema,
     UserLoginSchema,
+    UserPasswordResetSchema,
     UserRegistrationCompleteSchema,
 )
+from apps.user.utils import unsign_timed_token
 
 
 class UserService(CRUDService):
@@ -69,13 +72,16 @@ class UserService(CRUDService):
             f'Password should be at least {config.MINIMAL_PASSWORD_LENGTH} '
             'characters long and contain at least one digit and upper case letter.'
         )
+        repeat_password = self.current_action_attributes.get('repeat_password')
 
         if not any(upper_char in value for upper_char in string.ascii_uppercase):
             return False, password_error
         if not any(digit in value for digit in string.digits):
             return False, password_error
-        if value != self.current_action_attributes.get('repeat_password'):
+        if value != repeat_password:
             return False, "Passwords don't match."
+        if len(value) < config.MINIMAL_PASSWORD_LENGTH:
+            return False, 'Password is too short.'
         return True, {}
 
     async def validate_first_name(self, value):
@@ -132,18 +138,7 @@ class UserService(CRUDService):
             )
             attrs['is_active'] = False
             attrs.pop('accept_eula')
-        if self.action == 'update':
-            attrs.pop('confirm_password')
         return await super().validate(attrs)
-
-    async def has_update_permission(
-        self,
-        user: User,
-        confirm_password: str,
-    ):
-        if user.password != self._hash_password(confirm_password):
-            return False, 'Incorrect password.'
-        return True, None
 
     @action
     async def authenticate_user(
@@ -177,7 +172,7 @@ class UserService(CRUDService):
 
     @staticmethod
     @inject
-    async def _get_user_reset_token(
+    async def _get_user_password_reset_token(
         user_id: int,
         timed_serializer: TimedSerializer = Provide[MainContainer.timed_serializer],
     ):
@@ -195,7 +190,7 @@ class UserService(CRUDService):
             return None, 'User not found'
 
         await self._repository.set_reset_flag(user_id=user.id)
-        token = await self._get_user_reset_token(user_id=user.id)
+        token = await self._get_user_password_reset_token(user_id=user.id)
 
         send_password_reset_email(
             user=UserHyperlinkEmailSchema(
@@ -204,3 +199,27 @@ class UserService(CRUDService):
             ),
         )
         return token, None
+
+    @action
+    async def reset_user_password(
+        self,
+        password_schema: UserPasswordResetSchema,
+        token: str,
+    ) -> Tuple[bool, Optional[dict[str, str]]]:
+        if not token:
+            return None, {'token': 'Token is not provided!'}
+
+        try:
+            user_id = await unsign_timed_token(token, salt=config.PASSWORD_RESET_SALT)
+        except (TypeError, BadSignature):
+            return None, {'token': 'Wrong token format!'}
+
+        user = await self._repository.retrieve_password_reset_needed_user(
+            id=user_id,
+        )
+
+        if not user:
+            return None, {
+                'token': 'There is no user with provided token in need of password reset!'
+            }
+        return await self.update(id=user.id, updateSchema=password_schema)

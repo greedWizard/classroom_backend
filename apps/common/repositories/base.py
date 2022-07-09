@@ -45,6 +45,10 @@ class AbstractBaseRepository(ABC):
         if test_mode:
             self._session_factory = test_session
 
+    @property
+    def model_fields(self):
+        return self._model.__table__.columns
+
 
 class ReadOnlyRepository(AbstractBaseRepository):
     default_ordering: list[str] = []

@@ -35,6 +35,7 @@ class MainContainer(containers.DeclarativeContainer):
         modules=[
             'scheduler.tasks.classroom',
             'apps.user.services.user_service',
+            'apps.user.utils',
         ],
     )
 
