@@ -121,37 +121,6 @@ async def get_room_post(
     return room_post
 
 
-@room_posts_router.post(
-    '/{post_id}/attachments',
-    response_model=List[AttachmentListItemSchema],
-    status_code=status.HTTP_201_CREATED,
-    operation_id='attachFilesToRoomPost',
-)
-async def attach_files_to_room_post(
-    post_id: int,
-    attachments: List[UploadFile],
-    user: User = Depends(get_current_user),
-):
-    attachments_list = []
-    attachment_service = AttachmentService(user)
-
-    for attachment in attachments:
-        attachments_list.append(
-            AttachmentCreateSchema(
-                filename=attachment.filename,
-                source=await attachment.read(),
-            ),
-        )
-    attachments, errors = await attachment_service.create_for_room_post(
-        attachments_list,
-        post_id,
-    )
-
-    if errors:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    return [AttachmentListItemSchema.from_orm(attachment) for attachment in attachments]
-
-
 @room_posts_router.delete(
     '',
     status_code=status.HTTP_204_NO_CONTENT,

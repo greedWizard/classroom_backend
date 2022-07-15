@@ -1,4 +1,5 @@
 from typing import (
+    Any,
     Dict,
     List,
     NewType,
@@ -173,17 +174,33 @@ class CreateUpdateService(IServiceBase):
             created_object = await self._repository.create(join=join, **attrs)
         except ObjectAlreadyExistsException as e:
             return None, {'error': self.error_messages['create'] + str(e)}
-        return created_object, {}
+        return created_object, None
+
+    async def _get_bulk_create_result(
+        self,
+        listCreateSchema: List[CreateSchema],
+    ) -> Tuple[list[BaseDBModel], list[dict[str, Any]]]:
+        results = [
+            await self.create(createSchema=createSchema)
+            for createSchema in listCreateSchema
+        ]
+
+        errors = [error for _, error in results]
+        created_objects = [obj for obj, _ in results]
+
+        if not any(errors):
+            errors = []
+        if not any(created_objects):
+            created_objects = []
+        return created_objects, errors
 
     @action
     async def bulk_create(
         self,
         listCreateSchema: List[CreateSchema],
     ):
-        return [
-            await self.create(createSchema=createSchema)
-            for createSchema in listCreateSchema
-        ]
+        created_objects, errors = await self._get_bulk_create_result(listCreateSchema)
+        return created_objects, errors
 
     @action
     async def update(

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from apps.common.schemas import NormalizedDatetimeModel
 
@@ -12,9 +12,29 @@ class AttachmentCreateSchema(BaseModel):
     post_id: Optional[int] = None
     assignment_id: Optional[int] = None
 
+    class Config:
+        orm_mode = True
 
-class AttachmentCreateSuccessSchema(AttachmentCreateSchema):
+
+class AttachmentCreateSuccessSchema(BaseModel):
     id: int
+    filename: str
+    post_id: Optional[int] = None
+    assignment_id: Optional[int] = None
+
+    class Config:
+        orm_mode = True
+
+
+class AttachmentError(BaseModel):
+    room_id: Optional[str] = None
+    assignment_id: Optional[str] = None
+    post_id: Optional[str] = None
+
+
+class AttachmentBulkCreateResponse(BaseModel):
+    created: Optional[list[AttachmentCreateSuccessSchema]] = None
+    errors: Optional[list[AttachmentError]] = None
 
 
 class AttachmentListItemSchema(NormalizedDatetimeModel):
