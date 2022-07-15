@@ -10,8 +10,10 @@ class Attachment(BaseDBModel):
     filename = sa.Column(sa.String(256), nullable=False)
 
     # post
-    post_id: int = sa.Column(sa.Integer, sa.ForeignKey('posts.id'))
-    assignment_id: int = sa.Column(sa.Integer, sa.ForeignKey('assignments.id'))
+    post_id: int = sa.Column(sa.Integer, sa.ForeignKey('posts.id', ondelete='CASCADE'))
+    assignment_id: int = sa.Column(
+        sa.Integer, sa.ForeignKey('assignments.id', ondelete='CASCADE')
+    )
 
     def __str__(self) -> str:
         return f'Attachment: "{self.filename}"'

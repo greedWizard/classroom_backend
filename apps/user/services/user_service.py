@@ -110,6 +110,9 @@ class UserService(CRUDService):
         return True, {}
 
     async def validate_phone_number(self, value: str) -> ResultTuple:
+        if not value:
+            return False, 'This field is required'
+
         if not re.match(PHONE_REGEX, value):
             return False, 'Invalid phone format.'
         if await self._repository.check_phone_number_already_taken(
@@ -220,6 +223,6 @@ class UserService(CRUDService):
 
         if not user:
             return None, {
-                'token': 'There is no user with provided token in need of password reset!'
+                'token': 'There is no user with provided token in need of password reset!',
             }
         return await self.update(id=user.id, updateSchema=password_schema)

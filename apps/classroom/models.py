@@ -63,17 +63,17 @@ class Participation(BaseDBModel, AuthorAbstract):
         'Room',
         backref=backref(
             name='participations',
-
             uselist=True,
             passive_deletes=True,
         ),
     )
-    user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'), nullable=False)
+    user_id = sa.Column(
+        sa.Integer, sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False
+    )
     user = relationship(
         'User',
         backref=backref(
             name='participations',
-
             uselist=True,
         ),
         foreign_keys=[user_id],
@@ -135,12 +135,15 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
     )
 
     # relations
-    room_id: int = sa.Column(sa.Integer, sa.ForeignKey('rooms.id'), nullable=False)
+    room_id: int = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('rooms.id', ondelete='CASCADE'),
+        nullable=False,
+    )
     room = relationship(
         'Room',
         backref=backref(
             name='posts',
-
             uselist=True,
         ),
     )
@@ -149,7 +152,6 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
         backref=backref(
             name='post',
         ),
-
         uselist=True,
     )
 
@@ -172,12 +174,15 @@ class HomeworkAssignment(BaseDBModel, AuthorAbstract):
     comment = sa.Column(sa.Text)
 
     # relations
-    post_id = sa.Column(sa.Integer, sa.ForeignKey('posts.id'), nullable=False)
+    post_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('posts.id', ondelete='CASCADE'),
+        nullable=False,
+    )
     post: RoomPost = relationship(
         'RoomPost',
         backref=backref(
             name='assignments',
-
             uselist=True,
         ),
     )
