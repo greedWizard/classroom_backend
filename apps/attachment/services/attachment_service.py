@@ -1,3 +1,9 @@
+from typing import (
+    Any,
+    Tuple,
+    Union,
+)
+
 from apps.attachment.repositories.attachment_repository import AttachmentRepository
 from apps.classroom.models import (
     HomeworkAssignment,
@@ -12,7 +18,9 @@ from apps.common.services.base import CRUDService
 
 class AttachmentService(AuthorMixin, CRUDService):
     _repository: AttachmentRepository = AttachmentRepository()
-    _assignment_repository: HomeworkAssignmentRepository = HomeworkAssignmentRepository()
+    _assignment_repository: HomeworkAssignmentRepository = (
+        HomeworkAssignmentRepository()
+    )
     _participation_repository: ParticipationRepository = ParticipationRepository()
     _post_repository: RoomPostRepository = RoomPostRepository()
     _post_checked: bool = False
@@ -33,6 +41,9 @@ class AttachmentService(AuthorMixin, CRUDService):
             room_id=post.room_id,
         )
         return participation.can_manage_posts
+
+    async def delete_by_id(self, id: int) -> Tuple[bool, Union[dict[str, Any], None]]:
+        return await self.delete(id=id)
 
     async def _can_attach_to_assignment(
         self,

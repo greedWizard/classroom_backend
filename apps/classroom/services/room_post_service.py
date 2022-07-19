@@ -1,4 +1,3 @@
-from ntpath import join
 from scheduler.tasks.classroom import notify_room_post_created
 
 from apps.classroom.constants import ParticipationRoleEnum
@@ -46,6 +45,13 @@ class RoomPostService(AuthorMixin, CRUDService):
                 f'Title should be less than {config.TITLE_MAX_LENGTH} characters.',
             )
         return True, None
+
+    @action
+    async def retrieve_detail(self, id: int):
+        return await self.retrieve(
+            ['attachments', 'assignments'],
+            id=id,
+        )
 
     async def _notify_room_post_create(self, room_post: RoomPost):
         emails = await room_post.room.participations.filter(
@@ -111,7 +117,9 @@ class RoomPostService(AuthorMixin, CRUDService):
         return await super().update(id, updateSchema, join, exclude_unset)
 
     @action
-    async def create(self, createSchema, exclude_unset: bool = False, join: list[str] = None):
+    async def create(
+        self, createSchema, exclude_unset: bool = False, join: list[str] = None
+    ):
         participation: Participation = await self._participation_repository.retrieve(
             user_id=self.user.id,
             room_id=createSchema.room_id,

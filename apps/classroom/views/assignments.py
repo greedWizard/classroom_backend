@@ -1,4 +1,7 @@
-from typing import Optional
+from typing import (
+    Optional,
+    Union,
+)
 
 from fastapi_pagination import (
     Page,
@@ -80,8 +83,8 @@ async def request_homework_assignment_changes(
     status_code=status.HTTP_200_OK,
 )
 async def fetch_assignments(
-    post_id: Optional[int] = None,
-    room_id: Optional[int] = None,
+    post_id: Union[int, None] = None,
+    room_id: Union[int, None] = None,
     user: User = Depends(get_current_user),
 ):
     service = AssignmentService(user)

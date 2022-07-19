@@ -10,15 +10,9 @@ from fastapi import (
     APIRouter,
     Depends,
     Query,
-    UploadFile,
 )
 from fastapi.exceptions import HTTPException
 
-from apps.attachment.schemas import (
-    AttachmentCreateSchema,
-    AttachmentListItemSchema,
-)
-from apps.attachment.services.attachment_service import AttachmentService
 from apps.classroom.schemas import (
     RoomPostCreateSchema,
     RoomPostCreateSuccessSchema,
@@ -28,7 +22,6 @@ from apps.classroom.schemas import (
 )
 from apps.classroom.schemas.common import RoomPostListItemSchema
 from apps.classroom.services.room_post_service import RoomPostService
-from apps.classroom.utils import make_room_post_schema
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
 
@@ -111,13 +104,12 @@ async def get_room_post(
     user: User = Depends(get_current_user),
 ):
     room_post_service = RoomPostService(user)
-    room_post, errors = await room_post_service.retrieve(
-        ['author', 'attachments', 'room'],
-        id=post_id,
-    )
+    room_post, errors = await room_post_service.retrieve_detail(post_id)
 
     if errors:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    if not room_post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return room_post
 
 

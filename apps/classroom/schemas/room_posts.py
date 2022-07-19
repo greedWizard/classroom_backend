@@ -61,12 +61,14 @@ class RoomPostDetailSchema(BaseModel):
     title: str
     description: Optional[str]
     type: str
-    author: AuthorSchema
+    author_id: int
     created_at: datetime
     updated_at: datetime
     attachments_count: int
+    assignments_count: int
     attachments: List[AttachmentListItemSchema]
-    room: RoomNestedSchema
+    room_id: int
+    is_assignable: bool
 
     class Config:
         orm_mode = True

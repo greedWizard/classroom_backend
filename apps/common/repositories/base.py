@@ -191,7 +191,6 @@ class CreateRepository(AbstractBaseRepository):
             except self._integrity_error as e:
                 raise ObjectAlreadyExistsException(e)
 
-            # Имеет ли это смысл?
             if join:
                 return await self.retrieve(id=created_object.id, join=join)
             return created_object

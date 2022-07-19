@@ -185,7 +185,6 @@ async def update_current_user(
     operation_id='initiateUserPasswordReset',
 )
 async def initiate_user_password_reset(
-    request: Request,
     schema: UserPasswordResetInitiationSchema,
     user_service: UserService = Depends(),
 ):
@@ -228,6 +227,7 @@ async def reset_user_password(
 ):
     """Resets user password."""
     token = request.cookies.get('token')
+    print(token)
     _, errors = await user_service.reset_user_password(
         password_schema=schema,
         token=token,
