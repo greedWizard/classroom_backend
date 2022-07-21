@@ -17,10 +17,11 @@ alembic - https://alembic.sqlalchemy.org/en/latest/ (Миграции)
 ### Тестирование
 
 pytest - https://docs.pytest.org/en/6.2.x/contents.html (Основной фреймворк для тестов)
-
 faker - https://zetcode.com/python/faker/ (Фейковые данные)
+pytest-asyncio - https://pypi.org/project/pytest-asyncio/
+factory-boy - https://factoryboy.readthedocs.io/en/stable/ (автоматическая генерация фикстур)
 
-Актуальные версии всех библиотек указаны в requirements.txt
+Актуальные версии всех библиотек указаны в pyproject.toml (dependencies)
 
 ## Развернуть проект
 
