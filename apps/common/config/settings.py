@@ -80,6 +80,7 @@ class ProjectSettings(BaseModel):
 
     # FILE SETTINGS
     MAX_FILE_SIZE: int = 64 * 1024 * 1024
+    PROFILE_PHOTO_RESOLUTION = 200
 
     # POSTS SETTINGS
     TITLE_MAX_LENGTH: int = 150
