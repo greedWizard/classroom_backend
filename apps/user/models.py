@@ -20,7 +20,7 @@ class User(BaseDBModel):
     is_banned = sa.Column(sa.Boolean, default=False)
     last_login = sa.Column(sa.DateTime)
 
-    profile_photo_id = sa.Column(sa.Integer())
+    profile_picture_id = sa.Column(sa.Integer())
 
     is_reset_needed = sa.Column(sa.Boolean, default=False)
     password_reset_deadline = sa.Column(sa.DateTime)
@@ -40,4 +40,4 @@ class User(BaseDBModel):
     # TODO remove hardcode
     @property
     def profile_picture_path(self):
-        return f'api/v1/attachments/{self.profile_photo_id}'
+        return f'api/v1/attachments/{self.profile_picture_id}'

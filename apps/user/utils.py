@@ -19,28 +19,25 @@ def hash_string(string: str):
     return hashlib.md5(string.encode()).hexdigest()
 
 
-def get_the_length_of_the_sides(profile_photo_size: tuple[int, int]) -> tuple[int, int]:
-    fixed_size = config.PROFILE_PHOTO_RESOLUTION
-    aspect_ratio = max(profile_photo_size) / fixed_size
-    size_of_side = int(min(profile_photo_size) / aspect_ratio)
+class ImageResize:
+    def __init__(self, profile_picture: bytes):
+        self.img = Image.open(BytesIO(profile_picture))
+        self.size_profile_picture = self.img.size
 
-    if max(profile_photo_size) == profile_photo_size[0]:
-        return fixed_size, size_of_side
-    else:
-        return size_of_side, fixed_size
+    def get_the_length_of_the_sides(self, new_size: int) -> tuple[int, int]:
+        aspect_ratio = max(self.size_profile_picture) / new_size
+        size_of_side = int(min(self.size_profile_picture) / aspect_ratio)
 
+        if max(self.size_profile_picture) == self.size_profile_picture[0]:
+            return new_size, size_of_side
 
-def resize_profile_photo(img, profile_photo_size: tuple[int, int]):
-    new_image = img.resize((get_the_length_of_the_sides(profile_photo_size)))
-    byte_io = BytesIO()
-    new_image.save(byte_io, format='JPEG')
-    return byte_io.getvalue()
+        return size_of_side, new_size
 
-
-def get_bytes_of_profile_photo(profile_photo):
-    img = Image.open(profile_photo)
-    size_profile_photo = img.size
-    return resize_profile_photo(img, size_profile_photo)
+    def get_resized_picture(self, new_size: int) -> bytes:
+        new_image = self.img.resize((self.get_the_length_of_the_sides(new_size)))
+        byte_io = BytesIO()
+        new_image.save(byte_io, format='JPEG')
+        return byte_io.getvalue()
 
 
 @inject

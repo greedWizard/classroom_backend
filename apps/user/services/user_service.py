@@ -42,13 +42,13 @@ from apps.user.schemas import (
     UserLoginSchema,
     UserPasswordResetSchema,
     UserRegistrationCompleteSchema,
-    AddProfilePhotoIdSchema,
+    AddProfilePictureIdSchema,
 )
 from apps.attachment.schemas import (
     AttachmentCreateSchema,
 )
 from apps.attachment.services.attachment_service import AttachmentService
-from apps.user.utils import unsign_timed_token, get_bytes_of_profile_photo
+from apps.user.utils import unsign_timed_token, ImageResize
 
 
 class UserService(CRUDService):
@@ -136,7 +136,7 @@ class UserService(CRUDService):
             return False, 'Incorrect password'
         return True, {}
 
-    async def validate_content_type_of_profile_photo(self, content_type):
+    async def validate_content_type_of_picture(self, content_type):
         if content_type not in ['image/jpeg', 'image/jpg', 'image/png']:
             return False, 'Profile photo must be .png, .jpeg, .jpg'
         return True, {}
@@ -242,23 +242,28 @@ class UserService(CRUDService):
         return await self.update(id=user.id, updateSchema=password_schema)
 
     @action
-    async def add_profile_photo_to_user(
+    async def set_profile_picture(
         self,
         profile_photo: UploadFile,
         user: User,
     ) -> Union[Tuple[bool, dict[str, str]], Any]:
         attachment_service = AttachmentService(user)
 
-        _, errors = await self.validate_content_type_of_profile_photo(profile_photo.content_type)
+        _, errors = await self.validate_content_type_of_picture(profile_photo.content_type)
         if errors:
             return False, {'content_type_of_profile_photo': errors}
-
-        add_profile_photo_schema = AttachmentCreateSchema(
+        image = ImageResize(await profile_photo.read())
+        add_profile_picture_schema = AttachmentCreateSchema(
             filename=profile_photo.filename,
-            source=get_bytes_of_profile_photo(profile_photo.file),
+            source=image.get_resized_picture(new_size=config.PROFILE_PICTURE_RESOLUTION)
         )
 
-        profile_photo_object: tuple = await attachment_service.create(createSchema=add_profile_photo_schema)
+        profile_picture_object: tuple = await attachment_service.create(createSchema=add_profile_picture_schema)
 
-        profile_photo_id = profile_photo_object[0].id
-        return await self.update(id=user.id, updateSchema=AddProfilePhotoIdSchema(profile_photo_id=profile_photo_id))
+        profile_picture_id = profile_picture_object[0].id
+        return await self.update(
+            id=user.id,
+            updateSchema=AddProfilePictureIdSchema(
+                profile_picture_id=profile_picture_id
+            )
+        )

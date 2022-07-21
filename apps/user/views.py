@@ -35,7 +35,7 @@ from apps.user.schemas import (
     UserProfileUpdateSchema,
     UserRegisterSchema,
     UserRegistrationCompleteSchema,
-    ProfilePhotoPath,
+    ProfilePicturePath,
 )
 from apps.user.services.user_service import UserService
 
@@ -244,20 +244,20 @@ async def reset_user_password(
 
 
 @router.post(
-    '/add-profile-photo',
+    '/add-profile-picture',
     status_code=status.HTTP_200_OK,
-    response_model=ProfilePhotoPath,
+    response_model=ProfilePicturePath,
     operation_id='addProfilePicture',
 )
-async def add_profile_photo(
-    profile_photo: UploadFile,
+async def add_profile_picture(
+    profile_picture: UploadFile,
     user_services: UserService = Depends(),
     current_user: User = Depends(get_current_user),
 ):
-    """Add Profile Photo"""
-    user, errors = await user_services.add_profile_photo_to_user(profile_photo, current_user)
+    """Add Profile Picture"""
+    user, errors = await user_services.set_profile_picture(profile_picture, current_user)
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
 
-    return ProfilePhotoPath(profile_photo_path=user.profile_picture_path)
+    return ProfilePicturePath(profile_picture_path=user.profile_picture_path)

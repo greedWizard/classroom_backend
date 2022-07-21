@@ -7,17 +7,17 @@ from tests.factories.user import UserFactory
 
 
 @pytest.mark.asyncio
-async def test_add_profile_photo_success(
+async def test_add_profile_picture_success(
     app: FastAPI,
     client: FastAPITestClient,
 ):
     user = await UserFactory.create()
-    url = app.url_path_for('add_profile_photo')
+    url = app.url_path_for('add_profile_picture')
 
     with open('tests/users/profile_photo.jpeg', 'rb') as profile_photo:
         client.authorize(user)
         files = {
-            'profile_photo': ('test.jpeg', profile_photo, 'image/jpeg'),
+            'profile_picture': ('test.jpeg', profile_photo, 'image/jpeg'),
         }
         response = client.post(
             url,
@@ -27,19 +27,19 @@ async def test_add_profile_photo_success(
     assert response.status_code == status.HTTP_200_OK
 
     response_json_data = response.json()
-    assert response_json_data['profile_photo_path']
+    assert response_json_data['profile_picture_path']
 
 
 @pytest.mark.asyncio
-async def test_add_profile_photo_not_authorized(
+async def test_add_profile_picture_not_authorized(
     app: FastAPI,
     client: FastAPITestClient,
 ):
-    url = app.url_path_for('add_profile_photo')
+    url = app.url_path_for('add_profile_picture')
 
     with open('tests/users/profile_photo.jpeg', 'rb') as profile_photo:
         files = {
-            'profile_photo': ('test.jpeg', profile_photo, 'image/jpeg'),
+            'profile_picture': ('test.jpeg', profile_photo, 'image/jpeg'),
         }
         response = client.post(
             url,
@@ -50,17 +50,17 @@ async def test_add_profile_photo_not_authorized(
 
 
 @pytest.mark.asyncio
-async def test_add_profile_photo_bad_content_type(
+async def test_add_profile_picture_bad_content_type(
     app: FastAPI,
     client: FastAPITestClient,
 ):
     user = await UserFactory.create()
-    url = app.url_path_for('add_profile_photo')
+    url = app.url_path_for('add_profile_picture')
 
     with open('tests/users/bad.txt', 'rb') as profile_photo:
         client.authorize(user)
         files = {
-            'profile_photo': ('bad.txt', profile_photo, 'text.plan'),
+            'profile_picture': ('bad.txt', profile_photo, 'text.plan'),
         }
         response = client.post(
             url,
@@ -73,18 +73,18 @@ async def test_add_profile_photo_bad_content_type(
 
 
 @pytest.mark.asyncio
-async def test_get_profile_photo(
+async def test_get_profile_picture(
     app: FastAPI,
     client: FastAPITestClient,
 ):
     user = await UserFactory.create()
     client.authorize(user)
 
-    url = app.url_path_for('add_profile_photo')
+    url = app.url_path_for('add_profile_picture')
 
     with open('tests/users/profile_photo.jpeg', 'rb') as profile_photo:
         files = {
-            'profile_photo': ('test.jpeg', profile_photo, 'image/jpeg'),
+            'profile_picture': ('test.jpeg', profile_photo, 'image/jpeg'),
         }
         response = client.post(
             url,
@@ -101,3 +101,41 @@ async def test_get_profile_photo(
 
     response = client.get(response_data['profile_picture_path'])
     assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio
+async def test_change_profile_picture(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    user = await UserFactory.create()
+    client.authorize(user)
+
+    url = app.url_path_for('add_profile_picture')
+
+    with open('tests/users/profile_photo.jpeg', 'rb') as profile_photo:
+        files = {
+            'profile_picture': ('test.jpeg', profile_photo, 'image/jpeg'),
+        }
+        response = client.post(
+            url,
+            files=files,
+        )
+    response_json_data = response.json()
+
+    response = client.get(response_json_data['profile_picture_path'])
+    old_picture = response.content
+
+    with open('tests/users/new_profile_photo.jpeg', 'rb') as profile_photo:
+        files = {
+            'profile_picture': ('test.jpeg', profile_photo, 'image/jpeg'),
+        }
+        response = client.post(
+            url,
+            files=files,
+        )
+    response_json_data = response.json()
+
+    response = client.get(response_json_data['profile_picture_path'])
+    new_picture = response.content
+    assert old_picture != new_picture
