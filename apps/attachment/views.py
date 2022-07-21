@@ -1,13 +1,19 @@
+from typing import Optional
+
 from starlette import status
 
 from fastapi import (
     APIRouter,
     Depends,
+    UploadFile,
 )
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
-from apps.attachment.schemas import AttachmentDeleteSchema
+from apps.attachment.schemas import (
+    AttachmentBulkCreateResponse,
+    AttachmentCreateSchema,
+)
 from apps.attachment.services.attachment_service import AttachmentService
 from apps.attachment.utils import stream_file
 from apps.user.dependencies import get_current_user
@@ -41,20 +47,42 @@ async def get_attachment(
     )
 
 
-@router.delete(
-    '',
-    status_code=status.HTTP_204_NO_CONTENT,
-    operation_id='deleteAttachments',
+@router.post(
+    '/',
+    response_model=AttachmentBulkCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+    operation_id='createAttachments',
 )
-async def delete_attachments(
-    attachmentDeleteSchema: AttachmentDeleteSchema,
+async def create_attachments(
+    attachments: list[UploadFile],
+    post_id: Optional[int] = None,
+    assignment_id: Optional[int] = None,
     user: User = Depends(get_current_user),
 ):
-    attachment_service = AttachmentService(user)
-    errors = await attachment_service.bulk_delete(id__in=attachmentDeleteSchema.ids)
+    if all([post_id is None, assignment_id is None]):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={'error': 'Either post_id or room_id must be provided!'},
+        )
 
-    if errors:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
+    attachments_list = [
+        AttachmentCreateSchema(
+            filename=attachment.filename,
+            source=await attachment.read(),
+            assignment_id=assignment_id,
+            post_id=post_id,
+        )
+        for attachment in attachments
+    ]
+
+    attachment_service = AttachmentService(user)
+    attachments, errors = await attachment_service.bulk_create(
+        attachments_list,
+    )
+
+    if not attachments:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return AttachmentBulkCreateResponse(created=attachments, errors=errors)
 
 
 @router.delete(

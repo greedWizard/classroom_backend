@@ -6,53 +6,91 @@ from datetime import (
     timedelta,
 )
 from hashlib import md5
-from typing import Tuple
+from typing import (
+    Optional,
+    Tuple,
+    Union,
+    Any,
+)
 
-from tortoise.expressions import Q
+from fastapi import UploadFile
 
+from dependency_injector.wiring import (
+    inject,
+    Provide,
+)
+from itsdangerous import TimedSerializer
+from itsdangerous.exc import BadSignature
+from pydantic import BaseModel
+from scheduler.tasks.user import send_password_reset_email
+
+from apps.common.config import config
+from apps.common.containers import MainContainer
+from apps.common.services.base import (
+    CRUDService,
+    ResultTuple,
+)
+from apps.common.services.decorators import action
 from apps.user.constants import (
     EMAIL_REGEX,
     PHONE_REGEX,
 )
 from apps.user.models import User
-from apps.user.schemas import UserLoginSchema
-from apps.user.utils import hash_string
-from common.config import config
-from common.services.base import (
-    CRUDService,
-    ResultTuple,
+from apps.user.repositories.user_repository import UserRepository
+from apps.user.schemas import (
+    UserHyperlinkEmailSchema,
+    UserLoginSchema,
+    UserPasswordResetSchema,
+    UserRegistrationCompleteSchema,
+    AddProfilePhotoIdSchema,
 )
-from common.services.decorators import action
+from apps.attachment.schemas import (
+    AttachmentCreateSchema,
+)
+from apps.attachment.services.attachment_service import AttachmentService
+from apps.user.utils import unsign_timed_token, get_bytes_of_profile_photo
 
 
 class UserService(CRUDService):
-    model = User
+    _repository: UserRepository = UserRepository()
+
     error_messages = {
         'already_exists': 'User with that credits is already registred.',
         'does_not_exist': 'User not found. He is either inactive or not registred yet.',
     }
-
-    async def get_queryset(self, management: bool = False):
-        return await self.model.active()
+    schema_map: dict[str, BaseModel] = {
+        'create': UserRegistrationCompleteSchema,
+    }
 
     def set_user(self, user: User):
         self.user = user
 
+    @property
+    def current_user_id(self):
+        user_id = None
+
+        if self.user:
+            user_id = self.user.id
+        return user_id
+
     def _hash_password(self, password: str) -> str:
-        return md5(password.encode()).hexdigest()
+        return md5(password.encode()).hexdigest()  # no qa
 
     async def validate_password(self, value: str) -> ResultTuple:
         password_error = (
             f'Password should be at least {config.MINIMAL_PASSWORD_LENGTH} '
             'characters long and contain at least one digit and upper case letter.'
         )
+        repeat_password = self.current_action_attributes.get('repeat_password')
 
         if not any(upper_char in value for upper_char in string.ascii_uppercase):
             return False, password_error
         if not any(digit in value for digit in string.digits):
             return False, password_error
-        if value != self.current_action_attributes['repeat_password']:
+        if value != repeat_password:
             return False, "Passwords don't match."
+        if len(value) < config.MINIMAL_PASSWORD_LENGTH:
+            return False, 'Password is too short.'
         return True, {}
 
     async def validate_first_name(self, value):
@@ -66,14 +104,12 @@ class UserService(CRUDService):
         return True, {}
 
     async def validate_email(self, value: str) -> ResultTuple:
-        exists_condition = Q(email=value)
-
-        if self.user:
-            exists_condition &= ~Q(id=self.user.id)
-
         if not re.match(EMAIL_REGEX, value):
             return False, 'Invalid email format.'
-        if await self.model.filter(exists_condition).exists():
+        if await self._repository.check_email_already_taken(
+            email=value,
+            user_id=self.current_user_id,
+        ):
             return False, 'User with that email is already registred.'
         return True, {}
 
@@ -83,14 +119,15 @@ class UserService(CRUDService):
         return True, {}
 
     async def validate_phone_number(self, value: str) -> ResultTuple:
-        exists_condition = Q(phone_number=value)
-
-        if self.user:
-            exists_condition &= ~Q(id=self.user.id)
+        if not value:
+            return False, 'This field is required'
 
         if not re.match(PHONE_REGEX, value):
             return False, 'Invalid phone format.'
-        if await self.model.filter(exists_condition).exists():
+        if await self._repository.check_phone_number_already_taken(
+            user_id=self.current_user_id,
+            phone_number=value,
+        ):
             return False, 'User with that phone number is already registred.'
         return True, {}
 
@@ -99,12 +136,17 @@ class UserService(CRUDService):
             return False, 'Incorrect password'
         return True, {}
 
+    async def validate_content_type_of_profile_photo(self, content_type):
+        if content_type not in ['image/jpeg', 'image/jpg', 'image/png']:
+            return False, 'Profile photo must be .png, .jpeg, .jpg'
+        return True, {}
+
     async def validate(self, attrs):
         password = attrs.get('password')
 
         if password:
             attrs['password'] = self._hash_password(password)
-            attrs.pop('repeat_password')
+            attrs.pop('repeat_password', None)
 
         if self.action == 'create':
             attrs['activation_token'] = uuid.uuid4().hex
@@ -113,50 +155,110 @@ class UserService(CRUDService):
             )
             attrs['is_active'] = False
             attrs.pop('accept_eula')
-        if self.action == 'update':
-            attrs.pop('confirm_password')
         return await super().validate(attrs)
-
-    async def has_update_permission(
-        self,
-        user: User,
-        confirm_password: str,
-    ):
-        if user.password != self._hash_password(confirm_password):
-            return False, 'Incorrect password.'
-        return True, None
 
     @action
     async def authenticate_user(
         self,
         userLoginSchema: UserLoginSchema,
     ) -> Tuple[User, str]:
-        user = await self.model.filter(
-            Q(email=userLoginSchema.email)
-            | Q(phone_number=userLoginSchema.phone_number),
-            password=hash_string(userLoginSchema.password),
-        ).first()
+        if not any((userLoginSchema.email, userLoginSchema.phone_number)):
+            return None, {
+                'email': 'this field is required',
+                'phone_number': 'this field is required',
+            }
+
+        user = await self._repository.get_user_by_auth_credentials(
+            password=userLoginSchema.password,
+            phone_number=userLoginSchema.phone_number,
+            email=userLoginSchema.email,
+        )
 
         if not user:
-            return None, 'Bad credentials'
-        if not user.is_active:
-            return None, 'User is not active. Please activate your profile.'
-
-        user.last_login = datetime.utcnow()
-        await user.save()
-
+            return None, 'User not found or inactive'
+        await self._repository.update_last_login(user)
         return user, None
 
     @action
     async def activate_user(self, activation_token: str) -> Tuple[User, dict]:
-        user = await self.model.filter(
-            is_active=False,
-            activation_token=activation_token,
-        ).first()
+        activated_user = await self._repository.activate_user(activation_token)
+
+        if not activated_user:
+            return False
+        return True
+
+    @staticmethod
+    @inject
+    async def _get_user_password_reset_token(
+        user_id: int,
+        timed_serializer: TimedSerializer = Provide[MainContainer.timed_serializer],
+    ):
+        return timed_serializer.dumps(obj=user_id, salt=config.PASSWORD_RESET_SALT)
+
+    @action
+    async def initiate_user_password_reset(
+        self,
+        email: str,
+        redirect_url: str,
+    ) -> Tuple[bool, Optional[str]]:
+        user = await self._repository.retrieve_active_user(email=email)
 
         if not user:
-            return None, {'activation_token': 'User not found'}
-        user.is_active = True
-        await user.save()
+            return None, 'User not found'
 
-        return user, None
+        await self._repository.set_reset_flag(user_id=user.id)
+        token = await self._get_user_password_reset_token(user_id=user.id)
+
+        send_password_reset_email(
+            user=UserHyperlinkEmailSchema(
+                email=user.email,
+                hyperlink=redirect_url,
+            ),
+        )
+        return token, None
+
+    @action
+    async def reset_user_password(
+        self,
+        password_schema: UserPasswordResetSchema,
+        token: str,
+    ) -> Tuple[bool, Optional[dict[str, str]]]:
+        if not token:
+            return None, {'token': 'Token is not provided!'}
+
+        try:
+            user_id = await unsign_timed_token(token, salt=config.PASSWORD_RESET_SALT)
+        except (TypeError, BadSignature):
+            return None, {'token': 'Wrong token format!'}
+
+        user = await self._repository.retrieve_password_reset_needed_user(
+            id=user_id,
+        )
+
+        if not user:
+            return None, {
+                'token': 'There is no user with provided token in need of password reset!',
+            }
+        return await self.update(id=user.id, updateSchema=password_schema)
+
+    @action
+    async def add_profile_photo_to_user(
+        self,
+        profile_photo: UploadFile,
+        user: User,
+    ) -> Union[Tuple[bool, dict[str, str]], Any]:
+        attachment_service = AttachmentService(user)
+
+        _, errors = await self.validate_content_type_of_profile_photo(profile_photo.content_type)
+        if errors:
+            return False, {'content_type_of_profile_photo': errors}
+
+        add_profile_photo_schema = AttachmentCreateSchema(
+            filename=profile_photo.filename,
+            source=get_bytes_of_profile_photo(profile_photo.file),
+        )
+
+        profile_photo_object: tuple = await attachment_service.create(createSchema=add_profile_photo_schema)
+
+        profile_photo_id = profile_photo_object[0].id
+        return await self.update(id=user.id, updateSchema=AddProfilePhotoIdSchema(profile_photo_id=profile_photo_id))

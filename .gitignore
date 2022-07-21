@@ -2,13 +2,17 @@ __pycache__/
 .vscode/
 venv/
 .pytest_cache/
-migrations/
+
 .coverage
 poetry.lock
 
 storage/*
 !storage/.gitkeep
+.mypy_cache/
 
 # environment
 .env
 *.db
+
+logs/*
+!logs/.gitkeep

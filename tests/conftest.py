@@ -6,24 +6,25 @@ from typing import Generator
 import pytest
 import pytest_asyncio
 from faker.proxy import Faker
-from starlette import status
-from tortoise.contrib.test import (
-    finalizer,
-    initializer,
-)
 
 from fastapi.applications import FastAPI
-from fastapi.testclient import TestClient
+from apps.attachment.repositories.attachment_repository import AttachmentRepository
 
-from apps.user.models import User
+from apps.classroom.repositories import RoomRepository
+from apps.classroom.repositories.assignment import HomeworkAssignmentRepository
+from apps.classroom.repositories.participation_repository import ParticipationRepository
+from apps.classroom.repositories.post_repository import RoomPostRepository
+from apps.common.database import test_engine
+from apps.common.factory import AppFactory
+from apps.common.models.base import BaseDBModel
+from apps.user.repositories.user_repository import UserRepository
 from apps.user.utils import hash_string
-from common.config import config
-from common.factory import AppFactory
+from tests.client import FastAPITestClient
 
 
 @pytest.fixture(scope='module', autouse=True)
 def app() -> FastAPI:
-    yield AppFactory.create_app(test_mode=True)
+    yield AppFactory.create_app()
 
 
 @pytest.fixture(scope='session')
@@ -31,19 +32,50 @@ def fake() -> Generator:
     yield Faker()
 
 
-@pytest.fixture(autouse=True, scope='module')
-def client(app: FastAPI) -> Generator:
-    initializer(config.APP_MODULES['models'])
-    with TestClient(app) as c:
-        yield c
-    finalizer()
-
-
 @pytest.fixture(scope='session')
 def event_loop() -> Generator:
     loop = asyncio.get_event_loop()
-    yield asyncio.get_event_loop()
+    yield loop
     loop.close()
+
+
+@pytest.fixture(autouse=True, scope='function')
+def client(app: FastAPI, event_loop: asyncio.AbstractEventLoop) -> Generator:
+    connection = event_loop.run_until_complete(test_engine.connect())
+    event_loop.run_until_complete(connection.run_sync(BaseDBModel.metadata.create_all))
+    with FastAPITestClient(app) as c:
+        yield c
+    event_loop.run_until_complete(connection.run_sync(BaseDBModel.metadata.drop_all))
+
+
+@pytest_asyncio.fixture
+async def user_repository():
+    return UserRepository()
+
+
+@pytest_asyncio.fixture
+async def room_repository():
+    return RoomRepository()
+
+
+@pytest_asyncio.fixture
+async def participation_repository():
+    return ParticipationRepository()
+
+
+@pytest_asyncio.fixture
+async def room_post_repository():
+    return RoomPostRepository()
+
+
+@pytest_asyncio.fixture
+async def assignment_repository():
+    return HomeworkAssignmentRepository()
+
+
+@pytest_asyncio.fixture
+async def attachment_repository():
+    return AttachmentRepository()
 
 
 @pytest_asyncio.fixture
@@ -54,34 +86,10 @@ async def user(fake: Faker):
         'first_name': fake.name(),
         'last_name': fake.name(),
         'middle_name': fake.name(),
-        'phone_number': f'+70000000000',
+        'phone_number': '+70000000000',
         'password': hash_string(password),
         'activation_token': uuid.uuid4().hex,
         'email': fake.email(),
         'activation_deadline_dt': datetime.utcnow(),
         'is_active': True,
     }
-
-    user, _ = await User.get_or_create(
-        defaults=default_user_data,
-    )
-    return user
-
-
-@pytest.fixture
-def authentication_token(
-    app: FastAPI,
-    client: TestClient,
-    user: User,
-) -> str:
-    url = app.url_path_for('authenticate_user')
-    response = client.post(
-        url,
-        json={
-            'email': user.email,
-            'password': '123',
-        },
-    )
-    assert response.status_code == status.HTTP_200_OK
-
-    yield response.json()['access_token']

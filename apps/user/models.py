@@ -1,43 +1,43 @@
-from tortoise import fields
-from tortoise.queryset import QuerySet
+import sqlalchemy as sa
 
-from apps.user.utils import hash_string
-from common.models import TimeStampAbstract
+from apps.common.models.base import BaseDBModel
 
 
-class User(TimeStampAbstract):
-    id = fields.IntField(pk=True)
-    first_name = fields.CharField(max_length=100)
-    last_name = fields.CharField(max_length=100)
-    middle_name = fields.CharField(max_length=100, blank=True, null=True)
-    password = fields.CharField(null=True, blank=True, max_length=256)
-    rating = fields.IntField(default=0)
-    last_login = fields.DatetimeField(null=True, blank=True)
-    activation_token = fields.CharField(max_length=256)
-    activation_deadline_dt = fields.DatetimeField()
-    is_active = fields.BooleanField(default=False)
-    is_reset_needed = fields.BooleanField(default=False)
-    phone_number = fields.CharField(max_length=15, unique=True)
-    email = fields.CharField(max_length=255, unique=True)
-    gender = fields.CharField(null=True, blank=True, max_length=50)
+# TODO: info verbose name + translations
+class User(BaseDBModel):
+    __tablename__ = 'users'
 
-    class Meta:
-        table = 'users'
+    first_name = sa.Column(sa.String(length=100), nullable=False)
+    last_name = sa.Column(sa.String(length=100), nullable=False)
+    middle_name = sa.Column(sa.String(length=100))
+    password = sa.Column(sa.String(length=250), nullable=False)
+    activation_token = sa.Column(sa.String(256), nullable=False)
+    activation_deadline_dt = sa.Column(sa.DateTime)
+    is_active = sa.Column(sa.Boolean, default=False)
+    phone_number = sa.Column(sa.String(15), unique=True, nullable=False)
+    email = sa.Column(sa.String(255), unique=True, nullable=False)
+    gender = sa.Column(sa.String(50))
+    is_banned = sa.Column(sa.Boolean, default=False)
+    last_login = sa.Column(sa.DateTime)
+
+    profile_photo_id = sa.Column(sa.Integer())
+
+    is_reset_needed = sa.Column(sa.Boolean, default=False)
+    password_reset_deadline = sa.Column(sa.DateTime)
 
     def __str__(self) -> str:
-        return f'{self.first_name} {self.last_name} {self.email}'
+        return (
+            f'{self.first_name} {self.last_name} {self.email} active={self.is_active}'
+        )
 
     def __repr__(self) -> str:
-        return f'<User {self.first_name} {self.last_name} {self.email}>'
+        return f'<User {self.first_name} {self.last_name} {self.email} active={self.is_active}>'
 
-    async def is_participating(self, room_id: int) -> bool:
-        return await self.participations.filter(room_id=room_id).exists()
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.middle_name} {self.last_name}'
 
-    async def set_password(self, unhashed_password: str):
-        self.password = hash_string(unhashed_password)
-        await self.save()
-
-    @classmethod
-    async def active(cls) -> QuerySet:
-        """Get active users."""
-        return cls.filter(is_active=True)
+    # TODO remove hardcode
+    @property
+    def profile_picture_path(self):
+        return f'api/v1/attachments/{self.profile_photo_id}'

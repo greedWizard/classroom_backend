@@ -1,37 +1,47 @@
 from urllib.parse import urljoin
 
+from dependency_injector.wiring import inject
 from fastapi_jwt_auth import AuthJWT
+from scheduler.tasks.user import send_activation_email
 from starlette import status
 
 from fastapi import (
     APIRouter,
     Depends,
     Request,
+    UploadFile
 )
 from fastapi.exceptions import HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import (
+    JSONResponse,
+    RedirectResponse,
+)
 
+from apps.common.config import config
+from apps.common.enums import OperationResultStatusEnum
+from apps.common.schemas import OperationResultSchema
 from apps.user.dependencies import (
     get_current_user,
     get_current_user_optional,
 )
 from apps.user.models import User
 from apps.user.schemas import (
+    UserHyperlinkEmailSchema,
     UserLoginSchema,
     UserLoginSuccessSchema,
+    UserPasswordResetInitiationSchema,
+    UserPasswordResetSchema,
     UserProfileSchema,
     UserProfileUpdateSchema,
     UserRegisterSchema,
     UserRegistrationCompleteSchema,
+    ProfilePhotoPath,
 )
 from apps.user.services.user_service import UserService
-from apps.user.utils import get_registration_complete_email_template
-from common.config import config
-from common.services.email import EmailService
 
 
 router = APIRouter(
-    tags=['authentication'],
+    tags=['user'],
 )
 
 
@@ -43,12 +53,8 @@ async def activate_user(
     activation_token: str,
     user_service: UserService = Depends(),
 ):
-    _, errors = await user_service.activate_user(activation_token)
-
-    if not errors:
-        # TODO: вот это вот вообще хрень, так быть не должно
-        return RedirectResponse(config.FRONTEND_LOGIN_URL)
-    raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
+    await user_service.activate_user(activation_token)
+    return RedirectResponse(config.FRONTEND_LOGIN_URL)
 
 
 @router.post(
@@ -61,7 +67,6 @@ async def register_user(
     request: Request,
     userRegisterSchema: UserRegisterSchema,
     user_service: UserService = Depends(),
-    email_service: EmailService = Depends(),
 ):
     user, errors = await user_service.create(userRegisterSchema)
 
@@ -73,13 +78,13 @@ async def register_user(
                 activation_token=user.activation_token,
             ),
         )
-        # TODO: отправить чиллить в треды, чтобы пользователь не ждал
-        await email_service.send_email(
-            subject='classroom activation link',
-            recipients=[user.email],
-            body=get_registration_complete_email_template(activation_link),
+        send_activation_email(
+            user=UserHyperlinkEmailSchema(
+                email=user.email,
+                hyperlink=activation_link,
+            ),
         )
-        return UserRegistrationCompleteSchema(status=config.USER_SUCCESS_STATUS)
+        return user
     raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
 
 
@@ -108,6 +113,7 @@ async def authenticate_user(
             detail=error_message,
         )
 
+    # TODO: отдельно создавать access_token и refresh_token
     access_token = Authorize.create_access_token(
         subject=user.id,
         expires_time=config.AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA,
@@ -162,14 +168,96 @@ async def update_current_user(
     user_service: UserService = Depends(),
 ):
     user_service.set_user(current_user)
-    user, errors = await user_service.update(current_user.id, userUpdateSchema)
-
-    if errors.get('confirm_password'):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
+    user, errors = await user_service.update(
+        id=current_user.id,
+        updateSchema=userUpdateSchema,
+    )
 
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=errors,
         )
-    return UserProfileSchema.from_orm(user)
+    return user
+
+
+@router.post(
+    '/request-reset-password',
+    response_model=OperationResultSchema,
+    operation_id='initiateUserPasswordReset',
+)
+async def initiate_user_password_reset(
+    request: Request,
+    schema: UserPasswordResetInitiationSchema,
+    user_service: UserService = Depends(),
+):
+    """Initiates the user password reset operation.
+
+    Returns operation result and token cookie. To proceed with password
+    reset the request to change password itself should be sent with the
+    same token.
+
+    """
+    token, error = await user_service.initiate_user_password_reset(
+        email=schema.email,
+        redirect_url=config.FRONTEND_USER_RESET_PASSWORD_URL,
+    )
+
+    if token:
+        response_schema = OperationResultSchema(
+            status=OperationResultStatusEnum.SUCCESS,
+            message='The password resed message has been sent to your email.',
+        )
+        response = JSONResponse(content=response_schema.dict())
+        response.set_cookie(key='token', value=token)
+        return response
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=error,
+    )
+
+
+@router.post(
+    '/reset-password',
+    response_model=OperationResultSchema,
+    operation_id='resetUserPassword',
+)
+@inject
+async def reset_user_password(
+    request: Request,
+    schema: UserPasswordResetSchema,
+    user_service: UserService = Depends(),
+):
+    """Resets user password."""
+    token = request.cookies.get('token')
+    _, errors = await user_service.reset_user_password(
+        password_schema=schema,
+        token=token,
+    )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return OperationResultSchema(
+        status=OperationResultStatusEnum.SUCCESS,
+        message='Password has been reset! Please relogin to start a new session!',
+    )
+
+
+@router.post(
+    '/add-profile-photo',
+    status_code=status.HTTP_200_OK,
+    response_model=ProfilePhotoPath,
+    operation_id='addProfilePicture',
+)
+async def add_profile_photo(
+    profile_photo: UploadFile,
+    user_services: UserService = Depends(),
+    current_user: User = Depends(get_current_user),
+):
+    """Add Profile Photo"""
+    user, errors = await user_services.add_profile_photo_to_user(profile_photo, current_user)
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+
+    return ProfilePhotoPath(profile_photo_path=user.profile_picture_path)

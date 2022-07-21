@@ -1,4 +1,5 @@
 from typing import List
+from fastapi_pagination import Page, paginate
 
 from starlette import status
 
@@ -15,15 +16,12 @@ from apps.classroom.schemas import (
     RoomCreateJoinLinkSuccessSchema,
     RoomCreateSchema,
     RoomCreateSuccessSchema,
-    RoomDeleteSchema,
     RoomDetailSchema,
     RoomListItemSchema,
-    RoomParticipationSchema,
 )
-from apps.classroom.services.room_service import (
-    ParticipationService,
-    RoomService,
-)
+from apps.classroom.schemas.participations import ParticipationDetailSchema, ParticipationListItemSchema
+from apps.classroom.services.participation_service import ParticipationService
+from apps.classroom.services.room_service import RoomService
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
 from apps.user.schemas import AuthorSchema
@@ -42,26 +40,20 @@ async def create_new_room(
     roomCreateSchema: RoomCreateSchema,
     user: User = Depends(get_current_user),
 ):
-
     room_service = RoomService(user)
-    room, errors = await room_service.create(roomCreateSchema)
+    result, errors = await room_service.create(roomCreateSchema)
 
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=errors,
         )
-
-    return RoomCreateSuccessSchema(
-        id=room.id,
-        name=room.name,
-        description=room.description,
-    )
+    return result
 
 
 @classroom_router.put(
     '/{room_id}',
-    response_model=RoomCreateSuccessSchema,
+    response_model=RoomDetailSchema,
     status_code=status.HTTP_200_OK,
     operation_id='updateRoom',
 )
@@ -71,19 +63,18 @@ async def update_room(
     user: User = Depends(get_current_user),
 ):
     room_service = RoomService(user)
-    room, errors = await room_service.update(room_id, roomUpdateSchema)
+    room, errors = await room_service.update(
+        room_id,
+        roomUpdateSchema,
+        join=['author', 'participations'],
+    )
 
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=errors,
         )
-
-    return RoomCreateSuccessSchema(
-        id=room.id,
-        name=room.name,
-        description=room.description,
-    )
+    return room
 
 
 @classroom_router.delete(
@@ -95,9 +86,8 @@ async def delete_room(
     room_id: int,
     user: User = Depends(get_current_user),
 ):
-    roomDeleteSchema = RoomDeleteSchema(id=room_id)
     room_service = RoomService(user)
-    deletes_count, errors = await room_service.delete(roomDeleteSchema)
+    deletes_count, errors = await room_service.delete(id=room_id)
 
     if errors:
         raise HTTPException(
@@ -121,64 +111,36 @@ async def get_room(
 ):
     room_service = RoomService(user)
     room, errors = await room_service.retrieve(
-        _fetch_related=['participations', 'author'],
         id=room_id,
+        _join=['participations', 'author'],
     )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=errors)
-    return RoomDetailSchema.from_orm(room)
+    return room
 
 
+# TODO: перенести в participations
 @classroom_router.get(
     '',
-    response_model=List[RoomListItemSchema],
+    response_model=Page[ParticipationDetailSchema],
     operation_id='getCurrentUserRooms',
 )
-async def current_user_room_list(
+async def participations_room_list(
     user: User = Depends(get_current_user),
     ordering: List[str] = Query(['-created_at']),
 ):
-    room_service = RoomService(user)
-    rooms, errors = await room_service.fetch(_ordering=ordering)
+    participation_service = ParticipationService(user)
+    participations, errors = await participation_service.fetch_for_user(
+        _ordering=ordering,
+    )
 
     if errors:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=errors,
+            errors=errors,
         )
-
-    room_response_list = []
-
-    # говнокод, потом переделать
-    for room in rooms:
-        await room.fetch_related('participations', 'author')
-        participation, _ = await room_service.participation_service.fetch(
-            {
-                'room_id': room.id,
-                'user_id': user.id,
-            },
-        )
-        participation = participation[0]
-
-        room_response_list.append(
-            RoomListItemSchema(
-                id=room.id,
-                name=room.name,
-                description=room.description,
-                participations_count=room.participations_count,
-                participation=RoomParticipationSchema(
-                    id=participation.id,
-                    role=participation.role.name,
-                    user_id=participation.user_id,
-                    room_id=participation.room_id,
-                    created_at=participation.created_at,
-                ),
-                created_at=room.created_at,
-                author=AuthorSchema.from_orm(room.author),
-            ),
-        )
-    return room_response_list
+    return paginate(participations)
 
 
 @classroom_router.post(
@@ -214,16 +176,8 @@ async def join_room_by_link(
             join_slug=join_slug,
             author_id=user.id,
         ),
-        fetch_related=['room', 'room__author'],
     )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-
-    return ParticipationSuccessSchema(
-        id=participation.id,
-        user_id=participation.user_id,
-        role=participation.role.name,
-        author_id=participation.author_id,
-        room=RoomListItemSchema.from_orm(participation.room),
-    )
+    return participation

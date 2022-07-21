@@ -3,14 +3,17 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from common.schemas import NormalizedDatetimeModel
+from apps.common.config import config
+from apps.common.schemas import NormalizedDatetimeModel
 
 
 class AuthorSchema(BaseModel):
     id: int
     first_name: str
     last_name: str
+    email: str
     middle_name: Optional[str] = None
+    full_name: str
 
     class Config:
         orm_mode = True
@@ -28,8 +31,13 @@ class UserRegisterSchema(BaseModel):
 
 
 class UserRegistrationCompleteSchema(BaseModel):
-    status: str
+    status: str = config.USER_SUCCESS_STATUS
     is_active: bool = False
+    email: str
+    activation_token: str
+
+    class Config:
+        orm_mode = True
 
 
 class UserLoginSchema(BaseModel):
@@ -54,6 +62,8 @@ class UserProfileSchema(NormalizedDatetimeModel):
     updated_at: datetime
     is_active: bool
 
+    profile_picture_path: Optional[str]
+
     class Config:
         orm_mode = True
 
@@ -67,3 +77,25 @@ class UserProfileUpdateSchema(BaseModel):
     first_name: Optional[str]
     last_name: Optional[str]
     middle_name: Optional[str]
+
+
+class UserHyperlinkEmailSchema(BaseModel):
+    email: str
+    hyperlink: str
+
+
+class UserPasswordResetInitiationSchema(BaseModel):
+    email: str
+
+
+class UserPasswordResetSchema(BaseModel):
+    password: str
+    repeat_password: str
+
+
+class AddProfilePhotoIdSchema(BaseModel):
+    profile_photo_id: int
+
+
+class ProfilePhotoPath(BaseModel):
+    profile_photo_path: str

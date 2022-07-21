@@ -1,93 +1,99 @@
-from typing import Dict
-
-from tortoise.expressions import Q
+from typing import (
+    Any,
+    Dict,
+)
 
 from apps.classroom.constants import ParticipationRoleEnum
-from apps.classroom.models import (
-    Participation,
-    Room,
-)
+from apps.classroom.repositories.participation_repository import ParticipationRepository
+from apps.classroom.repositories.room_repository import RoomRepository
+from apps.classroom.schemas.participations import ParticipationSuccessSchema
+from apps.common.services.author import AuthorMixin
+from apps.common.services.base import CRUDService
+from apps.common.services.decorators import action
 from apps.user.models import User
-from common.services.author import AuthorMixin
-from common.services.base import CRUDService
 
 
 class ParticipationService(AuthorMixin, CRUDService):
-    model = Participation
-    room_model = Room
+    _repository: ParticipationRepository = ParticipationRepository()
+    _room_repository: RoomRepository = RoomRepository()
+    schema_map = {
+        'create': ParticipationSuccessSchema,
+    }
 
     def __init__(self, user: User, *args, **kwargs) -> None:
         self.user = user
         super().__init__(user, *args, **kwargs)
 
-    async def get_queryset(self, management: bool = False):
-        qs = await super().get_queryset(management)
-        room_ids = (
-            await self.room_model.filter(participations__user_id=self.user.id)
-            .distinct()
-            .values_list('id', flat=True)
-        )
-        return qs.filter(room_id__in=room_ids).distinct()
-
     async def validate_join_slug(self, value: str):
-        if not await self.room_model.filter(join_slug=value).exists():
+        if not await self._room_repository.exists(
+            join_slug=value,
+        ):
             return False, 'This room does not exist.'
         return True, None
 
-    async def is_user_participating(
-        self,
-        user_id: int,
-        room_id: int,
-        join_slug: str = None,
-    ):
-        return await self.model.filter(
-            Q(user_id=user_id)
-            & (
-                Q(
-                    room_id=room_id,
-                )
-                | Q(
-                    room__join_slug=join_slug,
-                )
-            ),
-        ).exists()
-
-    async def can_moderate_room(
-        self,
-        room_id: int,
-        user_id: int,
-    ):
-        participation, _ = await self.retrieve(
-            _fetch_related=['room', 'user'],
-            room_id=room_id,
-            user_id=user_id,
-        )
-
-        if not participation:
-            return False
-
-        return participation.can_moderate_room()
-
     async def validate_user_id(self, value: int):
-        join_slug = self.current_action_attributes.get('join_slug')
         room_id = self.current_action_attributes.get('room_id')
-        if await self.is_user_participating(
-            self.current_action_attributes.get('user_id'),
-            room_id,
-            join_slug,
-        ):
+        user_id = value
+
+        if await self._repository.exists(room_id=room_id, user_id=user_id):
             return False, 'User is already in this room.'
         return True, None
 
     async def validate(self, attrs: Dict) -> Dict:
-        join_slug = self.current_action_attributes.get('join_slug')
-
-        if (
-            'join_slug' in self.current_action_attributes
-            and not 'room_id' in self.current_action_attributes
-        ):
-            attrs['room_id'] = (
-                await self.room_model.filter(join_slug=join_slug).first()
-            ).id
         attrs['role'] = attrs.get('role') or ParticipationRoleEnum.participant
+
+        if 'join_slug' in attrs:
+            join_slug = attrs.pop('join_slug')
+            room = await self._room_repository.get_room_by_join_slug(
+                join_slug=join_slug,
+            )
+            attrs['room_id'] = room.id
+
         return await super().validate(attrs)
+
+    @action
+    async def remove_user_from_room(self, user_id: int, room_id: int):
+        participation, _ = await self.retrieve(
+            room_id=room_id,
+            user_id=self.user.id,
+        )
+        errors = []
+
+        if not participation:
+            return False, {'error': 'Not Found'}
+        if not participation.can_remove_participants:
+            errors.append({'room_id': 'Permission denied'})
+        if (
+            participation.role == ParticipationRoleEnum.host
+            and participation.user_id == user_id
+        ):
+            errors.append({'user_id': "Can't remove a room host."})
+        if errors:
+            return False, errors
+        await self.model.filter(user_id=user_id, room_id=room_id).delete()
+        return True, None
+
+    @action
+    async def fetch_for_user(
+        self,
+        _ordering: dict[str, Any] = None,
+        **filters,
+    ):
+        return await self.fetch(
+            _ordering=_ordering,
+            join=['room', 'room.author', 'room.participations'],
+            user_id=self.user.id,
+            **filters,
+        )
+
+    @action
+    async def fetch_by_room(
+        self,
+        room_id: int,
+        _ordering: list = ...,
+        join: list[str] = None,
+        **filters,
+    ):
+        if await self._repository.count(room_id=room_id, user_id=self.user.id):
+            return await super().fetch(_ordering, join, room_id=room_id, **filters)
+        return None, {'error': 'Access denied.'}
