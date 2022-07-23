@@ -48,11 +48,14 @@ from apps.attachment.schemas import (
     AttachmentCreateSchema,
 )
 from apps.attachment.services.attachment_service import AttachmentService
-from apps.user.utils import unsign_timed_token, ImageResize
+from apps.attachment.repositories.attachment_repository import AttachmentRepository
+from apps.attachment.models import Attachment
+from apps.user.utils import unsign_timed_token, ImageResizer
 
 
 class UserService(CRUDService):
     _repository: UserRepository = UserRepository()
+    _attachment_repository: AttachmentRepository = AttachmentRepository()
 
     error_messages = {
         'already_exists': 'User with that credits is already registred.',
@@ -246,24 +249,26 @@ class UserService(CRUDService):
         self,
         profile_photo: UploadFile,
         user: User,
-    ) -> Union[Tuple[bool, dict[str, str]], Any]:
-        attachment_service = AttachmentService(user)
+    ) -> Tuple[Union[Attachment, bool], dict[str, str]]:
+        image_resizer = ImageResizer()
 
         _, errors = await self.validate_content_type_of_picture(profile_photo.content_type)
         if errors:
             return False, {'content_type_of_profile_photo': errors}
-        image = ImageResize(await profile_photo.read())
-        add_profile_picture_schema = AttachmentCreateSchema(
+
+        created_object = await self._attachment_repository.create_picture(
             filename=profile_photo.filename,
-            source=image.get_resized_picture(new_size=config.PROFILE_PICTURE_RESOLUTION)
+            source=image_resizer.get_resized_picture(
+                await profile_photo.read(),
+                new_size=config.PROFILE_PICTURE_RESOLUTION,
+            ),
+            profile_picture_user_id=user.id,
         )
-
-        profile_picture_object: tuple = await attachment_service.create(createSchema=add_profile_picture_schema)
-
-        profile_picture_id = profile_picture_object[0].id
-        return await self.update(
+        await self.update(
             id=user.id,
             updateSchema=AddProfilePictureIdSchema(
-                profile_picture_id=profile_picture_id
+                profile_picture_id=created_object.id
             )
         )
+
+        return created_object, {}

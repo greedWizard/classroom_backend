@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship, backref
 
 from apps.common.models.base import BaseDBModel
 
@@ -14,9 +15,17 @@ class Attachment(BaseDBModel):
     assignment_id: int = sa.Column(
         sa.Integer, sa.ForeignKey('assignments.id', ondelete='CASCADE')
     )
+    profile_picture_user_id = sa.Column(
+        sa.Integer(), sa.ForeignKey('users.id', ondelete='CASCADE'),
+    )
+    user = relationship(
+        'User',
+        backref=backref('attachments', uselist=False),
+        foreign_keys=[profile_picture_user_id],
+    )
 
     def __str__(self) -> str:
-        return f'Attachment: "{self.filename}"'
+        return f'Attachment: "{self.filename}" {self.profile_picture_user_id}'
 
     def __repr__(self) -> str:
         return f'<{str(self)}>'

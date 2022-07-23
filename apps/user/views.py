@@ -38,6 +38,7 @@ from apps.user.schemas import (
     ProfilePicturePath,
 )
 from apps.user.services.user_service import UserService
+from apps.common.utils import get_attachment_path
 
 
 router = APIRouter(
@@ -255,9 +256,9 @@ async def add_profile_picture(
     current_user: User = Depends(get_current_user),
 ):
     """Add Profile Picture"""
-    user, errors = await user_services.set_profile_picture(profile_picture, current_user)
+    attachment_with_profile_picture, errors = await user_services.set_profile_picture(profile_picture, current_user)
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
 
-    return ProfilePicturePath(profile_picture_path=user.profile_picture_path)
+    return ProfilePicturePath(profile_picture_path=get_attachment_path(attachment_with_profile_picture.id))

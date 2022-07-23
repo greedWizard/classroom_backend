@@ -33,3 +33,7 @@ def prepare_json_schema(schema: BaseModel):
 def prepare_json_list(schemas: list[BaseModel]):
     """Workaround to escape the JSONDecode error for list of schemas."""
     return [prepare_json_schema(schema) for schema in schemas]
+
+
+def get_attachment_path(attachment_id: int) -> str:
+    return f'api/v1/attachments/{attachment_id}'
