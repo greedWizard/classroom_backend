@@ -208,6 +208,7 @@ class UserService(CRUDService):
 
         await self._repository.set_reset_flag(user_id=user.id)
         token = await self._get_user_password_reset_token(user_id=user.id)
+        print(token)
 
         send_password_reset_email(
             user=UserHyperlinkEmailSchema(
@@ -239,7 +240,10 @@ class UserService(CRUDService):
             return None, {
                 'token': 'There is no user with provided token in need of password reset!',
             }
-        return await self.update(id=user.id, updateSchema=password_schema)
+
+        return await self.update(
+            id=user.id, updateSchema=password_schema, exclude_unset=False
+        )
 
     @action
     async def set_profile_picture(

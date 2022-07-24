@@ -91,6 +91,9 @@ class UserPasswordResetInitiationSchema(BaseModel):
 class UserPasswordResetSchema(BaseModel):
     password: str
     repeat_password: str
+    is_reset_needed: bool = False
+    password_reset_deadline: Optional[datetime] = None
+
 
 
 class AddProfilePictureIdSchema(BaseModel):

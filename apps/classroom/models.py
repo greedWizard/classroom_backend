@@ -68,7 +68,9 @@ class Participation(BaseDBModel, AuthorAbstract):
         ),
     )
     user_id = sa.Column(
-        sa.Integer, sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False
+        sa.Integer,
+        sa.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False,
     )
     user = relationship(
         'User',
@@ -154,6 +156,14 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
         ),
         uselist=True,
     )
+
+    @property
+    def is_assignable(self):
+        return self.type == RoomPostType.homework
+
+    @property
+    def assignments_count(self):
+        return len(self.assignments)
 
     def __str__(self) -> str:
         return f'"{self.title}" / "{self.description}"'
