@@ -9,6 +9,7 @@ from hashlib import md5
 from typing import (
     Optional,
     Tuple,
+    Union,
 )
 
 from dependency_injector.wiring import (
@@ -20,6 +21,10 @@ from itsdangerous.exc import BadSignature
 from pydantic import BaseModel
 from scheduler.tasks.user import send_password_reset_email
 
+from fastapi import UploadFile
+
+from apps.attachment.models import Attachment
+from apps.attachment.repositories.attachment_repository import AttachmentRepository
 from apps.common.config import config
 from apps.common.containers import MainContainer
 from apps.common.services.base import (
@@ -39,11 +44,15 @@ from apps.user.schemas import (
     UserPasswordResetSchema,
     UserRegistrationCompleteSchema,
 )
-from apps.user.utils import unsign_timed_token
+from apps.user.utils import (
+    resize_image,
+    unsign_timed_token,
+)
 
 
 class UserService(CRUDService):
     _repository: UserRepository = UserRepository()
+    _attachment_repository: AttachmentRepository = AttachmentRepository()
 
     error_messages = {
         'already_exists': 'User with that credits is already registred.',
@@ -125,6 +134,11 @@ class UserService(CRUDService):
     async def validate_confirm_password(self, value):
         if self._hash_password(value) != self.user.password:
             return False, 'Incorrect password'
+        return True, {}
+
+    async def validate_content_type_of_picture(self, content_type: str):
+        if not content_type.startswith('image'):
+            return False, 'Profile photo must be .png, .jpeg, .jpg'
         return True, {}
 
     async def validate(self, attrs):
@@ -226,6 +240,37 @@ class UserService(CRUDService):
             return None, {
                 'token': 'There is no user with provided token in need of password reset!',
             }
+
         return await self.update(
             id=user.id, updateSchema=password_schema, exclude_unset=False
         )
+
+    @action
+    async def set_profile_picture(
+        self,
+        profile_photo: UploadFile,
+        user: User,
+    ) -> Tuple[Union[Attachment, bool], dict[str, str]]:
+        _, errors = await self.validate_content_type_of_picture(
+            profile_photo.content_type
+        )
+        if errors:
+            return False, {'content_type_of_profile_photo': errors}
+
+        resized_picture = await resize_image(
+            await profile_photo.read(),
+            new_size=config.PROFILE_PICTURE_RESOLUTION,
+        )
+
+        created_attachment = await self._attachment_repository.create(
+            filename=profile_photo.filename,
+            source=resized_picture,
+        )
+        updated_user = await self._repository.update_and_return_single(
+            values={
+                'profile_picture_id': created_attachment.id,
+            },
+            id=user.id,
+        )
+
+        return updated_user, {}

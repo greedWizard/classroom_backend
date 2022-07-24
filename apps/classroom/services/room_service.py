@@ -38,7 +38,9 @@ class RoomService(AuthorMixin, CRUDService):
         return attrs
 
     @action
-    async def create(self, createSchema, exclude_unset: bool = False, join: list[str] = None):
+    async def create(
+        self, createSchema, exclude_unset: bool = False, join: list[str] = None
+    ):
         created_room, errors = await super().create(createSchema, exclude_unset)
 
         if errors:
@@ -69,7 +71,7 @@ class RoomService(AuthorMixin, CRUDService):
         if not participation.can_refresh_join_slug:
             return {}, 'You are not allowed to perform this operation.'
 
-        room = await self._repository.update_and_return(
+        room = await self._repository.update_and_return_single(
             values={'join_slug': self.generate_join_slug()},
             id=room_id,
         )

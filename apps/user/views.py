@@ -9,6 +9,7 @@ from fastapi import (
     APIRouter,
     Depends,
     Request,
+    UploadFile,
 )
 from fastapi.exceptions import HTTPException
 from fastapi.responses import (
@@ -25,6 +26,7 @@ from apps.user.dependencies import (
 )
 from apps.user.models import User
 from apps.user.schemas import (
+    ProfilePicturePath,
     UserHyperlinkEmailSchema,
     UserLoginSchema,
     UserLoginSuccessSchema,
@@ -239,3 +241,24 @@ async def reset_user_password(
         status=OperationResultStatusEnum.SUCCESS,
         message='Password has been reset! Please relogin to start a new session!',
     )
+
+
+@router.post(
+    '/add-profile-picture',
+    status_code=status.HTTP_200_OK,
+    response_model=ProfilePicturePath,
+    operation_id='addProfilePicture',
+)
+async def add_profile_picture(
+    profile_picture: UploadFile,
+    user_services: UserService = Depends(),
+    current_user: User = Depends(get_current_user),
+):
+    """Add Profile Picture."""
+    updated_user, errors = await user_services.set_profile_picture(
+        profile_picture, current_user
+    )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return updated_user

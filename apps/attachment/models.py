@@ -12,7 +12,8 @@ class Attachment(BaseDBModel):
     # post
     post_id: int = sa.Column(sa.Integer, sa.ForeignKey('posts.id', ondelete='CASCADE'))
     assignment_id: int = sa.Column(
-        sa.Integer, sa.ForeignKey('assignments.id', ondelete='CASCADE')
+        sa.Integer,
+        sa.ForeignKey('assignments.id', ondelete='CASCADE'),
     )
 
     def __str__(self) -> str:

@@ -216,7 +216,7 @@ class CreateUpdateService(IServiceBase):
         if errors:
             return None, errors
 
-        updated_instance = await self._repository.update_and_return(
+        updated_instance = await self._repository.update_and_return_single(
             values=attrs,
             join=join,
             id=id,

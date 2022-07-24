@@ -10,6 +10,7 @@ from jinja2 import (
 
 from apps.common.config import config
 from apps.common.config.integrations import MailClientConnectionConfig
+from apps.common.helpers.image_resizer import ImageResizer
 from apps.common.services.email import EmailService
 from apps.common.services.email.clients import SMTPClient
 
@@ -51,4 +52,8 @@ class MainContainer(containers.DeclarativeContainer):
     timed_serializer = providers.Singleton(
         TimedSerializer,
         secret_key=config.APP_SECRET_KEY,
+    )
+
+    image_resizer = providers.Singleton(
+        ImageResizer,
     )
