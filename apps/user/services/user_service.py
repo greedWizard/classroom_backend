@@ -136,8 +136,8 @@ class UserService(CRUDService):
             return False, 'Incorrect password'
         return True, {}
 
-    async def validate_content_type_of_picture(self, content_type):
-        if content_type not in ['image/jpeg', 'image/jpg', 'image/png']:
+    async def validate_content_type_of_picture(self, content_type: str):
+        if not content_type.startswith('image'):
             return False, 'Profile photo must be .png, .jpeg, .jpg'
         return True, {}
 
