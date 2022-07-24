@@ -160,7 +160,7 @@ class AssignmentService(AuthorMixin, CRUDService):
             return None, error
 
         changes_dict = changes_schema.dict() if changes_schema else {}
-        assignment = await self._repository.update_and_return(
+        assignment = await self._repository.update_and_return_single(
             values={
                 'status': status,
                 **changes_dict,

@@ -1,7 +1,8 @@
 import pytest
 
-from fastapi.applications import FastAPI
 from fastapi import status
+from fastapi.applications import FastAPI
+
 from tests.client import FastAPITestClient
 from tests.factories.user import UserFactory
 
@@ -69,7 +70,9 @@ async def test_add_profile_picture_bad_content_type(
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     json_data = response.json()
-    assert json_data['detail'] == {'content_type_of_profile_photo': 'Profile photo must be .png, .jpeg, .jpg'}
+    assert json_data['detail'] == {
+        'content_type_of_profile_photo': 'Profile photo must be .png, .jpeg, .jpg'
+    }
 
 
 @pytest.mark.asyncio
@@ -100,7 +103,7 @@ async def test_get_profile_picture(
     assert response_data['profile_picture_path']
 
     response = client.get(response_data['profile_picture_path'])
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_200_OK, response.json()
 
 
 @pytest.mark.asyncio

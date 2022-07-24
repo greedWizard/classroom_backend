@@ -9,7 +9,7 @@ from fastapi import (
     APIRouter,
     Depends,
     Request,
-    UploadFile
+    UploadFile,
 )
 from fastapi.exceptions import HTTPException
 from fastapi.responses import (
@@ -26,6 +26,7 @@ from apps.user.dependencies import (
 )
 from apps.user.models import User
 from apps.user.schemas import (
+    ProfilePicturePath,
     UserHyperlinkEmailSchema,
     UserLoginSchema,
     UserLoginSuccessSchema,
@@ -35,10 +36,8 @@ from apps.user.schemas import (
     UserProfileUpdateSchema,
     UserRegisterSchema,
     UserRegistrationCompleteSchema,
-    ProfilePicturePath,
 )
 from apps.user.services.user_service import UserService
-from apps.common.utils import get_attachment_path
 
 
 router = APIRouter(
@@ -255,10 +254,11 @@ async def add_profile_picture(
     user_services: UserService = Depends(),
     current_user: User = Depends(get_current_user),
 ):
-    """Add Profile Picture"""
-    attachment_with_profile_picture, errors = await user_services.set_profile_picture(profile_picture, current_user)
+    """Add Profile Picture."""
+    updated_user, errors = await user_services.set_profile_picture(
+        profile_picture, current_user
+    )
 
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-
-    return ProfilePicturePath(profile_picture_path=get_attachment_path(attachment_with_profile_picture.id))
+    return updated_user

@@ -99,3 +99,6 @@ class AddProfilePictureIdSchema(BaseModel):
 
 class ProfilePicturePath(BaseModel):
     profile_picture_path: str
+
+    class Config:
+        orm_mode = True
