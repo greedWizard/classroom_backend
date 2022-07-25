@@ -246,7 +246,7 @@ class CRUDRepository(
         await self.update(values=values, id=obj.id)
         return await self.refresh(obj=obj)
 
-    async def update_and_return(
+    async def update_and_return_single(
         self,
         values: dict[str, Any],
         join: list[str] = None,

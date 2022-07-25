@@ -1,4 +1,5 @@
 import hashlib
+from io import BytesIO
 from typing import (
     Any,
     Optional,
@@ -12,10 +13,23 @@ from itsdangerous import TimedSerializer
 
 from apps.common.config import config
 from apps.common.containers import MainContainer
+from apps.common.helpers.image_resizer import ImageResizer
 
 
 def hash_string(string: str):
     return hashlib.md5(string.encode()).hexdigest()
+
+
+@inject
+async def resize_image(
+    picture_bytes: BytesIO,
+    new_size: int,
+    image_resizer: ImageResizer = Provide[MainContainer.image_resizer],
+) -> BytesIO:
+    return image_resizer.get_resized_picture(
+        picture_bytes,
+        new_size=new_size,
+    )
 
 
 @inject

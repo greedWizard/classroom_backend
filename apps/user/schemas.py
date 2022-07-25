@@ -62,6 +62,8 @@ class UserProfileSchema(NormalizedDatetimeModel):
     updated_at: datetime
     is_active: bool
 
+    profile_picture_path: Optional[str]
+
     class Config:
         orm_mode = True
 
@@ -91,3 +93,15 @@ class UserPasswordResetSchema(BaseModel):
     repeat_password: str
     is_reset_needed: bool = False
     password_reset_deadline: Optional[datetime] = None
+
+
+
+class AddProfilePictureIdSchema(BaseModel):
+    profile_picture_id: int
+
+
+class ProfilePicturePath(BaseModel):
+    profile_picture_path: str
+
+    class Config:
+        orm_mode = True
