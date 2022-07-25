@@ -1,6 +1,7 @@
 version: '3.9'
 
 services:
+
   db:
     image: postgres:14.2-alpine
     volumes:
@@ -9,6 +10,7 @@ services:
     container_name: classroom-db
     ports:
       - "5433:5432"
+
   back:
     build:
       context: .
