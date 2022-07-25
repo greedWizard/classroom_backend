@@ -16,7 +16,10 @@ from apps.attachment.schemas import (
 )
 from apps.attachment.services.attachment_service import AttachmentService
 from apps.attachment.utils import stream_file
-from apps.user.dependencies import get_current_user
+from apps.user.dependencies import (
+    get_current_user,
+    get_current_user_optional,
+)
 from apps.user.models import User
 
 
@@ -32,7 +35,9 @@ router = APIRouter(
 )
 async def get_attachment(
     attachment_id: int,
-    user: User = Depends(get_current_user),
+    user: User = Depends(
+        get_current_user_optional
+    ),  # TODO: на время для аватарок оставим пользователя опциональным
 ):
     attachment_service = AttachmentService(user)
     attachment, errors = await attachment_service.retrieve(id=attachment_id)
