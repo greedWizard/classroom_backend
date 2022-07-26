@@ -4,6 +4,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
+from apps.common.config import config
 from apps.common.models.base import BaseDBModel
 from apps.common.utils import get_attachment_path
 
@@ -53,7 +54,9 @@ class User(BaseDBModel):
     def full_name(self):
         return f'{self.first_name} {self.middle_name} {self.last_name}'
 
-    # TODO remove hardcode
     @property
     def profile_picture_path(self) -> str:
+        if not self.profile_picture_id:
+            return config.DEFAULT_PROFILE_PICTURE_URL
+
         return get_attachment_path(self.profile_picture_id)

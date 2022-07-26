@@ -75,7 +75,7 @@ class ProjectSettings(BaseModel):
     FRONTEND_LOGIN_URL: str = os.environ.get('FRONTEND_LOGIN_URL')
     FRONTEND_ROOM_POST_URL: str = os.environ.get('FRONTEND_ROOM_POST_URL')
     FRONTEND_USER_RESET_PASSWORD_URL: str = os.environ.get(
-        'FRONTEND_USER_RESET_PASSWORD_URL'
+        'FRONTEND_USER_RESET_PASSWORD_URL',
     )
 
     # FILE SETTINGS
@@ -88,3 +88,7 @@ class ProjectSettings(BaseModel):
 
     # TEMPLATES
     JINJA_TEMPLATES_FOLDER: str = 'templates/'
+
+    # STATIC
+    STATIC_URL = env('STATIC_URL')
+    DEFAULT_PROFILE_PICTURE_URL = env('DEFAULT_PROFILE_PICTURE_URL')

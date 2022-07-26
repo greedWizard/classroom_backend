@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from apps.common.config import config
 from apps.user.schemas import AuthorSchema
 
 
@@ -36,4 +37,4 @@ def prepare_json_list(schemas: list[BaseModel]):
 
 
 def get_attachment_path(attachment_id: int) -> str:
-    return f'api/v1/attachments/{attachment_id}'
+    return config.STATIC_URL.format(file_id=attachment_id)
