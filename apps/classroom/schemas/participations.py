@@ -36,6 +36,7 @@ class ParticipationUserSchema(BaseModel):
     last_name: str
     email: str
     middle_name: Optional[str]
+    profile_picture_path: str
 
     class Config:
         orm_mode = True
@@ -67,20 +68,6 @@ class ParticipationCurrentUserSchema(NormalizedDatetimeModel):
 
     class Config:
         orm_mode = True
-
-
-class ParticipationMemberListSchema(BaseModel):
-    id: int
-    role: str
-    created_at: datetime
-    can_manage_posts: bool
-    can_examine: bool
-    can_assign_homeworks: bool
-    can_remove_participants: bool
-    can_manage_assignments: bool
-    is_moderator: bool
-    room: RoomDetailSchema
-    user: AuthorSchema
 
 
 class ParticipationDetailSchema(NormalizedDatetimeModel):

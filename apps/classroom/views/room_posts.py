@@ -62,7 +62,7 @@ async def update_room_post(
     room_post, errors = await room_post_service.update(
         post_id,
         room_postUpdateSchema,
-        join=['author', 'room', 'attachments'],
+        join=['author', 'attachments', 'assignments'],
     )
 
     if errors:
