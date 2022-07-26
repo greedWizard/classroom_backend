@@ -14,6 +14,7 @@ class AuthorSchema(BaseModel):
     email: str
     middle_name: Optional[str] = None
     full_name: str
+    profile_picutre_path: str
 
     class Config:
         orm_mode = True
@@ -93,7 +94,6 @@ class UserPasswordResetSchema(BaseModel):
     repeat_password: str
     is_reset_needed: bool = False
     password_reset_deadline: Optional[datetime] = None
-
 
 
 class AddProfilePictureIdSchema(BaseModel):
