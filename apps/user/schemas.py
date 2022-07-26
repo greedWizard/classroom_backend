@@ -14,7 +14,7 @@ class AuthorSchema(BaseModel):
     email: str
     middle_name: Optional[str] = None
     full_name: str
-    profile_picutre_path: str
+    profile_picture_path: str
 
     class Config:
         orm_mode = True

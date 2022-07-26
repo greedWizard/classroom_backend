@@ -17,14 +17,12 @@ from apps.classroom.schemas import (
     RoomCreateSchema,
     RoomCreateSuccessSchema,
     RoomDetailSchema,
-    RoomListItemSchema,
 )
-from apps.classroom.schemas.participations import ParticipationDetailSchema, ParticipationListItemSchema
+from apps.classroom.schemas.participations import ParticipationDetailSchema
 from apps.classroom.services.participation_service import ParticipationService
 from apps.classroom.services.room_service import RoomService
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
-from apps.user.schemas import AuthorSchema
 
 
 classroom_router = APIRouter()
