@@ -54,12 +54,3 @@ class HomeworkAssignmentRequestChangesSchema(BaseModel):
 class HomeworkAssignmentRateSchema(BaseModel):
     rate: int
     comment: str = ''
-
-
-class HomeworkAssignmentCreateSuccessSchema(NormalizedDatetimeModel):
-    id: int
-    created_at: datetime
-    author_id: int
-
-    class Config(NormalizedDatetimeModel.Config):
-        orm_mode = True
