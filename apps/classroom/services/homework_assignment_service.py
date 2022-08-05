@@ -153,7 +153,6 @@ class AssignmentService(AuthorMixin, CRUDService):
             id=assignment_id,
             join=['post'],
         )
-
         is_valid, error = await self._check_assignment_rights(assignment, status)
 
         if not is_valid:
@@ -165,10 +164,9 @@ class AssignmentService(AuthorMixin, CRUDService):
                 'status': status,
                 **changes_dict,
             },
-            join=['post', 'author', 'attachments'],
+            join=['post', 'author', 'attachments', 'post.room'],
             id=assignment_id,
         )
-
         return assignment, None
 
     @action

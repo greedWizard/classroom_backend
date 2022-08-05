@@ -229,7 +229,6 @@ async def reset_user_password(
 ):
     """Resets user password."""
     token = request.cookies.get('token')
-    print(token)
     _, errors = await user_service.reset_user_password(
         password_schema=schema,
         token=token,
@@ -256,7 +255,8 @@ async def add_profile_picture(
 ):
     """Add Profile Picture."""
     updated_user, errors = await user_services.set_profile_picture(
-        profile_picture, current_user
+        profile_picture,
+        current_user,
     )
 
     if errors:

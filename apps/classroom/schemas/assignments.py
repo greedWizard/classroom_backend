@@ -8,11 +8,22 @@ from apps.common.schemas import NormalizedDatetimeModel
 from apps.user.schemas import AuthorSchema
 
 
+class AssignmentRoomNestedSchema(NormalizedDatetimeModel):
+    id: int
+    name: str
+
+
+class AssignmentPostNestedSchema(NormalizedDatetimeModel):
+    id: int
+    title: str
+    room: AssignmentRoomNestedSchema
+
+
 class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
     id: int
     created_at: datetime
     updated_at: datetime
-    post_id: int
+    post: AssignmentPostNestedSchema
     author: AuthorSchema
     status: str
     status_assigned: bool
