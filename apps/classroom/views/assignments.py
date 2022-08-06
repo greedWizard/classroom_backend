@@ -27,7 +27,10 @@ from apps.classroom.schemas import (
     HomeworkAssignmentRateSchema,
     HomeworkAssignmentRequestChangesSchema,
 )
-from apps.classroom.schemas.assignments import HomeworkAssignmentCreateSuccessSchema
+from apps.classroom.schemas.assignments import (
+    HomeworkAssignmentCreateSuccessSchema,
+    HomeworkAssignmentListitemSchema,
+)
 from apps.classroom.services.homework_assignment_service import AssignmentService
 from apps.user.dependencies import get_current_user
 from apps.user.models import User
@@ -78,7 +81,7 @@ async def request_homework_assignment_changes(
 
 @router.get(
     '',
-    response_model=Page[HomeworkAssignmentDetailSchema],
+    response_model=Page[HomeworkAssignmentListitemSchema],
     operation_id='fetchAssignments',
     status_code=status.HTTP_200_OK,
 )
@@ -94,10 +97,12 @@ async def fetch_assignments(
     if post_id is not None:
         assignments, errors = await service.fetch_post_assignments(
             post_id=post_id,
+            join=['author'],
         )
     elif room_id is not None:
         assignments, errors = await service.fetch_room_assignments(
             room_id=room_id,
+            join=['author'],
         )
 
     if errors:
@@ -140,6 +145,7 @@ async def get_my_assignment(
 
     assignment = await service.retrieve_user_assignment_for_post(
         post_id=post_id,
+        join=['author', 'post', 'post.room', 'attachments'],
     )
     return assignment
 

@@ -11,7 +11,6 @@ from apps.classroom.constants import (
 from apps.classroom.models import (
     HomeworkAssignment,
     Participation,
-    RoomPost,
 )
 from apps.classroom.repositories.assignment import HomeworkAssignmentRepository
 from apps.classroom.repositories.participation_repository import ParticipationRepository
@@ -61,14 +60,20 @@ class AssignmentService(AuthorMixin, CRUDService):
     async def fetch_post_assignments(
         self,
         post_id: int,
+        join: list[str] = None,
         **extra_filters,
     ) -> tuple[HomeworkAssignment, Union[dict[str, str], None]]:
-        post: RoomPost = await self._room_post_repository.retrieve(
-            join=['assignments', 'assignments.author', 'assignments.attachments'],
-            id=post_id,
+        if not join:
+            join = []
+
+        room = await self._room_repository.get_by_post(post_id=post_id)
+        assignments: list[HomeworkAssignment] = await self._repository.fetch_by_post_id(
+            post_id=post_id,
+            join=join,
         )
+
         participation: Participation = await self._participation_repository.retrieve(
-            room_id=post.room_id,
+            room_id=room.id,
             user_id=self.user.id,
         )
 
@@ -76,20 +81,26 @@ class AssignmentService(AuthorMixin, CRUDService):
             return None, {'error': 'You are not allowed to do that'}
         if not participation.can_manage_assignments:
             return None, {'error': 'You are not allowed to do that'}
-        return post.assignments, None
+        return assignments, None
 
     @action
-    async def fetch_room_assignments(self, room_id: int, **filters):
+    async def fetch_room_assignments(
+        self,
+        room_id: int,
+        join: list[str] = None,
+        **filters,
+    ):
+        if join is None:
+            join = []
+
         participation: Participation = await self._participation_repository.retrieve(
             room_id=room_id,
             user_id=self.user.id,
         )
-        is_moderator = participation.can_manage_assignments
-        join = ['author', 'attachments']
 
-        if not participation and not is_moderator:
+        if not participation:
             return None, {'error': 'You are not allowed to do that.'}
-        if is_moderator:
+        if participation.can_manage_assignments:
             return (
                 await self._repository.fetch_by_room_id(
                     room_id=room_id,
@@ -97,14 +108,15 @@ class AssignmentService(AuthorMixin, CRUDService):
                 ),
                 None,
             )
-        return (
-            await self._repository.fetch_by_room_id(
-                join=join,
-                room_id=room_id,
-                author_id=self.user.id,
-            ),
-            None,
-        )
+        if participation.can_assign_homeworks:
+            return (
+                await self._repository.fetch_by_room_id(
+                    join=join,
+                    room_id=room_id,
+                    author_id=self.user.id,
+                ),
+                None,
+            )
 
     async def _check_assignment_rights(
         self,
@@ -172,7 +184,7 @@ class AssignmentService(AuthorMixin, CRUDService):
     @action
     async def retrieve_detail(self, id: int):
         assignment: HomeworkAssignment = await self._repository.retrieve(
-            join=['attachments', 'author', 'post'],
+            join=['attachments', 'author', 'post', 'post.room'],
             id=id,
         )
         participation: Participation = await self._participation_repository.retrieve(
@@ -190,9 +202,13 @@ class AssignmentService(AuthorMixin, CRUDService):
     async def retrieve_user_assignment_for_post(
         self,
         post_id: int,
+        join: list[str] = None,
     ) -> HomeworkAssignment:
+        if not join:
+            join = []
+
         return await self._repository.retrieve(
-            join=['author', 'attachments'],
+            join=join,
             author_id=self.user.id,
             post_id=post_id,
         )

@@ -12,11 +12,34 @@ class AssignmentRoomNestedSchema(NormalizedDatetimeModel):
     id: int
     name: str
 
+    class Config(NormalizedDatetimeModel.Config):
+        orm_mode = True
+
 
 class AssignmentPostNestedSchema(NormalizedDatetimeModel):
     id: int
     title: str
     room: AssignmentRoomNestedSchema
+
+    class Config(NormalizedDatetimeModel.Config):
+        orm_mode = True
+
+
+class HomeworkAssignmentListitemSchema(NormalizedDatetimeModel):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    author: AuthorSchema
+    status: str
+    status_assigned: bool
+    status_done: bool
+    status_request_changes: bool
+    comment: Optional[str] = ''
+    rate: Optional[int] = None
+    post_id: int
+
+    class Config(NormalizedDatetimeModel.Config):
+        orm_mode = True
 
 
 class HomeworkAssignmentDetailSchema(NormalizedDatetimeModel):
