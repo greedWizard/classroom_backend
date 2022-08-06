@@ -25,12 +25,8 @@ class HomeworkAssignmentRepository(CRUDRepository):
             limit=limit,
             **extra_filters,
         )
-        statement = (
-            statement.join(self._model.post)
-            .filter(
-                self._model.post_id == post_id,
-            )
-            .group_by(self._model)
+        statement = statement.join(self._model.post).filter(
+            self._model.post_id == post_id,
         )
 
         async with self.get_session() as session:
