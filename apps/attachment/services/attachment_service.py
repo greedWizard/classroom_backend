@@ -5,6 +5,7 @@ from typing import (
 )
 
 from apps.attachment.models import Attachment
+from apps.attachment.schemas import AttachmentCreateSchema
 from apps.attachment.repositories.attachment_repository import AttachmentRepository
 from apps.classroom.models import (
     HomeworkAssignment,
@@ -15,6 +16,7 @@ from apps.classroom.repositories.participation_repository import ParticipationRe
 from apps.classroom.repositories.post_repository import RoomPostRepository
 from apps.common.services.author import AuthorMixin
 from apps.common.services.base import CRUDService
+from apps.common.config import config
 
 
 class AttachmentService(AuthorMixin, CRUDService):
@@ -94,3 +96,17 @@ class AttachmentService(AuthorMixin, CRUDService):
             return False, 'You are not allowed to do that.'
         self._assignment_checked = True
         return True, None
+
+    async def create_attachments(
+        self,
+        attachments: list[AttachmentCreateSchema]
+    ):
+        if not all(
+            map(
+                lambda attachment: len(attachment.source) < config.MAX_FILE_SIZE,
+                attachments,
+            )
+        ):
+            return False, {'attachment': 'File size too large.'}
+
+        return await self.bulk_create(attachments)

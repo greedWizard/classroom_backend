@@ -81,7 +81,7 @@ async def create_attachments(
     ]
 
     attachment_service = AttachmentService(user)
-    attachments, errors = await attachment_service.bulk_create(
+    attachments, errors = await attachment_service.create_attachments(
         attachments_list,
     )
 
