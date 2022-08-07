@@ -1,3 +1,4 @@
+import uuid
 from typing import Union
 
 from sqlalchemy import (
@@ -81,12 +82,29 @@ class UserRepository(CRUDRepository):
         filters['is_active'] = True
         return await self.retrieve(**filters)
 
-    async def set_reset_flag(self, user_id: int):
-        return await self.update(
+    async def set_password_reset_deadline(self, user_id: int) -> _model:
+        return await self.update_and_return_single(
             values={
-                'is_reset_needed': True,
+                'is_reset_needed': False,
                 'password_reset_deadline': get_current_datetime()
                 + config.RESET_PASSWORD_TIMEDELTA,
+                'activation_token': uuid.uuid4().hex,
+            },
+            id=user_id,
+        )
+
+    async def confirm_password_reset(self, user_id: int) -> _model:
+        return await self.update(
+            values={'is_reset_needed': True},
+            id=user_id,
+        )
+
+    async def close_password_reset(self, user_id: int, new_password: str) -> _model:
+        return await self.update(
+            values={
+                'is_reset_needed': False,
+                'password_reset_deadline': None,
+                'password': new_password,
             },
             id=user_id,
         )

@@ -1,17 +1,11 @@
 import hashlib
 from io import BytesIO
-from typing import (
-    Any,
-    Optional,
-)
 
 from dependency_injector.wiring import (
     inject,
     Provide,
 )
-from itsdangerous import TimedSerializer
 
-from apps.common.config import config
 from apps.common.containers import MainContainer
 from apps.common.helpers.image_resizer import ImageResizer
 
@@ -29,18 +23,4 @@ async def resize_image(
     return image_resizer.get_resized_picture(
         picture_bytes,
         new_size=new_size,
-    )
-
-
-@inject
-async def unsign_timed_token(
-    token: str,
-    salt: Optional[str] = None,
-    timed_serializer: TimedSerializer = Provide[MainContainer.timed_serializer],
-) -> Any:
-    """Method returns value from signed token."""
-    return timed_serializer.loads(
-        token,
-        max_age=config.RESET_PASSWORD_TIMEDELTA.total_seconds(),
-        salt=salt,
     )

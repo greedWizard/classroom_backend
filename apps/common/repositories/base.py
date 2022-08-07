@@ -165,7 +165,11 @@ class ReadOnlyRepository(AbstractBaseRepository):
             return (await session.execute(statement)).scalars().first()
 
     async def exists(self, **filters) -> bool:
-        return await self.count(**filters) > 0
+        statement = await self._fetch_statement(**filters)
+
+        async with self.get_session() as session:
+            result = await session.execute(statement.exists().select())
+            return result.scalar()
 
     async def count(self, **filters) -> int:
         statement = select(func.count(self._model.id)).filter_by(**filters)

@@ -35,6 +35,7 @@ class MainContainer(containers.DeclarativeContainer):
     wiring_config: containers.WiringConfiguration = containers.WiringConfiguration(
         modules=[
             'scheduler.tasks.classroom',
+            'apps.common.utils',
             'apps.user.services.user_service',
             'apps.user.utils',
         ],

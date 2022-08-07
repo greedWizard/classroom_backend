@@ -188,6 +188,7 @@ async def update_current_user(
 )
 async def initiate_user_password_reset(
     schema: UserPasswordResetInitiationSchema,
+    request: Request,
     user_service: UserService = Depends(),
 ):
     """Initiates the user password reset operation.
@@ -197,22 +198,66 @@ async def initiate_user_password_reset(
     same token.
 
     """
-    token, error = await user_service.initiate_user_password_reset(
+    token_dto, error = await user_service.initiate_user_password_reset(
         email=schema.email,
-        redirect_url=config.FRONTEND_USER_RESET_PASSWORD_URL,
     )
 
-    if token:
-        response_schema = OperationResultSchema(
-            status=OperationResultStatusEnum.SUCCESS,
-            message='The password resed message has been sent to your email.',
+    if error or not token_dto:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error,
         )
-        response = JSONResponse(content=response_schema.dict())
-        response.set_cookie(key='token', value=token)
-        return response
+
+    response_schema = OperationResultSchema(
+        status=OperationResultStatusEnum.SUCCESS,
+        message='The password resed message has been sent to your email.',
+    )
+    redirect_url = urljoin(
+        str(request.base_url),
+        request.app.url_path_for(
+            'confirm_password_reset',
+            activation_token=token_dto.activation_token,
+        ),
+    )
+    await user_service.send_password_reset_email(
+        token_dto.user_email,
+        redirect_url=redirect_url,
+    )
+    response = JSONResponse(content=response_schema.dict())
+    response.set_cookie(key='token', value=token_dto.timed_token)
+    return response
+
+
+@router.get(
+    '/confirm-password-reset/{activation_token}',
+    operation_id='confirmPasswordReset',
+)
+async def confirm_password_reset(
+    request: Request,
+    activation_token: str,
+    user_service: UserService = Depends(),
+):
+    """Confirms user password reset."""
+    token = request.cookies.get('token')
+
+    if not await user_service.exists(activation_token=activation_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='User not found',
+        )
+
+    result, errors = await user_service.confirm_password_reset(
+        password_reset_token=token,
+        activation_token=activation_token,
+    )
+
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    if result:
+        return RedirectResponse(config.FRONTEND_USER_RESET_PASSWORD_URL)
     raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=error,
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail='Something went wrong',
     )
 
 

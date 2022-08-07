@@ -98,7 +98,7 @@ async def test_join_room_by_link_success(
     client.authorize(user)
     url = app.url_path_for('join_room_by_link', join_slug=room.join_slug)
     response = client.get(url)
-    assert response.status_code == status.HTTP_200_OK
+    assert response.status_code == status.HTTP_200_OK, response.json()
 
     participation = await participation_repository.retrieve(
         user_id=user.id,
@@ -371,9 +371,12 @@ async def test_participations_list(
 
     client.authorize(user)
     url = app.url_path_for('get_participations')
-    response = client.get(url, params={ 'room_id': room.id })
+    response = client.get(url, params={'room_id': room.id})
     json_data = response.json()
 
     assert response.status_code == status.HTTP_200_OK, response.json()
-    assert await participation_repository.count(room_id=room.id) == \
-        json_data['total'] == participations_count
+    assert (
+        await participation_repository.count(room_id=room.id)
+        == json_data['total']
+        == participations_count
+    )

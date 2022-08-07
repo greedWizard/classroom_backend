@@ -1,8 +1,18 @@
 from datetime import datetime
+from typing import (
+    Any,
+    Optional,
+)
 
+from dependency_injector.wiring import (
+    inject,
+    Provide,
+)
+from itsdangerous import TimedSerializer
 from pydantic import BaseModel
 
 from apps.common.config import config
+from apps.common.containers import MainContainer
 from apps.user.schemas import AuthorSchema
 
 
@@ -38,3 +48,25 @@ def prepare_json_list(schemas: list[BaseModel]):
 
 def get_attachment_path(attachment_id: int) -> str:
     return config.STATIC_URL.format(file_id=attachment_id)
+
+
+@inject
+async def sign_timed_token(
+    subject: Any,
+    timed_serializer: TimedSerializer = Provide[MainContainer.timed_serializer],
+):
+    return timed_serializer.dumps(obj=subject, salt=config.PASSWORD_RESET_SALT)
+
+
+@inject
+async def unsign_timed_token(
+    token: str,
+    salt: Optional[str] = None,
+    timed_serializer: TimedSerializer = Provide[MainContainer.timed_serializer],
+) -> Any:
+    """Method returns value from signed token."""
+    return timed_serializer.loads(
+        token,
+        max_age=config.RESET_PASSWORD_TIMEDELTA.total_seconds(),
+        salt=salt,
+    )

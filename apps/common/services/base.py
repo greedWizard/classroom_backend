@@ -16,6 +16,7 @@ from apps.common.models.base import BaseDBModel
 from apps.common.repositories.base import (
     AbstractBaseRepository,
     CRUDRepository,
+    ReadOnlyRepository,
 )
 from apps.common.repositories.exceptions import ObjectAlreadyExistsException
 from apps.common.services.decorators import action
@@ -65,7 +66,7 @@ class IServiceBase(SchemaMapMixin):
         return self._action_attributes.get(self.action, {})
 
     error_messages: dict[str, str] = {
-        'create': f'Could not create new instance',
+        'create': 'Could not create new instance',
     }
     required_fields_map = {}
     _errors: Dict = {}
@@ -241,6 +242,8 @@ class CreateUpdateService(IServiceBase):
 
 
 class RetrieveFetchServiceMixin(IServiceBase):
+    _repository: ReadOnlyRepository
+
     async def fetch(
         self,
         _ordering: List = [],
@@ -258,7 +261,7 @@ class RetrieveFetchServiceMixin(IServiceBase):
 
     @action
     async def exists(self, **filters):
-        return await self.model.filter(**filters).exists()
+        return await self._repository.exists(**filters)
 
 
 class DeleteMixin(IServiceBase):

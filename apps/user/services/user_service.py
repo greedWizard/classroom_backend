@@ -12,11 +12,6 @@ from typing import (
     Union,
 )
 
-from dependency_injector.wiring import (
-    inject,
-    Provide,
-)
-from itsdangerous import TimedSerializer
 from itsdangerous.exc import BadSignature
 from pydantic import BaseModel
 from scheduler.tasks.user import send_password_reset_email
@@ -26,16 +21,20 @@ from fastapi import UploadFile
 from apps.attachment.models import Attachment
 from apps.attachment.repositories.attachment_repository import AttachmentRepository
 from apps.common.config import config
-from apps.common.containers import MainContainer
 from apps.common.services.base import (
     CRUDService,
     ResultTuple,
 )
 from apps.common.services.decorators import action
+from apps.common.utils import (
+    sign_timed_token,
+    unsign_timed_token,
+)
 from apps.user.constants import (
     EMAIL_REGEX,
     PHONE_REGEX,
 )
+from apps.user.dto import UserTokenResultDTO
 from apps.user.models import User
 from apps.user.repositories.user_repository import UserRepository
 from apps.user.schemas import (
@@ -44,10 +43,7 @@ from apps.user.schemas import (
     UserPasswordResetSchema,
     UserRegistrationCompleteSchema,
 )
-from apps.user.utils import (
-    resize_image,
-    unsign_timed_token,
-)
+from apps.user.utils import resize_image
 
 
 class UserService(CRUDService):
@@ -187,36 +183,39 @@ class UserService(CRUDService):
             return False
         return True
 
-    @staticmethod
-    @inject
-    async def _get_user_password_reset_token(
-        user_id: int,
-        timed_serializer: TimedSerializer = Provide[MainContainer.timed_serializer],
-    ):
-        return timed_serializer.dumps(obj=user_id, salt=config.PASSWORD_RESET_SALT)
-
     @action
     async def initiate_user_password_reset(
         self,
         email: str,
-        redirect_url: str,
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> Tuple[UserTokenResultDTO, Optional[str]]:
         user = await self._repository.retrieve_active_user(email=email)
 
         if not user:
             return None, 'User not found'
 
-        await self._repository.set_reset_flag(user_id=user.id)
-        token = await self._get_user_password_reset_token(user_id=user.id)
-        print(token)
+        user = await self._repository.set_password_reset_deadline(user_id=user.id)
+        token = await sign_timed_token(user.id)
 
+        return (
+            UserTokenResultDTO(
+                timed_token=token,
+                activation_token=user.activation_token,
+                user_email=user.email,
+            ),
+            None,
+        )
+
+    async def send_password_reset_email(
+        self,
+        user_email: User,
+        redirect_url: str,
+    ) -> None:
         send_password_reset_email(
             user=UserHyperlinkEmailSchema(
-                email=user.email,
+                email=user_email,
                 hyperlink=redirect_url,
             ),
         )
-        return token, None
 
     @action
     async def reset_user_password(
@@ -238,12 +237,19 @@ class UserService(CRUDService):
 
         if not user:
             return None, {
-                'token': 'There is no user with provided token in need of password reset!',
+                'token': 'There is no user with provided token in need of password reset',
             }
 
-        return await self.update(
-            id=user.id, updateSchema=password_schema, exclude_unset=False
+        attrs, errors = await self._validate_values(**password_schema.dict())
+
+        if errors:
+            return None, errors
+
+        user = await self._repository.close_password_reset(
+            user_id,
+            new_password=attrs['password'],
         )
+        return user, None
 
     @action
     async def set_profile_picture(
@@ -252,7 +258,7 @@ class UserService(CRUDService):
         user: User,
     ) -> Tuple[Union[Attachment, bool], dict[str, str]]:
         _, errors = await self.validate_content_type_of_picture(
-            profile_photo.content_type
+            profile_photo.content_type,
         )
         if errors:
             return False, {'content_type_of_profile_photo': errors}
@@ -274,3 +280,23 @@ class UserService(CRUDService):
         )
 
         return updated_user, {}
+
+    @action
+    async def confirm_password_reset(
+        self,
+        password_reset_token: str,
+        activation_token: str,
+    ) -> Tuple[bool, Optional[dict[str, str]]]:
+        if not await self.exists(activation_token=activation_token):
+            return None, 'User not found'
+
+        try:
+            user_id = await unsign_timed_token(
+                password_reset_token,
+                salt=config.PASSWORD_RESET_SALT,
+            )
+        except (TypeError, BadSignature):
+            return None, {'token': 'Wrong token format'}
+
+        await self._repository.confirm_password_reset(user_id)
+        return True, None
