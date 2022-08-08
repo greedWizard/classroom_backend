@@ -93,11 +93,21 @@ class UserRepository(CRUDRepository):
             id=user_id,
         )
 
-    async def confirm_password_reset(self, user_id: int) -> _model:
-        return await self.update(
-            values={'is_reset_needed': True},
-            id=user_id,
-        )
+    async def confirm_password_reset(self, activation_token: str) -> _model:
+        # TODO: filters gt(e)
+        confirmed_user: User = await self.retrieve(activation_token=activation_token)
+
+        if not confirmed_user:
+            return None
+
+        if get_current_datetime() >= confirmed_user.password_reset_deadline:
+            return None
+
+        async with self.get_session() as session:
+            confirmed_user.is_reset_needed = True
+            session.add(confirmed_user)
+            await session.commit()
+            return confirmed_user
 
     async def close_password_reset(self, user_id: int, new_password: str) -> _model:
         return await self.update(

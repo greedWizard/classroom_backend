@@ -284,19 +284,9 @@ class UserService(CRUDService):
     @action
     async def confirm_password_reset(
         self,
-        password_reset_token: str,
         activation_token: str,
     ) -> Tuple[bool, Optional[dict[str, str]]]:
         if not await self.exists(activation_token=activation_token):
             return None, 'User not found'
-
-        try:
-            user_id = await unsign_timed_token(
-                password_reset_token,
-                salt=config.PASSWORD_RESET_SALT,
-            )
-        except (TypeError, BadSignature):
-            return None, {'token': 'Wrong token format'}
-
-        await self._repository.confirm_password_reset(user_id)
+        await self._repository.confirm_password_reset(activation_token=activation_token)
         return True, None

@@ -233,13 +233,10 @@ async def initiate_user_password_reset(
     operation_id='confirmPasswordReset',
 )
 async def confirm_password_reset(
-    request: Request,
     activation_token: str,
     user_service: UserService = Depends(),
 ):
     """Confirms user password reset."""
-    token = request.cookies.get('token')
-
     if not await user_service.exists(activation_token=activation_token):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -247,7 +244,6 @@ async def confirm_password_reset(
         )
 
     result, errors = await user_service.confirm_password_reset(
-        password_reset_token=token,
         activation_token=activation_token,
     )
 
