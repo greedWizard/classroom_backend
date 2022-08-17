@@ -59,6 +59,7 @@ class AttachmentService(AuthorMixin, CRUDService):
         return participation.can_manage_posts
 
     async def validate_manage_permissions(self, attachment_id: int):
+        """ fdbdbfdfbdfbxdfbdb"""
         attachment: Attachment = await self._repository.retrieve(id=attachment_id)
 
         if attachment.post_id:
@@ -97,16 +98,11 @@ class AttachmentService(AuthorMixin, CRUDService):
         self._assignment_checked = True
         return True, None
 
-    async def create_attachments(
-        self,
-        attachments: list[AttachmentCreateSchema]
-    ):
-        if not all(
-            map(
-                lambda attachment: len(attachment.source) < config.MAX_FILE_SIZE,
-                attachments,
-            )
-        ):
-            return False, {'attachment': 'File size too large.'}
+    async def validate_source(
+            self,
+            file_size: bytes,
+    ) -> Tuple[bool, Union[str, None]]:
+        if len(file_size) > config.MAX_FILE_SIZE:
+            return False, '{filename} size is to large'
 
-        return await self.bulk_create(attachments)
+        return True, None

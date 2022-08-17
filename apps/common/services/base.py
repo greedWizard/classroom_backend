@@ -152,7 +152,10 @@ class CreateUpdateService(IServiceBase):
                 )(value)
 
                 if not validation_success:
-                    errors[key] = validation_error
+                    if validation_method == 'validate_source':
+                        errors[key] = validation_error.format(filename=kwargs['filename'])
+                    else:
+                        errors[key] = validation_error
 
         attrs = await self.validate(kwargs) or kwargs
         return attrs, errors

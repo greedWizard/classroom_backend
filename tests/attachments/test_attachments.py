@@ -1,3 +1,5 @@
+import tempfile
+
 import pytest
 
 from fastapi import status
@@ -223,3 +225,35 @@ async def test_attach_file_assignment_or_post_id_not_provided(
     json_data = response.json()
     assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
     assert json_data.get('detail')
+
+
+@pytest.mark.asyncio
+async def test_attachment_file_is_large(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.moderator,
+    )
+    post = await RoomPostFactory.create(room=participation.room)
+    assignment = await AssignmentFactory.create(post=post)
+    url = app.url_path_for('create_attachments')
+
+    with tempfile.TemporaryFile() as file:
+        file.truncate(65 * 1024 * 1024)
+
+        client.authorize(participation.user)
+        files = {
+            'attachments': ('file.txt', file, 'text/plan')
+        }
+
+        response = client.post(
+            url=url,
+            files=files,
+            params={
+                     'assignment_id': assignment.id,
+                 },
+        )
+
+    json_data = response.json()
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
