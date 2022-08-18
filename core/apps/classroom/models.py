@@ -1,5 +1,12 @@
 import uuid
 
+import sqlalchemy as sa
+from sqlalchemy.orm import (
+    backref,
+    relationship,
+    validates,
+)
+
 from core.apps.classroom.constants import (
     HomeWorkAssignmentStatus,
     ParticipationRoleEnum,
@@ -7,13 +14,6 @@ from core.apps.classroom.constants import (
 )
 from core.common.models.base import BaseDBModel
 from core.common.models.mixins import AuthorAbstract
-
-import sqlalchemy as sa
-from sqlalchemy.orm import (
-    backref,
-    relationship,
-    validates,
-)
 
 
 class Room(BaseDBModel, AuthorAbstract):

@@ -1,5 +1,21 @@
 from urllib.parse import urljoin
 
+from fastapi import (
+    APIRouter,
+    Depends,
+    Request,
+    UploadFile,
+)
+from fastapi.exceptions import HTTPException
+from fastapi.responses import (
+    JSONResponse,
+    RedirectResponse,
+)
+from fastapi_jwt_auth import AuthJWT
+
+from dependency_injector.wiring import inject
+from starlette import status
+
 from core.apps.users.dependencies import (
     get_current_user,
     get_current_user_optional,
@@ -22,21 +38,6 @@ from core.common.config import config
 from core.common.enums import OperationResultStatusEnum
 from core.common.schemas import OperationResultSchema
 from core.scheduler.tasks.user import send_activation_email
-from dependency_injector.wiring import inject
-from fastapi_jwt_auth import AuthJWT
-from starlette import status
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    Request,
-    UploadFile,
-)
-from fastapi.exceptions import HTTPException
-from fastapi.responses import (
-    JSONResponse,
-    RedirectResponse,
-)
 
 
 router = APIRouter(

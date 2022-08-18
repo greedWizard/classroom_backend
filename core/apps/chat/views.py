@@ -1,3 +1,17 @@
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+    WebSocket,
+    WebSocketDisconnect,
+)
+
+from dependency_injector.wiring import (
+    inject,
+    Provide,
+)
+from websockets.exceptions import ConnectionClosedError
+
 from core.apps.chat.containers import ChatContainer
 from core.apps.chat.managers import ChatManager
 from core.apps.chat.schemas import (
@@ -12,19 +26,6 @@ from core.apps.users.dependencies import (
     websocket_user,
 )
 from core.apps.users.models import User
-from dependency_injector.wiring import (
-    inject,
-    Provide,
-)
-from websockets.exceptions import ConnectionClosedError
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    Query,
-    WebSocket,
-    WebSocketDisconnect,
-)
 
 
 router = APIRouter(tags=['chat'])

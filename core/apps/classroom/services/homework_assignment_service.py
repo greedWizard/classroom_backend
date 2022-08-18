@@ -13,9 +13,7 @@ from core.apps.classroom.models import (
     Participation,
 )
 from core.apps.classroom.repositories.assignment import HomeworkAssignmentRepository
-from core.apps.classroom.repositories.participation_repository import (
-    ParticipationRepository,
-)
+from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.apps.classroom.schemas import HomeworkAssignmentRequestChangesSchema

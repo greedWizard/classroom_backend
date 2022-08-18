@@ -1,11 +1,11 @@
-from core.common.models.base import BaseDBModel
-from core.common.models.mixins import AuthorAbstract
-
 import sqlalchemy as sa
 from sqlalchemy.orm import (
     backref,
     relationship,
 )
+
+from core.common.models.base import BaseDBModel
+from core.common.models.mixins import AuthorAbstract
 
 
 dialogs_participants = sa.Table(

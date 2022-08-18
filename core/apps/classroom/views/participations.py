@@ -1,22 +1,23 @@
 from typing import List
 
-from core.apps.classroom.schemas import ParticipationListItemSchema
-from core.apps.classroom.schemas.participations import ParticipationCurrentUserSchema
-from core.apps.classroom.services.participation_service import ParticipationService
-from core.apps.users.dependencies import get_current_user
-from core.apps.users.models import User
-from fastapi_pagination import (
-    Page,
-    paginate,
-)
-from starlette import status
-
 from fastapi import (
     Depends,
     Query,
 )
 from fastapi.exceptions import HTTPException
 from fastapi.routing import APIRouter
+from fastapi_pagination import (
+    Page,
+    paginate,
+)
+
+from starlette import status
+
+from core.apps.classroom.schemas import ParticipationListItemSchema
+from core.apps.classroom.schemas.participations import ParticipationCurrentUserSchema
+from core.apps.classroom.services.participation_service import ParticipationService
+from core.apps.users.dependencies import get_current_user
+from core.apps.users.models import User
 
 
 participations_router = APIRouter()

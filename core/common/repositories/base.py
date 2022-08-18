@@ -5,14 +5,6 @@ from typing import (
     Union,
 )
 
-from core.common.config import config
-from core.common.database import (
-    async_session,
-    test_session,
-)
-from core.common.models.base import BaseDBModel
-from core.common.repositories.exceptions import ObjectAlreadyExistsException
-
 import sqlalchemy
 from sqlalchemy import (
     delete,
@@ -23,6 +15,14 @@ from sqlalchemy import (
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+
+from core.common.config import config
+from core.common.database import (
+    async_session,
+    test_session,
+)
+from core.common.models.base import BaseDBModel
+from core.common.repositories.exceptions import ObjectAlreadyExistsException
 
 
 class AbstractBaseRepository(ABC):

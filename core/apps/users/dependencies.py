@@ -1,9 +1,9 @@
+from fastapi import Depends
+from fastapi_jwt_auth import AuthJWT
+
 from core.apps.users.exceptions import NotAuthenticatedException
 from core.apps.users.models import User
 from core.apps.users.services.user_service import UserService
-from fastapi_jwt_auth import AuthJWT
-
-from fastapi import Depends
 
 
 async def _get_current_user(

@@ -4,8 +4,9 @@ from typing import (
     Optional,
 )
 
-from core.common.schemas import NormalizedDatetimeModel
 from pydantic import BaseModel
+
+from core.common.schemas import NormalizedDatetimeModel
 
 
 class AttachmentCreateSchema(BaseModel):

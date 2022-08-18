@@ -4,9 +4,7 @@ from typing import (
 )
 
 from core.apps.classroom.constants import ParticipationRoleEnum
-from core.apps.classroom.repositories.participation_repository import (
-    ParticipationRepository,
-)
+from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.apps.classroom.schemas.participations import ParticipationSuccessSchema
 from core.apps.users.models import User

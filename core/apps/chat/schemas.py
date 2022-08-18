@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from core.apps.users.schemas import AuthorSchema
 from pydantic import BaseModel
+
+from core.apps.users.schemas import AuthorSchema
 
 
 class DialogCreateSchema(BaseModel):

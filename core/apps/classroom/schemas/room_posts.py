@@ -4,10 +4,11 @@ from typing import (
     Optional,
 )
 
+from pydantic import BaseModel
+
 from core.apps.attachments.schemas import AttachmentListItemSchema
 from core.apps.users.schemas import AuthorSchema
 from core.common.schemas import NormalizedDatetimeModel
-from pydantic import BaseModel
 
 
 class RoomBaseSchema(NormalizedDatetimeModel):

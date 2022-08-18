@@ -1,5 +1,18 @@
 from typing import List
 
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+)
+from fastapi.exceptions import HTTPException
+from fastapi_pagination import (
+    Page,
+    paginate,
+)
+
+from starlette import status
+
 from core.apps.classroom.schemas import (
     ParticipationCreateByJoinSlugSchema,
     ParticipationSuccessSchema,
@@ -13,18 +26,6 @@ from core.apps.classroom.services.participation_service import ParticipationServ
 from core.apps.classroom.services.room_service import RoomService
 from core.apps.users.dependencies import get_current_user
 from core.apps.users.models import User
-from fastapi_pagination import (
-    Page,
-    paginate,
-)
-from starlette import status
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    Query,
-)
-from fastapi.exceptions import HTTPException
 
 
 classroom_router = APIRouter()

@@ -1,9 +1,10 @@
-import pytest
-from core.tests.client import FastAPITestClient
-from core.tests.factories.user import UserFactory
-
 from fastapi import status
 from fastapi.applications import FastAPI
+
+import pytest
+
+from core.tests.client import FastAPITestClient
+from core.tests.factories.user import UserFactory
 
 
 @pytest.mark.asyncio

@@ -3,6 +3,19 @@ from typing import (
     Union,
 )
 
+from fastapi import (
+    Depends,
+    UploadFile,
+)
+from fastapi.exceptions import HTTPException
+from fastapi.routing import APIRouter
+from fastapi_pagination import (
+    Page,
+    paginate,
+)
+
+from starlette import status
+
 from core.apps.attachments.schemas import (
     AttachmentCreateSchema,
     AttachmentListItemSchema,
@@ -21,18 +34,6 @@ from core.apps.classroom.schemas.assignments import (
 from core.apps.classroom.services.homework_assignment_service import AssignmentService
 from core.apps.users.dependencies import get_current_user
 from core.apps.users.models import User
-from fastapi_pagination import (
-    Page,
-    paginate,
-)
-from starlette import status
-
-from fastapi import (
-    Depends,
-    UploadFile,
-)
-from fastapi.exceptions import HTTPException
-from fastapi.routing import APIRouter
 
 
 router = APIRouter()

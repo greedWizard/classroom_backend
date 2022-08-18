@@ -1,5 +1,15 @@
 from typing import Optional
 
+from fastapi import (
+    APIRouter,
+    Depends,
+    UploadFile,
+)
+from fastapi.exceptions import HTTPException
+from fastapi.responses import StreamingResponse
+
+from starlette import status
+
 from core.apps.attachments.schemas import (
     AttachmentBulkCreateResponse,
     AttachmentCreateSchema,
@@ -11,15 +21,6 @@ from core.apps.users.dependencies import (
     get_current_user_optional,
 )
 from core.apps.users.models import User
-from starlette import status
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    UploadFile,
-)
-from fastapi.exceptions import HTTPException
-from fastapi.responses import StreamingResponse
 
 
 router = APIRouter(

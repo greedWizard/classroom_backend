@@ -1,7 +1,8 @@
-from core.common.config import config
+from fastapi.exceptions import HTTPException
+
 from starlette import status
 
-from fastapi.exceptions import HTTPException
+from core.common.config import config
 
 
 class UserException(HTTPException):

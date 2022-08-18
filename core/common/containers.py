@@ -1,8 +1,3 @@
-from core.common.config import config
-from core.common.config.integrations import MailClientConnectionConfig
-from core.common.helpers.image_resizer import ImageResizer
-from core.common.services.email import EmailService
-from core.common.services.email.clients import SMTPClient
 from dependency_injector import (
     containers,
     providers,
@@ -12,6 +7,12 @@ from jinja2 import (
     Environment,
     FileSystemLoader,
 )
+
+from core.common.config import config
+from core.common.config.integrations import MailClientConnectionConfig
+from core.common.helpers.image_resizer import ImageResizer
+from core.common.services.email import EmailService
+from core.common.services.email.clients import SMTPClient
 
 
 class TemplatesContainer(containers.DeclarativeContainer):

@@ -5,17 +5,13 @@ from typing import (
 )
 
 from core.apps.attachments.models import Attachment
-from core.apps.attachments.repositories.attachment_repository import (
-    AttachmentRepository,
-)
+from core.apps.attachments.repositories.attachment_repository import AttachmentRepository
 from core.apps.classroom.models import (
     HomeworkAssignment,
     Participation,
 )
 from core.apps.classroom.repositories.assignment import HomeworkAssignmentRepository
-from core.apps.classroom.repositories.participation_repository import (
-    ParticipationRepository,
-)
+from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
 from core.common.services.author import AuthorMixin
 from core.common.services.base import CRUDService

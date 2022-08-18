@@ -1,11 +1,12 @@
 from typing import Union
 
+from tortoise.expressions import Q
+
 from core.apps.chat.models import Dialog
 from core.apps.chat.services.mixins import ChatPermissionsMixin
 from core.apps.users.models import User
 from core.common.services.base import CRUDService
 from core.common.services.decorators import action
-from tortoise.expressions import Q
 
 
 class DialogService(ChatPermissionsMixin, CRUDService):

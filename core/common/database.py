@@ -1,10 +1,10 @@
-from core.common.config import config
-
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
 )
 from sqlalchemy.orm import sessionmaker
+
+from core.common.config import config
 
 
 engine = create_async_engine(config.DB_CONNECTION_STRING, future=True, echo=True)

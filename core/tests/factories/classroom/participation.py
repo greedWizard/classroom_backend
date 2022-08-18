@@ -1,11 +1,10 @@
 from datetime import datetime
 
 import factory
+
 from core.apps.classroom.constants import ParticipationRoleEnum
 from core.apps.classroom.models import Participation
-from core.apps.classroom.repositories.participation_repository import (
-    ParticipationRepository,
-)
+from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.tests.factories.base import AsyncRepositoryFactory
 from core.tests.factories.classroom.room import RoomFactory
 from core.tests.factories.user.user import UserFactory

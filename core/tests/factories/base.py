@@ -2,6 +2,7 @@ import asyncio
 import inspect
 
 import factory
+
 from core.common.repositories.base import CreateUpdateRepository
 
 

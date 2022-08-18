@@ -1,12 +1,13 @@
 import hashlib
 from io import BytesIO
 
-from core.common.containers import MainContainer
-from core.common.helpers.image_resizer import ImageResizer
 from dependency_injector.wiring import (
     inject,
     Provide,
 )
+
+from core.common.containers import MainContainer
+from core.common.helpers.image_resizer import ImageResizer
 
 
 def hash_string(string: str):

@@ -1,3 +1,5 @@
+from tortoise.expressions import Q
+
 from core.apps.chat.models import (
     Dialog,
     Message,
@@ -5,7 +7,6 @@ from core.apps.chat.models import (
 from core.apps.chat.services.mixins import ChatPermissionsMixin
 from core.common.services.base import CRUDService
 from core.common.services.decorators import action
-from tortoise.expressions import Q
 
 
 class MessageService(ChatPermissionsMixin, CRUDService):

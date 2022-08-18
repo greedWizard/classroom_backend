@@ -4,11 +4,11 @@ from typing import (
     Union,
 )
 
+from pydantic import BaseModel
+
 from core.apps.classroom.constants import ParticipationRoleEnum
 from core.apps.classroom.models import Participation
-from core.apps.classroom.repositories.participation_repository import (
-    ParticipationRepository,
-)
+from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.apps.classroom.schemas import ParticipationCreateSchema
 from core.apps.classroom.schemas.rooms import (
@@ -18,7 +18,6 @@ from core.apps.classroom.schemas.rooms import (
 from core.common.services.author import AuthorMixin
 from core.common.services.base import CRUDService
 from core.common.services.decorators import action
-from pydantic import BaseModel
 
 
 class RoomService(AuthorMixin, CRUDService):

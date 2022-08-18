@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import factory
+
 from core.apps.classroom.models import Room
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.tests.factories.base import AsyncRepositoryFactory

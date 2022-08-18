@@ -1,6 +1,6 @@
-from core.common.models.base import BaseDBModel
-
 import sqlalchemy as sa
+
+from core.common.models.base import BaseDBModel
 
 
 class Attachment(BaseDBModel):

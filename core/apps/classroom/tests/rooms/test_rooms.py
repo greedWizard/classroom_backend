@@ -1,16 +1,15 @@
+from fastapi import status
+from fastapi.applications import FastAPI
+
 import pytest
+
 from core.apps.classroom.constants import ParticipationRoleEnum
-from core.apps.classroom.repositories.participation_repository import (
-    ParticipationRepository,
-)
+from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.tests.client import FastAPITestClient
 from core.tests.factories.classroom.participation import ParticipationFactory
 from core.tests.factories.classroom.room import RoomFactory
 from core.tests.factories.user import UserFactory
-
-from fastapi import status
-from fastapi.applications import FastAPI
 
 
 @pytest.mark.asyncio

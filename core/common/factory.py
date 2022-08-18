@@ -1,10 +1,10 @@
-from core.common.config import config
-from core.common.exception_handlers import authjwt_exception_handler
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from fastapi_pagination import add_pagination
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from core.common.config import config
+from core.common.exception_handlers import authjwt_exception_handler
 
 
 API_V1_PREFIX = '/api/v1/'

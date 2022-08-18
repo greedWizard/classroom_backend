@@ -12,10 +12,13 @@ from typing import (
     Union,
 )
 
+from fastapi import UploadFile
+
+from itsdangerous.exc import BadSignature
+from pydantic import BaseModel
+
 from core.apps.attachments.models import Attachment
-from core.apps.attachments.repositories.attachment_repository import (
-    AttachmentRepository,
-)
+from core.apps.attachments.repositories.attachment_repository import AttachmentRepository
 from core.apps.users.constants import (
     EMAIL_REGEX,
     PHONE_REGEX,
@@ -41,10 +44,6 @@ from core.common.utils import (
     unsign_timed_token,
 )
 from core.scheduler.tasks.user import send_password_reset_email
-from itsdangerous.exc import BadSignature
-from pydantic import BaseModel
-
-from fastapi import UploadFile
 
 
 class UserService(CRUDService):

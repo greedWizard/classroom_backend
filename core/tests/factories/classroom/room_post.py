@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import factory
+
 from core.apps.classroom.constants import RoomPostType
 from core.apps.classroom.models import RoomPost
 from core.apps.classroom.repositories.post_repository import RoomPostRepository

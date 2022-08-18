@@ -4,11 +4,11 @@ from typing import (
     NewType,
 )
 
+from fastapi import WebSocket
+
 from core.apps.chat.models import Dialog
 from core.apps.chat.schemas import MessageSchema
 from core.common.utils import prepare_json_list
-
-from fastapi import WebSocket
 
 
 ws_connection = NewType('WsConnection', list[dict[str, Any]])

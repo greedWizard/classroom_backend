@@ -1,7 +1,7 @@
+from sqlalchemy import select
+
 from core.apps.classroom.models import Room
 from core.common.repositories.base import CRUDRepository
-
-from sqlalchemy import select
 
 
 class RoomRepository(CRUDRepository):

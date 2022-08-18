@@ -1,9 +1,10 @@
+from fastapi_jwt_auth import AuthJWT
+
 from dependency_injector import providers
 from dependency_injector.containers import (
     DeclarativeContainer,
     WiringConfiguration,
 )
-from fastapi_jwt_auth import AuthJWT
 
 
 class UserContainer(DeclarativeContainer):

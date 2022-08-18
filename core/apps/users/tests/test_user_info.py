@@ -4,15 +4,16 @@ from datetime import (
 )
 from typing import Dict
 
-import pytest
-from core.apps.users.repositories.user_repository import UserRepository
-from core.apps.users.utils import hash_string
-from core.tests.factories.user import UserFactory
-from faker import Faker
-
 from fastapi import status
 from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
+
+import pytest
+from faker import Faker
+
+from core.apps.users.repositories.user_repository import UserRepository
+from core.apps.users.utils import hash_string
+from core.tests.factories.user import UserFactory
 
 
 USER_TEST_PASSWORD = 'testpPassword123'

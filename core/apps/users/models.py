@@ -1,12 +1,12 @@
-from core.common.config import config
-from core.common.models.base import BaseDBModel
-from core.common.utils import get_attachment_path
-
 import sqlalchemy as sa
 from sqlalchemy.orm import (
     backref,
     relationship,
 )
+
+from core.common.config import config
+from core.common.models.base import BaseDBModel
+from core.common.utils import get_attachment_path
 
 
 # TODO: info verbose name + translations

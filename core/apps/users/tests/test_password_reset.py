@@ -1,17 +1,18 @@
 from datetime import timedelta
 from unittest import mock
 
+from fastapi import status
+from fastapi.applications import FastAPI
+from fastapi.testclient import TestClient
+
 import pytest
+from itsdangerous import TimedSerializer
+
 from core.apps.users.models import User
 from core.apps.users.repositories.user_repository import UserRepository
 from core.common.config import config
 from core.common.utils import get_current_datetime
 from core.tests.factories.user import UserFactory
-from itsdangerous import TimedSerializer
-
-from fastapi import status
-from fastapi.applications import FastAPI
-from fastapi.testclient import TestClient
 
 
 @pytest.mark.asyncio

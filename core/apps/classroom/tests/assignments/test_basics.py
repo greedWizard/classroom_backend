@@ -1,4 +1,8 @@
+from fastapi import status
+from fastapi.applications import FastAPI
+
 import pytest
+
 from core.apps.classroom.constants import (
     HomeWorkAssignmentStatus,
     ParticipationRoleEnum,
@@ -10,9 +14,6 @@ from core.tests.factories.classroom.assignments import AssignmentFactory
 from core.tests.factories.classroom.participation import ParticipationFactory
 from core.tests.factories.classroom.room_post import RoomPostFactory
 from core.tests.factories.user.user import UserFactory
-
-from fastapi import status
-from fastapi.applications import FastAPI
 
 
 @pytest.mark.asyncio

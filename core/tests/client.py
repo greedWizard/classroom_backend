@@ -1,7 +1,7 @@
-from core.apps.users.models import User
+from fastapi.testclient import TestClient
 from fastapi_jwt_auth import AuthJWT
 
-from fastapi.testclient import TestClient
+from core.apps.users.models import User
 
 
 class FastAPITestClient(TestClient):

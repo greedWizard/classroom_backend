@@ -1,10 +1,11 @@
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel
+
 from core.apps.classroom.schemas.common import RoomBaseSchema
 from core.apps.users.schemas import AuthorSchema
 from core.common.schemas import NormalizedDatetimeModel
-from pydantic import BaseModel
 
 
 class RoomCreateSchema(RoomBaseSchema):

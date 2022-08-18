@@ -1,16 +1,16 @@
 import uuid
 from typing import Union
 
+from sqlalchemy import (
+    func,
+    select,
+)
+
 from core.apps.users.models import User
 from core.apps.users.utils import hash_string
 from core.common.config import config
 from core.common.repositories.base import CRUDRepository
 from core.common.utils import get_current_datetime
-
-from sqlalchemy import (
-    func,
-    select,
-)
 
 
 class UserRepository(CRUDRepository):

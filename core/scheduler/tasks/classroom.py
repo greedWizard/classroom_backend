@@ -1,3 +1,9 @@
+from dependency_injector.wiring import (
+    inject,
+    Provide,
+)
+from jinja2 import Environment
+
 from core.apps.classroom.schemas import RoomPostEmailNotificationSchema
 from core.common.containers import (
     MainContainer,
@@ -6,11 +12,6 @@ from core.common.containers import (
 from core.common.services.email import EmailService
 from core.scheduler.app import huey_app
 from core.scheduler.tasks.subjects import ROOM_POST_NOTIFICATION_CREATED
-from dependency_injector.wiring import (
-    inject,
-    Provide,
-)
-from jinja2 import Environment
 
 
 @huey_app.task()

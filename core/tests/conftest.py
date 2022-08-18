@@ -1,25 +1,22 @@
 import asyncio
 from typing import Generator
 
+from fastapi.applications import FastAPI
+
 import pytest
 import pytest_asyncio
-from core.apps.attachments.repositories.attachment_repository import (
-    AttachmentRepository,
-)
+from faker.proxy import Faker
+
+from core.apps.attachments.repositories.attachment_repository import AttachmentRepository
 from core.apps.classroom.repositories import RoomRepository
 from core.apps.classroom.repositories.assignment import HomeworkAssignmentRepository
-from core.apps.classroom.repositories.participation_repository import (
-    ParticipationRepository,
-)
+from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
 from core.apps.users.repositories.user_repository import UserRepository
 from core.common.database import test_engine
 from core.common.factory import AppFactory
 from core.common.models.base import BaseDBModel
 from core.tests.client import FastAPITestClient
-from faker.proxy import Faker
-
-from fastapi.applications import FastAPI
 
 
 @pytest.fixture(scope='module', autouse=True)

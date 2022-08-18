@@ -1,5 +1,18 @@
 from typing import List
 
+from fastapi import (
+    APIRouter,
+    Depends,
+    Query,
+)
+from fastapi.exceptions import HTTPException
+from fastapi_pagination import (
+    Page,
+    paginate,
+)
+
+from starlette import status
+
 from core.apps.classroom.schemas import (
     RoomPostCreateSchema,
     RoomPostCreateSuccessSchema,
@@ -11,18 +24,6 @@ from core.apps.classroom.schemas.common import RoomPostListItemSchema
 from core.apps.classroom.services.room_post_service import RoomPostService
 from core.apps.users.dependencies import get_current_user
 from core.apps.users.models import User
-from fastapi_pagination import (
-    Page,
-    paginate,
-)
-from starlette import status
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    Query,
-)
-from fastapi.exceptions import HTTPException
 
 
 room_posts_router = APIRouter()

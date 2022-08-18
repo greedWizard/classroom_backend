@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import factory
+
 from core.apps.users.models import User
 from core.apps.users.repositories.user_repository import UserRepository
 from core.apps.users.utils import hash_string

@@ -4,15 +4,16 @@ from typing import (
     Optional,
 )
 
-from core.apps.users.schemas import AuthorSchema
-from core.common.config import config
-from core.common.containers import MainContainer
 from dependency_injector.wiring import (
     inject,
     Provide,
 )
 from itsdangerous import TimedSerializer
 from pydantic import BaseModel
+
+from core.apps.users.schemas import AuthorSchema
+from core.common.config import config
+from core.common.containers import MainContainer
 
 
 def get_current_datetime():

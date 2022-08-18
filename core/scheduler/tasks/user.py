@@ -1,3 +1,9 @@
+from dependency_injector.wiring import (
+    inject,
+    Provide,
+)
+from jinja2 import Environment
+
 from core.apps.users.schemas import UserHyperlinkEmailSchema
 from core.common.containers import (
     MainContainer,
@@ -9,11 +15,6 @@ from core.scheduler.tasks.subjects import (
     USER_ACTIVATION_SUBJECT,
     USER_PASSWORD_RESET_SUBJECT,
 )
-from dependency_injector.wiring import (
-    inject,
-    Provide,
-)
-from jinja2 import Environment
 
 
 @huey_app.task()

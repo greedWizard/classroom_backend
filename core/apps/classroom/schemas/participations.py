@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel
+
 from core.apps.classroom.schemas.rooms import RoomDetailSchema
 from core.common.schemas import NormalizedDatetimeModel
-from pydantic import BaseModel
 
 
 class ParticipationNestedSchema(BaseModel):

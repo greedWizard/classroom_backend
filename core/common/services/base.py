@@ -9,6 +9,8 @@ from typing import (
     Union,
 )
 
+from pydantic import BaseModel
+
 from core.common.models.base import BaseDBModel
 from core.common.repositories.base import (
     AbstractBaseRepository,
@@ -18,7 +20,6 @@ from core.common.repositories.base import (
 from core.common.repositories.exceptions import ObjectAlreadyExistsException
 from core.common.services.decorators import action
 from core.common.services.exceptions import ServiceMapException
-from pydantic import BaseModel
 
 
 CreateSchema = NewType('CreateSchemaType', BaseModel)

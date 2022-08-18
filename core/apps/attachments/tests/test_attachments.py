@@ -1,7 +1,9 @@
+from fastapi import status
+from fastapi.applications import FastAPI
+
 import pytest
-from core.apps.attachments.repositories.attachment_repository import (
-    AttachmentRepository,
-)
+
+from core.apps.attachments.repositories.attachment_repository import AttachmentRepository
 from core.apps.classroom.constants import ParticipationRoleEnum
 from core.apps.classroom.repositories.assignment import HomeworkAssignmentRepository
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
@@ -10,9 +12,6 @@ from core.tests.factories.classroom.assignments import AssignmentFactory
 from core.tests.factories.classroom.participation import ParticipationFactory
 from core.tests.factories.classroom.room_post import RoomPostFactory
 from core.tests.utils.functions import check_attachment_is_attached
-
-from fastapi import status
-from fastapi.applications import FastAPI
 
 
 TEST_FILE_PATH = 'core/apps/attachments/tests/new_file.txt'
