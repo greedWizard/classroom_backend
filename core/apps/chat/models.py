@@ -101,7 +101,7 @@ class Message(BaseDBModel):
         foreign_keys=[dialog_id],
     )
     text = sa.Column(
-        sa.Text(length=500),
+        sa.String(length=500),
         nullable=False,
     )
 

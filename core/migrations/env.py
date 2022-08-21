@@ -14,6 +14,7 @@ from core.common.config import config as project_config
 from core.apps.classroom.models import * # no qa
 from core.apps.users.models import * # no qa
 from core.apps.attachments.models import * # no qa
+from core.apps.chat.models import *
 
 from core.common.models.base import BaseDBModel # no qa
 
