@@ -34,9 +34,9 @@ async def test_user_registration_success(
 ):
     url = app.router.url_path_for('register_user')
     password = 'KjoiunslAdjkl19'
+    users_count = await user_repository.count()
 
-    user_count = len(await user_repository.fetch())
-    assert not user_count
+    assert not users_count
 
     user_creds = {
         'first_name': 'Валерий',
@@ -54,7 +54,7 @@ async def test_user_registration_success(
     response = client.post(url, json=user_creds)
 
     assert response.status_code == status.HTTP_201_CREATED, response.json()
-    assert await user_repository.count() == user_count + 1
+    assert await user_repository.count() == users_count + 1
 
     user = await user_repository.retrieve(email=email)
 

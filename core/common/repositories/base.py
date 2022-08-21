@@ -2,6 +2,7 @@ from abc import ABC
 from typing import (
     Any,
     Callable,
+    Optional,
     Union,
 )
 
@@ -26,9 +27,9 @@ from core.common.repositories.exceptions import ObjectAlreadyExistsException
 
 
 class AbstractBaseRepository(ABC):
-    _model: BaseDBModel = NotImplemented
+    _model: type[BaseDBModel] = NotImplemented
     _session_factory: Callable = async_session
-    _integrity_error: Exception = IntegrityError
+    _integrity_error: type[Exception] = IntegrityError
 
     def get_session(self) -> AsyncSession:
         return self._session_factory()
@@ -91,7 +92,10 @@ class ReadOnlyRepository(AbstractBaseRepository):
             option = option.joinedload(nested_field)
         return option
 
-    async def _join_statement(self, statement, columns: list[str]):
+    async def _join_statement(self, statement, columns: Optional[list[str]] = None):
+        if not columns:
+            return statement
+
         load_options = [
             await self._get_join_options_recursive(column) for column in columns
         ]

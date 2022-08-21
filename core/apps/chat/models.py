@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import (
     backref,
     relationship,
@@ -8,7 +9,7 @@ from core.common.models.base import BaseDBModel
 from core.common.models.mixins import AuthorAbstract
 
 
-dialogs_participants = sa.Table(
+DialogsParticipants = sa.Table(
     'dialogs_participants',
     BaseDBModel.metadata,
     sa.Column(
@@ -18,7 +19,7 @@ dialogs_participants = sa.Table(
             'users.id',
             ondelete='CASCADE',
         ),
-        nullable=True,
+        nullable=False,
         primary_key=True,
     ),
     sa.Column(
@@ -28,7 +29,7 @@ dialogs_participants = sa.Table(
             'dialogs.id',
             ondelete='CASCADE',
         ),
-        nullable=True,
+        nullable=False,
         primary_key=True,
     ),
 )
@@ -39,17 +40,25 @@ class Dialog(BaseDBModel, AuthorAbstract):
 
     participants = relationship(
         'User',
-        secondary=dialogs_participants,
+        secondary=DialogsParticipants,
         backref=backref(
             'dialogs',
             uselist=True,
         ),
     )
 
+    @hybrid_property
+    def participants_count(self):
+        return len(self.participants)
+
+    @participants_count.expression
+    def participants_count(cls):
+        return sa.select([
+            sa.func.count(DialogsParticipants.c.dialog_id),
+        ]).where(DialogsParticipants.c.dialog_id == cls.id).label('participants_count')
+
     def __str__(self) -> str:
-        return (
-            f'Dialog #{self.id} from user #{self.sender_id} to user #{self.reciever_id}'
-        )
+        return f'Dialog #{self.id}'
 
     def __repr__(self) -> str:
         return f'<{self}>'
@@ -57,23 +66,6 @@ class Dialog(BaseDBModel, AuthorAbstract):
 
 class Message(BaseDBModel):
     __tablename__ = 'messages'
-
-    reciever_id = sa.Column(
-        sa.Integer,
-        sa.ForeignKey(
-            'users.id',
-            ondelete='CASCADE',
-        ),
-        nullable=False,
-    )
-    reciever = relationship(
-        'User',
-        backref=backref(
-            name='received_messages',
-            uselist=True,
-        ),
-        foreign_keys=[reciever_id],
-    )
 
     sender_id = sa.Column(
         sa.Integer,
@@ -109,7 +101,7 @@ class Message(BaseDBModel):
         foreign_keys=[dialog_id],
     )
     text = sa.Column(
-        sa.Text(length=300),
+        sa.Text(length=500),
         nullable=False,
     )
 

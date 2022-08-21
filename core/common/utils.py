@@ -11,7 +11,6 @@ from dependency_injector.wiring import (
 from itsdangerous import TimedSerializer
 from pydantic import BaseModel
 
-from core.apps.users.schemas import AuthorSchema
 from core.common.config import config
 from core.common.containers import MainContainer
 
@@ -19,16 +18,6 @@ from core.common.containers import MainContainer
 def get_current_datetime():
     # TODO: настроить таймзон
     return datetime.utcnow()
-
-
-# TODO: выпилить
-def get_author_data(user) -> BaseModel:
-    return AuthorSchema(
-        id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        middle_name=user.middle_name,
-    )
 
 
 def prepare_json_schema(schema: BaseModel):

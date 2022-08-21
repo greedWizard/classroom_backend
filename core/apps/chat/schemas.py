@@ -5,10 +5,6 @@ from pydantic import BaseModel
 from core.apps.users.schemas import AuthorSchema
 
 
-class DialogCreateSchema(BaseModel):
-    reciever_id: int
-
-
 class MessageSchema(BaseModel):
     id: int
     sender: AuthorSchema
@@ -37,6 +33,25 @@ class DialogNestedSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class DialogCreateSchema(BaseModel):
+    author_id: int
+    updated_by_id: int
+
+
+class DialogDetailSchema(BaseModel):
+    id: int
+    participants: list[AuthorSchema]
+    author: AuthorSchema
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class DialogStartSchema(BaseModel):
+    participants_ids: list[int]
 
 
 class MessageListItemSchema(BaseModel):
