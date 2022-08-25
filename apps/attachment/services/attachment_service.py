@@ -59,7 +59,6 @@ class AttachmentService(AuthorMixin, CRUDService):
         return participation.can_manage_posts
 
     async def validate_manage_permissions(self, attachment_id: int):
-        """ fdbdbfdfbdfbxdfbdb"""
         attachment: Attachment = await self._repository.retrieve(id=attachment_id)
 
         if attachment.post_id:
@@ -98,11 +97,19 @@ class AttachmentService(AuthorMixin, CRUDService):
         self._assignment_checked = True
         return True, None
 
+    def _check_file_size(
+        self,
+        file_bytes: bytes,
+    ) -> int:
+        return len(file_bytes) > config.MAX_FILE_SIZE
+
     async def validate_source(
             self,
-            file_size: bytes,
+            file_bytes: bytes,
     ) -> Tuple[bool, Union[str, None]]:
-        if len(file_size) > config.MAX_FILE_SIZE:
-            return False, '{filename} size is to large'
+        if self._check_file_size(file_bytes):
+            return False, '{filename} size is to large'.format(
+                filename=self.current_action_attributes.get('filename')
+            )
 
         return True, None

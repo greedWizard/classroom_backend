@@ -1,9 +1,14 @@
 import tempfile
-
+from os import stat
 import pytest
 
 from fastapi import status
 from fastapi.applications import FastAPI
+
+from mock import mock_open, MagicMock
+from mock import Mock, patch
+from io import BytesIO
+
 
 from apps.attachment.repositories.attachment_repository import AttachmentRepository
 from apps.classroom.constants import ParticipationRoleEnum
@@ -14,6 +19,8 @@ from tests.factories.classroom.assignments import AssignmentFactory
 from tests.factories.classroom.participation import ParticipationFactory
 from tests.factories.classroom.room_post import RoomPostFactory
 from tests.utils.functions import check_attachment_is_attached
+
+from apps.common.config import config
 
 
 TEST_FILE_PATH = 'tests/attachments/new_file.txt'
@@ -236,24 +243,29 @@ async def test_attachment_file_is_large(
         role=ParticipationRoleEnum.moderator,
     )
     post = await RoomPostFactory.create(room=participation.room)
-    assignment = await AssignmentFactory.create(post=post)
     url = app.url_path_for('create_attachments')
+    check_file_size_mock = Mock()
+    check_file_size_mock.return_value = True
 
-    with tempfile.TemporaryFile() as file:
-        file.truncate(65 * 1024 * 1024)
+    with patch(
+            'apps.attachment.services.attachment_service.AttachmentService._check_file_size',
+            check_file_size_mock,
+    ):
+        with tempfile.TemporaryFile() as file:
+            client.authorize(participation.user)
+            files = {
+                'attachments': ('file.txt', file, 'text/plan'),
+            }
 
-        client.authorize(participation.user)
-        files = {
-            'attachments': ('file.txt', file, 'text/plan')
-        }
-
-        response = client.post(
-            url=url,
-            files=files,
-            params={
-                     'assignment_id': assignment.id,
-                 },
-        )
+            response = client.post(
+                url=url,
+                files=files,
+                params={
+                    'room_id': post.room.id,
+                    'post_id': post.id,
+                },
+            )
 
     json_data = response.json()
     assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
+    assert json_data['detail'] == [{'source': 'file.txt size is to large'}]
