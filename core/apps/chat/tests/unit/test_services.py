@@ -6,6 +6,7 @@ from core.apps.classroom.repositories.participation_repository import Participat
 from core.tests.factories.chat.dialog import DialogFactory
 from core.tests.factories.classroom.participation import ParticipationFactory
 from core.tests.factories.classroom.room import RoomFactory
+from core.tests.factories.user.user import UserFactory
 
 
 @pytest.mark.asyncio
@@ -231,9 +232,7 @@ async def test_dialog_start_success(
 
 
 @pytest.mark.asyncio
-async def test_dialog_start_not_roommates(
-    dialog_repository: DialogRepository,
-):
+async def test_dialog_start_not_roommates():
     participations = await ParticipationFactory.create_batch(
         size=3,
     )
@@ -249,3 +248,19 @@ async def test_dialog_start_not_roommates(
 
     assert not dialog
     assert errors == {'error': 'Users are not rommates.'}, errors
+
+
+@pytest.mark.asyncio
+async def test_dialog_participant_in(dialog_repository: DialogRepository):
+    dialog_participant = await UserFactory.create()
+    not_a_dialog_participant = await UserFactory.create()
+    dialog = await DialogFactory.create(participants=[dialog_participant])
+
+    assert await dialog_repository.check_participant_in_dialog(
+        participant_id=dialog_participant.id,
+        dialog_id=dialog.id,
+    )
+    assert not await dialog_repository.check_participant_in_dialog(
+        participant_id=not_a_dialog_participant.id,
+        dialog_id=dialog.id,
+    )

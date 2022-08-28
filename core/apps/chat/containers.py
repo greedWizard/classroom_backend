@@ -9,7 +9,7 @@ from core.apps.chat.managers import ChatManager
 
 class ChatContainer(DeclarativeContainer):
     wiring_config: WiringConfiguration = WiringConfiguration(
-        modules=['.views'],
+        modules=['core.apps.chat.views'],
     )
     manager = providers.Singleton(
         ChatManager,

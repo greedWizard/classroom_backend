@@ -44,11 +44,11 @@ class User(BaseDBModel):
 
     def __str__(self) -> str:
         return (
-            f'{self.first_name} {self.last_name} {self.email} active={self.is_active}'
+            f'{self.first_name} {self.last_name} {self.email}'
         )
 
     def __repr__(self) -> str:
-        return f'<User {self.first_name} {self.last_name}{self.email} active={self.is_active}>'
+        return f'<User {self.first_name} {self.last_name} {self.email} active={self.is_active}>'
 
     @property
     def full_name(self):

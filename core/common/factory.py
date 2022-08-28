@@ -27,7 +27,6 @@ class AppFactory:
             allow_headers=['*'],
         )
         cls._register_views(app)
-        cls._connect_db()
 
         app.exception_handler(AuthJWTException)(authjwt_exception_handler)
 
@@ -57,7 +56,3 @@ class AppFactory:
             chat_router,
             prefix=''.join([API_V1_PREFIX, 'chat']),
         )
-
-    @classmethod
-    def _connect_db(cls):
-        pass

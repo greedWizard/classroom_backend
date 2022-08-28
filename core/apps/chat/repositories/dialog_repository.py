@@ -28,11 +28,25 @@ class DialogRepository(CRUDRepository):
             await session.execute(
                 query, [
                     {'dialog_id': dialog_id, 'user_id': participant_id}
-                                    for participant_id in participants_ids
+                    for participant_id in participants_ids
                 ],
             )
             await session.commit()
         return len(participants_ids)
+
+    async def check_participant_in_dialog(
+        self,
+        participant_id: int,
+        dialog_id: int,
+    ) -> bool:
+        statement = select(DialogsParticipants.c.dialog_id).filter(
+            DialogsParticipants.c.dialog_id == dialog_id,
+            DialogsParticipants.c.user_id == participant_id,
+        )
+
+        async with self.get_session() as session:
+            result = await session.execute(statement=statement)
+            return bool(result.scalar() is not None)
 
     async def find_exact_dialog(
         self,

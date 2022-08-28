@@ -4,6 +4,7 @@ from fastapi import (
     HTTPException,
     Query,
     WebSocket,
+    WebSocketDisconnect,
 )
 
 from dependency_injector.wiring import (
@@ -14,40 +15,71 @@ from starlette import status
 
 from core.apps.chat.containers import ChatContainer
 from core.apps.chat.managers import ChatManager
+from core.apps.chat.repositories.dialog_repository import DialogRepository
 from core.apps.chat.schemas import (
     DialogDetailSchema,
     DialogStartSchema,
+    MessageCreateSchema,
 )
 from core.apps.chat.services.dialog_service import DialogService
-from core.apps.users.dependencies import get_current_user
+from core.apps.chat.services.message_service import MessageService
+from core.apps.users.dependencies import (
+    get_current_user,
+    get_websocket_user,
+)
 from core.apps.users.models import User
 
 
 router = APIRouter(tags=['chat'])
 
 
-# TODO: логировать здесь ВСЁ абсолютно, творится какая-то херня
 @router.websocket('/')
 @inject
 async def chat(
     websocket: WebSocket,
     jwt_token: str = Query(...),
-    reciever_id: int = Query(...),
-    sender_id: int = Query(...),
+    dialog_id: int = Query(...),
     chat_manager: ChatManager = Depends(Provide[ChatContainer.manager]),
+    dialog_repository: DialogRepository = Depends(DialogRepository),
+    message_service: MessageService = Depends(MessageService),
 ):
-    pass
+    user = await get_websocket_user(token=jwt_token)
+    await chat_manager.add_connection(dialog_id, websocket)
+
+    if not await dialog_repository.check_participant_in_dialog(user.id, dialog_id):
+        await websocket.close()
+        raise WebSocketDisconnect(403)
+
+    previous_messages, _ = await message_service.fetch(
+        _ordering=['-created_at'],
+        join=['sender'],
+        dialog_id=dialog_id,
+    )
+    await chat_manager.broadcast_batch(previous_messages, websocket)
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            message_create_schema = MessageCreateSchema(
+                text=data['text'],
+                sender_id=user.id,
+                dialog_id=dialog_id,
+            )
+            message, _ = await message_service.create(message_create_schema, join=['sender'])
+            await chat_manager.broadcast_message_to_all_participants(message)
+    except WebSocketDisconnect:
+        await chat_manager.remove_connection(dialog_id, websocket)
 
 
 @router.post(
-    '/start-tet-a-tet',
+    '/start-private-dialog',
     response_model=DialogDetailSchema,
     status_code=status.HTTP_201_CREATED,
     operation_id='startDialogWithTeacher',
     summary='Start a new private dialog',
     description='Creates a dialog with participants.'
-                    'If a dialog already exists between'
-                        "participants then it won't be created",
+    'If a dialog already exists between'
+    'participants then it won\'t be created',
 )
 async def start_dialog(
     schema: DialogStartSchema,
@@ -66,18 +98,3 @@ async def start_dialog(
             detail=errors,
         )
     return dialog
-
-
-# TODO: тесты на эту вьюху
-# @router.get(
-#     '/my-dialogs',
-#     response_model=list[MessageListItemSchema],
-#     operation_id='myDialogs',
-# )
-# async def my_dialogs(
-#     user: User = Depends(get_current_user),
-# ):
-#     message_service = MessageService(user)
-#     messages = await message_service.fetch_last()
-
-#     return [MessageListItemSchema.from_orm(message) for message in messages]

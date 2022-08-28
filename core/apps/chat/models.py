@@ -100,9 +100,14 @@ class Message(BaseDBModel):
         ),
         foreign_keys=[dialog_id],
     )
+
     text = sa.Column(
         sa.String(length=500),
         nullable=False,
+    )
+    is_read = sa.Column(
+        sa.Boolean(),
+        default=False,
     )
 
     def __str__(self) -> str:

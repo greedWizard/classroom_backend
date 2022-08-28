@@ -1,57 +1,41 @@
-from typing import (
-    Any,
-    List,
-    NewType,
-)
-
 from fastapi import WebSocket
 
-from core.apps.chat.models import Dialog
-from core.apps.chat.schemas import MessageSchema
-from core.common.utils import prepare_json_list
-
-
-ws_connection = NewType('WsConnection', list[dict[str, Any]])
+from core.apps.chat.models import Message
+from core.apps.chat.schemas import MessageDetailSchema
 
 
 class ChatManager:
-    # TODO: поменять на нормальный DI через провайдеры контейнера
     def __init__(self):
-        self.active_connections: List[ws_connection] = []
+        self.active_connections: dict[str, list[WebSocket]] = {}
 
-    def _get_dialog_connections(self, dialog: Dialog) -> list[ws_connection]:
-        return [
-            connection
-            for connection in self.active_connections
-            if connection['dialog'].id == dialog.id
-        ]
+    async def add_connection(self, dialog_id: int, websocket: WebSocket):
+        await websocket.accept()
+        if dialog_id not in self.active_connections.keys():
+            self.active_connections[dialog_id] = [websocket]
+        else:
+            self.active_connections[dialog_id].append(websocket)
+
+    async def remove_connection(self, dialog_id: int, websocket: WebSocket) -> WebSocket:
+        try:
+            self.active_connections[dialog_id].remove(websocket)
+        except (KeyError, ValueError):
+            pass
 
     @staticmethod
-    def _get_connection(websocket: WebSocket, dialog: Dialog) -> ws_connection:
-        return {'websocket': websocket, 'dialog': dialog}
+    async def broadcast(websocket: WebSocket, message: Message):
+        message_schema = MessageDetailSchema.from_orm(message)
+        await websocket.send_json(message_schema.dict())
 
-    async def connect(self, websocket: WebSocket, dialog: Dialog):
-        await websocket.accept()
-        self.active_connections.append(self._get_connection(websocket, dialog))
+    async def broadcast_message_to_all_participants(self, message: Message):
+        for websocket in self.active_connections[message.dialog_id]:
+            await self.broadcast(websocket, message)
 
-    async def disconnect(self, websocket: WebSocket, dialog: Dialog):
-        self.active_connections.remove(self._get_connection(websocket, dialog))
-
-    async def broadcast_messages(self, messages: list[MessageSchema], dialog: Dialog):
-        dialog_connections = self._get_dialog_connections(dialog)
-
-        for connection in dialog_connections:
-            await connection['websocket'].send_json(prepare_json_list(messages))
-
-    async def broadcast_dialog(self, dialog: Dialog):
-        await self.broadcast_messages(
-            [MessageSchema.from_orm(message) for message in dialog.messages],
-            dialog=dialog,
+    async def broadcast_batch(
+        self,
+        messages: list[Message],
+        websocket: WebSocket,
+    ):
+        messages_models = [MessageDetailSchema.from_orm(message) for message in messages]
+        await websocket.send_json(
+            data=[message_model.dict() for message_model in messages_models],
         )
-
-    async def remove_inactive(self):
-        self.active_connections = [
-            connection
-            for connection in self.active_connections
-            if connection['websocket']
-        ]

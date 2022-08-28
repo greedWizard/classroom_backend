@@ -20,9 +20,19 @@ class MessageSchema(BaseModel):
 
 
 class MessageCreateSchema(BaseModel):
-    reciever_id: int
+    sender_id: int
     text: str
     dialog_id: int
+
+
+class MessageDetailSchema(BaseModel):
+    sender: AuthorSchema
+    text: str
+    is_read: bool
+    dialog_id: int
+
+    class Config:
+        orm_mode = True
 
 
 class DialogNestedSchema(BaseModel):
