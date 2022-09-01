@@ -111,4 +111,7 @@ class Message(BaseDBModel):
     )
 
     def __str__(self) -> str:
-        return f'Message {self.text}, dialog#{self.dialog_id}'
+        return f'Message {self.text}'
+
+    def __repr__(self) -> str:
+        return f'<Message "{self.text}", {self.created_at}, dialog#{self.dialog_id}>'

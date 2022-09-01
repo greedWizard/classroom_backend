@@ -3,14 +3,14 @@ from datetime import datetime
 import factory
 
 from core.apps.chat.models import Message
-from core.apps.chat.repositories.dialog_repository import DialogRepository
+from core.apps.chat.repositories.message_repository import MessageRepository
 from core.tests.factories.base import AsyncRepositoryFactory
 from core.tests.factories.chat.dialog import DialogFactory
 from core.tests.factories.user.user import UserFactory
 
 
 class MessageFactory(AsyncRepositoryFactory):
-    __repository__: DialogRepository = DialogRepository()
+    __repository__: MessageRepository = MessageRepository()
 
     id = factory.Sequence(lambda n: n)
     created_at = datetime.utcnow()

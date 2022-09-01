@@ -102,6 +102,16 @@ class ReadOnlyRepository(AbstractBaseRepository):
         statement = statement.options(*load_options)
         return statement
 
+    async def _distinct_statement(
+        self,
+        statement,
+        distinct_fields: list[str],
+    ):
+        group_by_list = {
+            getattr(self._model, distinct_field) for distinct_field in distinct_fields
+        }
+        return statement.group_by(*group_by_list)
+
     async def _fetch_statement(
         self,
         ordering: list[str] = None,
@@ -142,6 +152,47 @@ class ReadOnlyRepository(AbstractBaseRepository):
     ) -> list[BaseDBModel]:
         """Fetch list of object with the specific criteria."""
         statement = await self._fetch_statement(
+            ordering=ordering,
+            join=join,
+            offset=offset,
+            limit=limit,
+            **filters,
+        )
+
+        async with self.get_session() as session:
+            result = await session.execute(statement)
+            return result.unique().scalars().all()
+
+    async def _get_statement_with_unique_fields(
+        self,
+        unique_fields: list[str],
+        join: list[str] = None,
+        ordering: list[str] = None,
+        offset: int = 0,
+        limit: int = 100,
+        **filters,
+    ):
+        statement = await self._fetch_statement(
+            ordering=ordering,
+            join=join,
+            offset=offset,
+            limit=limit,
+            **filters,
+        )
+        return await self._distinct_statement(statement, distinct_fields=unique_fields)
+
+    async def fetch_unique(
+        self,
+        unique_fields: list[str],
+        ordering: list[str] = None,
+        join: list[str] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        **filters,
+    ):
+        """Fetch unique objects with filters."""
+        statement = await self._get_statement_with_unique_fields(
+            unique_fields=unique_fields,
             ordering=ordering,
             join=join,
             offset=offset,

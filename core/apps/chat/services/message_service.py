@@ -4,6 +4,7 @@ from core.apps.chat.models import Message
 from core.apps.chat.repositories.dialog_repository import DialogRepository
 from core.apps.chat.repositories.message_repository import MessageRepository
 from core.common.services.base import CRUDService
+from core.common.services.decorators import action
 
 
 class MessageService(CRUDService):
@@ -22,3 +23,27 @@ class MessageService(CRUDService):
         ):
             return False, 'You are not participating in this dialog!'
         return True, None
+
+    @action
+    async def get_unique_last_messages(
+        self,
+        user_id: int,
+        ordering: Optional[list[str]] = None,
+        join: Optional[list[str]] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        **filters,
+    ):
+        if not ordering:
+            ordering = []
+
+        ordering.insert(0, '-created_at')
+
+        return await self._repository.get_unique_last_messages(
+            ordering=ordering,
+            join=join,
+            limit=limit,
+            offset=offset,
+            user_id=user_id,
+            **filters,
+        )

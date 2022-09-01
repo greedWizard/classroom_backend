@@ -54,7 +54,6 @@ repos:
 #         language_version: python3.9
 #         args: ['-S']
 
-
 -   repo: https://github.com/pycqa/isort
     rev: 5.5.2
     hooks:

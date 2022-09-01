@@ -51,7 +51,7 @@ async def chat(
         raise WebSocketDisconnect(403)
 
     previous_messages, _ = await message_service.fetch(
-        _ordering=['-created_at'],
+        _ordering=['created_at'],
         join=['sender'],
         dialog_id=dialog_id,
     )
@@ -69,6 +69,32 @@ async def chat(
             await chat_manager.broadcast_message_to_all_participants(message)
     except WebSocketDisconnect:
         await chat_manager.remove_connection(dialog_id, websocket)
+
+
+@router.websocket('/all-dialogs/')
+@inject
+async def all_dialogs_preview(
+    websocket: WebSocket,
+    jwt_token: str = Query(...),
+    chat_manager: ChatManager = Depends(Provide[ChatContainer.manager]),
+    message_service: MessageService = Depends(MessageService),
+):
+    user = await get_websocket_user(token=jwt_token)
+    messages = await message_service.get_unique_last_messages(
+        user_id=user.id,
+        join=['sender'],
+    )
+
+    for dialog_id in [message.dialog_id for message in messages]:
+        await chat_manager.add_connection(dialog_id, websocket)
+
+    try:
+        await chat_manager.broadcast_batch(messages, websocket)
+        data = await websocket.receive_json()
+        print(data)
+    except WebSocketDisconnect:
+        for dialog_id in [message.dialog_id for message in messages]:
+            await chat_manager.remove_connection(dialog_id=dialog_id, websocket=websocket)
 
 
 @router.post(
