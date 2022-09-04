@@ -51,11 +51,8 @@ class UserService(CRUDService):
     _attachment_repository: AttachmentRepository = AttachmentRepository()
 
     error_messages = {
-        'already_exists': 'User with that credits is already registred.',
+        'create': 'User with that credits is already registred.',
         'does_not_exist': 'User not found. He is either inactive or not registred yet.',
-    }
-    schema_map: dict[str, BaseModel] = {
-        'create': UserRegistrationCompleteSchema,
     }
 
     def set_user(self, user: User):
