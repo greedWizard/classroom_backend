@@ -143,18 +143,12 @@ async def get_last_messages(
     limit: int = Query(default=0),
     offset: int = Query(default=50),
 ):
-    messages, errors = await message_service.get_unique_last_messages(
+    messages = await message_service.get_unique_last_messages(
         user_id=current_user.id,
         ordering=['-created_at'],
         join=['sender'],
         limit=limit,
         offset=offset,
     )
-
-    if errors:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=errors,
-        )
     return messages
 
