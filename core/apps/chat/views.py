@@ -20,6 +20,7 @@ from core.apps.chat.schemas import (
     DialogDetailSchema,
     DialogStartSchema,
     MessageCreateSchema,
+    MessageDetailSchema,
 )
 from core.apps.chat.services.dialog_service import DialogService
 from core.apps.chat.services.message_service import MessageService
@@ -79,6 +80,7 @@ async def all_dialogs_preview(
     chat_manager: ChatManager = Depends(Provide[ChatContainer.manager]),
     message_service: MessageService = Depends(MessageService),
 ):
+    # TODO: подключить кафку и отправлять новые сообщение в реалтайме
     user = await get_websocket_user(token=jwt_token)
     messages = await message_service.get_unique_last_messages(
         user_id=user.id,
@@ -124,3 +126,35 @@ async def start_dialog(
             detail=errors,
         )
     return dialog
+
+
+@router.get(
+    '/last-messages',
+    response_model=list[MessageDetailSchema],
+    status_code=status.HTTP_200_OK,
+    operation_id='getLastMessages',
+    summary='Get unique last messages',
+    description='Get unique last messages'
+    'for current user',
+)
+async def get_last_messages(
+    current_user: User = Depends(get_current_user),
+    message_service: MessageService = Depends(MessageService),
+    limit: int = Query(default=0),
+    offset: int = Query(default=50),
+):
+    messages, errors = await message_service.get_unique_last_messages(
+        user_id=current_user.id,
+        ordering=['-created_at'],
+        join=['sender'],
+        limit=limit,
+        offset=offset,
+    )
+
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=errors,
+        )
+    return messages
+
