@@ -172,8 +172,8 @@ class CreateUpdateService(IServiceBase):
 
         try:
             created_object = await self._repository.create(join=join, **attrs)
-        except ObjectAlreadyExistsException:
-            return None, {'error': self.error_messages['create']}
+        except ObjectAlreadyExistsException as e:
+            return None, {'error': self.error_messages['create'], 'trace': str(e)}
         return created_object, None
 
     async def _get_bulk_create_result(

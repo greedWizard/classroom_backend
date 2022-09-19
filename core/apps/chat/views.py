@@ -93,7 +93,6 @@ async def all_dialogs_preview(
     try:
         await chat_manager.broadcast_batch(messages, websocket)
         data = await websocket.receive_json()
-        print(data)
     except WebSocketDisconnect:
         for dialog_id in [message.dialog_id for message in messages]:
             await chat_manager.remove_connection(dialog_id=dialog_id, websocket=websocket)
