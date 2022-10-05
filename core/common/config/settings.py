@@ -71,12 +71,13 @@ class ProjectSettings(BaseModel):
     USER_PERMISSION_DENIED_ERROR: str = 'You are not logged in.'
     AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA: timedelta = timedelta(days=3)
 
-    # ETERNAL SETTINGS
+    # EXTERNAL SETTINGS
     FRONTEND_LOGIN_URL: str = os.environ.get('FRONTEND_LOGIN_URL')
     FRONTEND_ROOM_POST_URL: str = os.environ.get('FRONTEND_ROOM_POST_URL')
     FRONTEND_USER_RESET_PASSWORD_URL: str = os.environ.get(
         'FRONTEND_USER_RESET_PASSWORD_URL',
     )
+    FRONTEND_PASSWORD_RECOVERY_URL: str = os.environ.get('FRONTEND_PASSWORD_RECOVERY_URL')
 
     # FILE SETTINGS
     MAX_FILE_SIZE: int = 64 * 1024 * 1024

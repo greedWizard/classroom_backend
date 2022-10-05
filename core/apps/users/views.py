@@ -198,11 +198,11 @@ async def initiate_user_password_reset(
     same token.
 
     """
-    token_dto, error = await user_service.initiate_user_password_reset(
+    timed_token, error = await user_service.initiate_user_password_reset(
         email=schema.email,
     )
 
-    if error or not token_dto:
+    if error or not timed_token:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error,
@@ -212,64 +212,26 @@ async def initiate_user_password_reset(
         status=OperationResultStatusEnum.SUCCESS,
         message='The password resed message has been sent to your email.',
     )
-    redirect_url = urljoin(
-        str(request.base_url),
-        request.app.url_path_for(
-            'confirm_password_reset',
-            activation_token=token_dto.activation_token,
-        ),
-    )
+    redirect_url = config.FRONTEND_PASSWORD_RECOVERY_URL.format(token=timed_token)
     await user_service.send_password_reset_email(
-        token_dto.user_email,
+        schema.email,
         redirect_url=redirect_url,
     )
-    response = JSONResponse(content=response_schema.dict())
-    response.set_cookie(key='token', value=token_dto.timed_token)
-    return response
-
-
-@router.get(
-    '/confirm-password-reset/{activation_token}',
-    operation_id='confirmPasswordReset',
-)
-async def confirm_password_reset(
-    activation_token: str,
-    user_service: UserService = Depends(),
-):
-    """Confirms user password reset."""
-    if not await user_service.exists(activation_token=activation_token):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='User not found',
-        )
-
-    result, errors = await user_service.confirm_password_reset(
-        activation_token=activation_token,
-    )
-
-    if errors:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
-    if result:
-        return RedirectResponse(config.FRONTEND_USER_RESET_PASSWORD_URL)
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail='Something went wrong',
-    )
+    return JSONResponse(content=response_schema.dict())
 
 
 @router.post(
-    '/reset-password',
+    '/reset-password/{token}',
     response_model=OperationResultSchema,
     operation_id='resetUserPassword',
 )
 @inject
 async def reset_user_password(
-    request: Request,
     schema: UserPasswordResetSchema,
+    token: str,
     user_service: UserService = Depends(),
 ):
     """Resets user password."""
-    token = request.cookies.get('token')
     _, errors = await user_service.reset_user_password(
         password_schema=schema,
         token=token,

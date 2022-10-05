@@ -23,14 +23,12 @@ from core.apps.users.constants import (
     EMAIL_REGEX,
     PHONE_REGEX,
 )
-from core.apps.users.dto import UserTokenResultDTO
 from core.apps.users.models import User
 from core.apps.users.repositories.user_repository import UserRepository
 from core.apps.users.schemas import (
     UserHyperlinkEmailSchema,
     UserLoginSchema,
     UserPasswordResetSchema,
-    UserRegistrationCompleteSchema,
 )
 from core.apps.users.utils import resize_image
 from core.common.config import config
@@ -184,7 +182,7 @@ class UserService(CRUDService):
     async def initiate_user_password_reset(
         self,
         email: str,
-    ) -> Tuple[UserTokenResultDTO, Optional[str]]:
+    ) -> Tuple[str, Optional[str]]:
         user = await self._repository.retrieve_active_user(email=email)
 
         if not user:
@@ -193,14 +191,7 @@ class UserService(CRUDService):
         user = await self._repository.set_password_reset_deadline(user_id=user.id)
         token = await sign_timed_token(user.id)
 
-        return (
-            UserTokenResultDTO(
-                timed_token=token,
-                activation_token=user.activation_token,
-                user_email=user.email,
-            ),
-            None,
-        )
+        return token, None
 
     async def send_password_reset_email(
         self,

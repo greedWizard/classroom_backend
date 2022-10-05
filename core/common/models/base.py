@@ -19,3 +19,5 @@ class BaseDBModel:
         default=get_current_datetime,
         onupdate=get_current_datetime,
     )
+
+    PK_FIELD = 'id'
