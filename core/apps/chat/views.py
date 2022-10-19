@@ -19,6 +19,7 @@ from core.apps.chat.repositories.dialog_repository import DialogRepository
 from core.apps.chat.schemas import (
     DialogDetailSchema,
     DialogStartSchema,
+    LastMessageDetail,
     MessageCreateSchema,
     MessageDetailSchema,
 )
@@ -129,7 +130,7 @@ async def start_dialog(
 
 @router.get(
     '/last-messages',
-    response_model=list[MessageDetailSchema],
+    response_model=list[LastMessageDetail],
     status_code=status.HTTP_200_OK,
     operation_id='getLastMessages',
     summary='Get unique last messages',
@@ -145,7 +146,7 @@ async def get_last_messages(
     messages = await message_service.get_unique_last_messages(
         user_id=current_user.id,
         ordering=['-created_at'],
-        join=['sender'],
+        join=['sender', 'dialog', 'dialog.participants'],
         limit=limit,
         offset=offset,
     )

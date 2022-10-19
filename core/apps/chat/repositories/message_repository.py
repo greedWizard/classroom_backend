@@ -44,4 +44,4 @@ class MessageRepository(CRUDRepository):
 
         async with self.get_session() as session:
             result = await session.execute(statement)
-            return result.scalars().all()
+            return result.unique().scalars().all()

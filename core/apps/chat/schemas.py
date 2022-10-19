@@ -75,3 +75,24 @@ class MessageListItemSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+class DialogWithParticipantsSchema(BaseModel):
+    id: int
+    participants: list[AuthorSchema]
+    participants_count: int
+
+    class Config:
+        orm_mode = True
+
+
+class LastMessageDetail(BaseModel):
+    id: int
+    sender: AuthorSchema
+    text: str
+    is_read: bool
+    dialog: DialogWithParticipantsSchema
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
