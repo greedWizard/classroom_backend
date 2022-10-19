@@ -30,6 +30,7 @@ class MessageDetailSchema(BaseModel):
     text: str
     is_read: bool
     dialog_id: int
+    created_at: datetime
 
     class Config:
         orm_mode = True
