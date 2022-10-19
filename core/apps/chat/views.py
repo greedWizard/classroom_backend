@@ -139,8 +139,8 @@ async def start_dialog(
 async def get_last_messages(
     current_user: User = Depends(get_current_user),
     message_service: MessageService = Depends(MessageService),
-    limit: int = Query(default=0),
-    offset: int = Query(default=50),
+    limit: int = Query(default=100),
+    offset: int = Query(default=0),
 ):
     messages = await message_service.get_unique_last_messages(
         user_id=current_user.id,

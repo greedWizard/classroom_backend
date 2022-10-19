@@ -188,7 +188,6 @@ async def update_current_user(
 )
 async def initiate_user_password_reset(
     schema: UserPasswordResetInitiationSchema,
-    request: Request,
     user_service: UserService = Depends(),
 ):
     """Initiates the user password reset operation.
