@@ -2,13 +2,16 @@ from fastapi import WebSocket
 
 from core.apps.chat.models import Message
 from core.apps.chat.schemas import MessageDetailSchema
+from core.common.utils import make_dict_json_serializable
 
 
 class BroadcastMixin:
     @staticmethod
     async def broadcast(websocket: WebSocket, message: Message):
         message_schema = MessageDetailSchema.from_orm(message)
-        await websocket.send_json(message_schema.dict())
+        message_dict = message_schema.dict()
+        make_dict_json_serializable(message_dict)
+        await websocket.send_json(message_dict)
 
     async def broadcast_batch(
         self,

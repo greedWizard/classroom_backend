@@ -59,3 +59,12 @@ async def unsign_timed_token(
         max_age=config.RESET_PASSWORD_TIMEDELTA.total_seconds(),
         salt=salt,
     )
+
+
+def make_dict_json_serializable(wrong_dict: dict[str, Any]):
+    for key, value in wrong_dict.items():
+        if isinstance(value, dict):
+            wrong_dict[key] = make_dict_json_serializable(value)
+        elif isinstance(value, datetime):
+            wrong_dict[key] = value.isoformat()
+    return wrong_dict

@@ -151,4 +151,3 @@ async def get_last_messages(
         offset=offset,
     )
     return messages
-
