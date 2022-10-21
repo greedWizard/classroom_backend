@@ -52,9 +52,11 @@ async def chat(
         await websocket.close()
         raise WebSocketDisconnect(403)
 
+    message_joins = ['sender', 'dialog', 'dialog.participants']
+
     previous_messages, _ = await message_service.fetch(
         _ordering=['created_at'],
-        join=['sender'],
+        join=message_joins,
         dialog_id=dialog_id,
     )
     await chat_manager.broadcast_batch(previous_messages, websocket)
@@ -67,7 +69,10 @@ async def chat(
                 sender_id=user.id,
                 dialog_id=dialog_id,
             )
-            message, _ = await message_service.create(message_create_schema, join=['sender'])
+            message, _ = await message_service.create(
+                message_create_schema,
+                join=message_joins,
+            )
             await chat_manager.broadcast_message_to_all_participants(message)
     except WebSocketDisconnect:
         await chat_manager.remove_connection(dialog_id, websocket)
