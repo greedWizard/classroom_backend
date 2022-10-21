@@ -52,7 +52,7 @@ async def chat(
         await websocket.close()
         raise WebSocketDisconnect(403)
 
-    message_joins = ['sender', 'dialog', 'dialog.participants']
+    message_joins = ['sender']
 
     previous_messages, _ = await message_service.fetch(
         _ordering=['created_at'],
@@ -156,3 +156,28 @@ async def get_last_messages(
         offset=offset,
     )
     return messages
+
+
+@router.get(
+    '/dialogs/{dialog_id}',
+    response_model=DialogDetailSchema,
+    status_code=status.HTTP_200_OK,
+    operation_id='getDialogDetail',
+    summary='Get dialog info with participants',
+    description='Get dialog info with participants',
+)
+async def get_dialog_detail(
+    dialog_id: int,
+    current_user: User = Depends(get_current_user),
+    dialog_service: DialogService = Depends(DialogService),
+):
+    dialog_joins = ['participants', 'author']
+
+    dialog, _ = await dialog_service.retrieve_participating_dialog(
+        dialog_id=dialog_id,
+        retriever_id=current_user.id,
+        _join=dialog_joins,
+    )
+    if not dialog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'dialog_id': 'Not found'})
+    return dialog

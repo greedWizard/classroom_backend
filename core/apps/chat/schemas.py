@@ -56,6 +56,7 @@ class DialogDetailSchema(BaseModel):
     participants: list[AuthorSchema]
     author: AuthorSchema
     created_at: datetime
+    participants_count: int
 
     class Config:
         orm_mode = True

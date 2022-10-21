@@ -8,6 +8,7 @@ from core.tests.client import FastAPITestClient
 from core.tests.factories.chat.dialog import DialogFactory
 from core.tests.factories.classroom.participation import ParticipationFactory
 from core.tests.factories.classroom.room import RoomFactory
+from core.tests.factories.user.user import UserFactory
 
 
 @pytest.mark.asyncio
@@ -76,3 +77,43 @@ async def test_start_dialog_repeat(
 
     assert response.status_code == status.HTTP_201_CREATED, response.json()
     assert await dialog_repository.count() == dialogs_count
+
+
+@pytest.mark.asyncio
+async def test_retrieve_dialog_in_dialog(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    dialog = await DialogFactory.create(participants=[
+        participation for participation in await UserFactory.create_batch(size=5)
+    ])
+
+    url = app.url_path_for('get_dialog_detail', dialog_id=dialog.id)
+    client.authorize(dialog.participants[0])
+
+    response = client.get(url=url)
+    json_data = response.json()
+    required_fields = ['participants', 'participants_count']
+
+    assert response.status_code == status.HTTP_200_OK, json_data
+
+    for field in required_fields:
+        assert field in json_data.keys(), json_data
+
+
+@pytest.mark.asyncio
+async def test_retrieve_dialog_not_participating(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    dialog = await DialogFactory.create(participants=[
+        participation for participation in await UserFactory.create_batch(size=5)
+    ])
+
+    url = app.url_path_for('get_dialog_detail', dialog_id=dialog.id)
+    client.authorize(await UserFactory.create())
+
+    response = client.get(url=url)
+    json_data = response.json()
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND, json_data

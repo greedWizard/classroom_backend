@@ -101,3 +101,16 @@ class DialogService(CRUDService):
                 join=join,
             )
         return dialog, None
+    
+    @action
+    async def retrieve_participating_dialog(
+        self,
+        retriever_id: int,
+        dialog_id: int,
+        *,
+        _join: Optional[list[str]] = None,
+        **filters,
+    ) -> Dialog:
+        if not await self._repository.check_participant_in_dialog(retriever_id, dialog_id):
+            return None, {'dialog_id': 'Not found'}
+        return await self.retrieve(_join, id=dialog_id, **filters)

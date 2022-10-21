@@ -1,12 +1,12 @@
 from fastapi import WebSocket
 
 from core.apps.chat.models import Message
-from core.apps.chat.schemas import LastMessageDetail, MessageDetailSchema
+from core.apps.chat.schemas import MessageDetailSchema
 from core.common.utils import make_dict_json_serializable
 
 
 class BroadcastMixin:
-    message_broadcast_schema = LastMessageDetail
+    message_broadcast_schema = MessageDetailSchema
 
     @classmethod
     async def broadcast(cls, websocket: WebSocket, message: Message):
