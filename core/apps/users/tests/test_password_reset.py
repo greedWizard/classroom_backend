@@ -11,7 +11,10 @@ from itsdangerous import TimedSerializer
 from core.apps.users.models import User
 from core.apps.users.repositories.user_repository import UserRepository
 from core.common.config import config
-from core.common.utils import get_current_datetime, sign_timed_token
+from core.common.utils import (
+    get_current_datetime,
+    sign_timed_token,
+)
 from core.tests.factories.user import UserFactory
 
 

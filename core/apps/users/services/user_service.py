@@ -15,7 +15,6 @@ from typing import (
 from fastapi import UploadFile
 
 from itsdangerous.exc import BadSignature
-from pydantic import BaseModel
 
 from core.apps.attachments.models import Attachment
 from core.apps.attachments.repositories.attachment_repository import AttachmentRepository

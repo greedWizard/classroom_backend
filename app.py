@@ -2,7 +2,6 @@ import logging
 
 from core.apps.users.containers import UserContainer
 from core.common.factory import AppFactory
-from core.common.config import config
 
 
 # SQLALCHEMY LOGGER

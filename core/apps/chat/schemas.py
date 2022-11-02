@@ -77,6 +77,7 @@ class MessageListItemSchema(BaseModel):
     class Config:
         orm_mode = True
 
+
 class DialogWithParticipantsSchema(BaseModel):
     id: int
     participants: list[AuthorSchema]
@@ -96,4 +97,3 @@ class LastMessageDetail(BaseModel):
 
     class Config:
         orm_mode = True
-

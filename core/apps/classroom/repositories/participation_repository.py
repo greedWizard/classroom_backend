@@ -30,8 +30,8 @@ class ParticipationRepository(CRUDRepository):
         users_ids_length = len(users_ids)
         are_roommates = True
 
-        for user_index in range(users_ids_length-1):
-            for other_user_index in range(user_index+1, users_ids_length):
+        for user_index in range(users_ids_length - 1):
+            for other_user_index in range(user_index + 1, users_ids_length):
                 if not await self.is_user_roommate(
                     user_id=users_ids[user_index],
                     other_user_id=users_ids[other_user_index],

@@ -25,6 +25,31 @@ class MessageService(CRUDService):
         return True, None
 
     @action
+    async def fetch_by_dialog_id(
+        self,
+        user_id: int,
+        dialog_id: int,
+        _ordering: list[str] = None,
+        join: list[str] = None,
+        limit: Optional[int] = None,
+        offset:int = 0,
+        **filters,
+    ):
+        if not await self._dialog_repository.check_participant_in_dialog(
+            participant_id=user_id,
+            dialog_id=dialog_id,
+        ):
+            return None, { 'detail': 'You are not participating in this dialog!' }
+        return await super().fetch(
+            _ordering,
+            join,
+            dialog_id=dialog_id,
+            limit=limit,
+            offset=offset,
+            **filters,
+        )
+
+    @action
     async def get_unique_last_messages(
         self,
         user_id: int,

@@ -101,7 +101,7 @@ class DialogService(CRUDService):
                 join=join,
             )
         return dialog, None
-    
+
     @action
     async def retrieve_participating_dialog(
         self,

@@ -98,7 +98,7 @@ async def all_dialogs_preview(
 
     try:
         await chat_manager.broadcast_batch(messages, websocket)
-        data = await websocket.receive_json()
+        await websocket.receive_json()
     except WebSocketDisconnect:
         for dialog_id in [message.dialog_id for message in messages]:
             await chat_manager.remove_connection(dialog_id=dialog_id, websocket=websocket)
@@ -181,3 +181,32 @@ async def get_dialog_detail(
     if not dialog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'dialog_id': 'Not found'})
     return dialog
+
+
+@router.get(
+    '/messages',
+    response_model=list[MessageDetailSchema],
+    status_code=status.HTTP_200_OK,
+    operation_id='getDialogDetail',
+    summary='Get chat messages from dialog',
+    description='Get chat messages by dialog id',
+)
+async def get_dialog_detail(
+    dialog_id: int = Query(...),
+    current_user: User = Depends(get_current_user),
+    message_service: MessageService = Depends(MessageService),
+    limit: int = Query(default=100),
+    offset: int = Query(default=0),
+):
+    messages, _ = await message_service.fetch_by_dialog_id(
+        dialog_id=dialog_id,
+        _ordering=['-created_at'],
+        user_id=current_user.id,
+        join=['sender'],
+        limit=limit,
+        offset=offset,
+    )
+    if not messages:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'dialog_id': 'Not found'})
+    return messages[::-1]
+

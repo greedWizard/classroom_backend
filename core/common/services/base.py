@@ -247,10 +247,18 @@ class RetrieveFetchServiceMixin(IServiceBase):
         self,
         _ordering: List = [],
         join: list[str] = None,
+        limit: Optional[int] = None,
+        offset: int = 0,
         **filters,
     ):
         return (
-            await self._repository.fetch(join=join, ordering=_ordering, **filters),
+            await self._repository.fetch(
+                _ordering,
+                join,
+                limit=limit,
+                offset=offset,
+                **filters,
+            ),
             None,
         )
 
