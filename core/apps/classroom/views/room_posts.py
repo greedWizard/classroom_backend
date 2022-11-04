@@ -80,12 +80,16 @@ async def get_room_posts(
     room_id: int,
     user: User = Depends(get_current_user),
     ordering: List[str] = Query(['-created_at']),
+    limit: int = Query(default=50),
+    offset: int = Query(default=0),
+    search: str = Query(default=''),
 ):
     room_post_service = RoomPostService(user)
     room_posts, errors = await room_post_service.fetch(
         _ordering=ordering,
         room_id=room_id,
         join=['author', 'attachments'],
+        search=search,
     )
 
     if errors:

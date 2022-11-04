@@ -92,15 +92,25 @@ class RoomPostService(AuthorMixin, CRUDService):
         )
 
     @action
-    async def fetch(self, _ordering, join: list[str] = None, **filters):
+    async def fetch(
+        self,
+        _ordering,
+        join: list[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+        search: str = '',
+        **filters,
+    ):
         if 'room_id' in filters:
             if not await self._participation_repository.count(
                 room_id=filters['room_id'],
                 user_id=self.user.id,
             ):
                 return None, {'error': 'Access denied!'}
-        return await super().fetch(_ordering, join, **filters)
-
+        if search:
+            return await self._repository.search_fetch(_ordering, join, limit=limit, offset=offset, **filters)
+        return await super().fetch(_ordering, join, limit=limit, offset=offset, **filters)
+    
     @action
     async def update(
         self,

@@ -187,7 +187,7 @@ async def get_dialog_detail(
     '/messages',
     response_model=list[MessageDetailSchema],
     status_code=status.HTTP_200_OK,
-    operation_id='getDialogDetail',
+    operation_id='getMessages',
     summary='Get chat messages from dialog',
     description='Get chat messages by dialog id',
 )

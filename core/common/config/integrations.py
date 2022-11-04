@@ -5,7 +5,7 @@ from pydantic import (
 
 
 class MailClientConnectionConfig(BaseSettings):
-    mail_username: str = Field(..., env='SMTP_MAIL_FROM')
+    mail_username: str = Field(..., env='SMTP_MAIL_USER')
     mail_password: str = Field(..., env='SMTP_PASSWORD')
     mail_from: str = Field(..., env='SMTP_MAIL_FROM')
     mail_server: str = Field(..., env='SMTP_MAIL_SERVER')
