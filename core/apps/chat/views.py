@@ -41,6 +41,7 @@ async def chat(
     websocket: WebSocket,
     jwt_token: str = Query(...),
     dialog_id: int = Query(...),
+    limit: int = Query(50),
     chat_manager: ChatManager = Depends(Provide[ChatContainer.manager]),
     dialog_repository: DialogRepository = Depends(DialogRepository),
     message_service: MessageService = Depends(MessageService),
@@ -58,6 +59,7 @@ async def chat(
         _ordering=['created_at'],
         join=message_joins,
         dialog_id=dialog_id,
+        limit=limit,
     )
     await chat_manager.broadcast_batch(previous_messages, websocket)
 
@@ -206,6 +208,7 @@ async def get_dialog_detail(
         limit=limit,
         offset=offset,
     )
+
     if not messages:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'dialog_id': 'Not found'})
     return messages[::-1]
