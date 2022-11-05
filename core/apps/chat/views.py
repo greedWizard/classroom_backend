@@ -56,11 +56,12 @@ async def chat(
     message_joins = ['sender']
 
     previous_messages, _ = await message_service.fetch(
-        _ordering=['created_at'],
+        _ordering=['-created_at'],
         join=message_joins,
         dialog_id=dialog_id,
         limit=limit,
     )
+    previous_messages = previous_messages[::-1]
     await chat_manager.broadcast_batch(previous_messages, websocket)
 
     try:
