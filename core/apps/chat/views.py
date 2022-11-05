@@ -174,7 +174,7 @@ async def get_dialog_detail(
     current_user: User = Depends(get_current_user),
     dialog_service: DialogService = Depends(DialogService),
 ):
-    dialog_joins = ['participants', 'author']
+    dialog_joins = ['participants', 'author', 'messages']
 
     dialog, _ = await dialog_service.retrieve_participating_dialog(
         dialog_id=dialog_id,
