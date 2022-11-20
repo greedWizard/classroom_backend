@@ -18,7 +18,7 @@ class ImageResizer:
         return size_of_side, new_size
 
     def get_resized_picture(self, profile_picture: bytes, new_size: int) -> bytes:
-        img = Image.open(BytesIO(profile_picture))
+        img = Image.open(BytesIO(profile_picture)).convert('RGB')
         size_profile_picture = img.size
 
         resized_image = img.resize(

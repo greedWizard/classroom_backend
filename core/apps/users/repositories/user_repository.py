@@ -85,7 +85,7 @@ class UserRepository(CRUDRepository):
     async def set_password_reset_deadline(self, user_id: int) -> _model:
         return await self.update_and_return_single(
             values={
-                'is_reset_needed': False,
+                'is_reset_needed': True,
                 'password_reset_deadline': get_current_datetime()
                 + config.RESET_PASSWORD_TIMEDELTA,
                 'activation_token': uuid.uuid4().hex,
