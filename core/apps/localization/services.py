@@ -16,4 +16,4 @@ class LocalizationService:
 
     @classmethod
     async def get_client_localization(cls, client_address: str) -> str:
-        return (await cls._cache_service.get_cache(client_address) or bytes(config.DEFAULT_LANGUAGE)).decode()
+        return (await cls._cache_service.get_cache(client_address) or 'en'.encode()).decode()
