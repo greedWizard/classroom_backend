@@ -1,11 +1,11 @@
 from huey import RedisHuey
 
-from core.common.config.huey import huey_settings
+from core.common.config import config
 
 
 huey_app = RedisHuey(
-    name=huey_settings.redis_name,
-    url=huey_settings.redis_url,
+    name=config.CACHE_SERVICE_HOST,
+    url=config.CACHE_URL,
     utc=True,
-    immediate=huey_settings.immediate,
+    immediate=config.HUEY_IMMEDIATE,
 )

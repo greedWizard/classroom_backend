@@ -17,6 +17,7 @@ from core.apps.classroom.repositories.participation_repository import Participat
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.apps.classroom.schemas import HomeworkAssignmentRequestChangesSchema
+from core.apps.localization.utils import translate as _
 from core.common.services.author import AuthorMixin
 from core.common.services.base import CRUDService
 from core.common.services.decorators import action
@@ -35,15 +36,15 @@ class AssignmentService(AuthorMixin, CRUDService):
         assigned_post = await self._room_post_repository.retrieve(id=value)
 
         if not assigned_post:
-            return None, 'Incorrect post id.'
+            return None, ('Incorrect post id.')
         if assigned_post.type != RoomPostType.homework:
-            return None, "Can't assign to material."
+            return None, ("Can't assign to material.")
 
         if await self._repository.count(
             author_id=self.user.id,
             post_id=assigned_post.id,
         ):
-            return None, 'Homework is already assigned by this user.'
+            return None, ('Homework is already assigned by this user.')
 
         participation: Participation = await self._participation_repository.retrieve(
             user_id=self.user.id,
@@ -51,9 +52,9 @@ class AssignmentService(AuthorMixin, CRUDService):
         )
 
         if not participation:
-            return None, 'You are not participating in this room.'
+            return None, _('You are not participating in this room.')
         if not participation.can_assign_homeworks:
-            return None, "You can't assign the homework."
+            return None, _("You can't assign the homework.")
         return True, None
 
     @action
@@ -78,9 +79,9 @@ class AssignmentService(AuthorMixin, CRUDService):
         )
 
         if not participation:
-            return None, {'error': 'You are not allowed to do that'}
+            return None, {'error': _('You are not allowed to do that')}
         if not participation.can_manage_assignments:
-            return None, {'error': 'You are not allowed to do that'}
+            return None, {'error': _('You are not allowed to do that')}
         return assignments, None
 
     @action
@@ -99,7 +100,7 @@ class AssignmentService(AuthorMixin, CRUDService):
         )
 
         if not participation:
-            return None, {'error': 'You are not allowed to do that.'}
+            return None, {'error': _('You are not allowed to do that.')}
         if participation.can_manage_assignments:
             return (
                 await self._repository.fetch_by_room_id(
@@ -152,7 +153,10 @@ class AssignmentService(AuthorMixin, CRUDService):
 
         if status in status_mutations:
             return True, None
-        return False, f"Can't change status from '{current_status}' to '{status}'."
+        return False, _("Can't change status from '{current_status}' to '{status}'.").format(
+            current_status=current_status,
+            status=status,
+        )
 
     @action
     async def change_assignment_status(
@@ -195,7 +199,7 @@ class AssignmentService(AuthorMixin, CRUDService):
             not participation.can_manage_assignments
             and assignment.author_id != self.user.id
         ):
-            return None, {'error': 'You are not allowed to do that.'}
+            return None, {'error': _('You are not allowed to do that.')}
         return assignment, None
 
     @action

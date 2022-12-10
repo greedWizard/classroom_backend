@@ -194,7 +194,7 @@ async def get_dialog_detail(
     summary='Get chat messages from dialog',
     description='Get chat messages by dialog id',
 )
-async def get_dialog_detail(
+async def get_messages(
     dialog_id: int = Query(...),
     current_user: User = Depends(get_current_user),
     message_service: MessageService = Depends(MessageService),
@@ -213,4 +213,3 @@ async def get_dialog_detail(
     if not messages:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={'dialog_id': 'Not found'})
     return messages[::-1]
-

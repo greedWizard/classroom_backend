@@ -93,6 +93,7 @@ itsdangerous = "^2.1.2"
 Pillow = "^9.2.0"
 pre-commit = "^2.20.0"
 ipython = "^8.4.0"
+aiokafka = "^0.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.3"

@@ -1,9 +1,5 @@
-import os
+import pathlib
 from datetime import timedelta
-from typing import (
-    Dict,
-    List,
-)
 
 import environ
 from pydantic import BaseModel
@@ -22,6 +18,7 @@ class ProjectSettings(BaseModel):
     # END DEBUG SETTINGS
 
     APP_SECRET_KEY: str = env('APP_SECRET_KEY')
+    BASE_DIR = pathlib.Path(__file__).parent.parent.parent.parent
 
     # DB SETTINGS
     POSTGRES_HOST: str = env('POSTGRES_HOST')
@@ -44,22 +41,22 @@ class ProjectSettings(BaseModel):
     # END CLEANUP SETTINGS
 
     # CORS SETTINGS
-    ALLOWED_CORS_ORIGINS: List[str] = env.list('ALLOWED_CORS_ORIGINS')
+    ALLOWED_CORS_ORIGINS: list[str] = env.list('ALLOWED_CORS_ORIGINS')
     # END CORS SETTINGS
 
     # APP SETTINGS
     MODELS_APP_LABEL: str = 'models'
-    MODELS_PATHS: List[str] = [
+    MODELS_PATHS: list[str] = [
         'core.apps.attachments.models',
         'core.apps.users.models',
         'core.apps.classroom.models',
         'core.apps.chat.models',
     ]
 
-    APP_MODULES: Dict[str, List[str]] = {
+    APP_MODULES: dict[str, list[str]] = {
         MODELS_APP_LABEL: MODELS_PATHS,
     }
-    MINIMAL_DAYS_DELTA: int = int(env('MINIMAL_DAYS_DELTA'))
+    MINIMAL_DAYS_DELTA: int = env('MINIMAL_DAYS_DELTA')
     PASSWORD_RESET_SALT: str = 'reset'
     RESET_PASSWORD_TIMEDELTA: timedelta = timedelta(minutes=30)
     # END APP SETTINGS
@@ -72,12 +69,12 @@ class ProjectSettings(BaseModel):
     AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA: timedelta = timedelta(days=3)
 
     # EXTERNAL SETTINGS
-    FRONTEND_LOGIN_URL: str = os.environ.get('FRONTEND_LOGIN_URL')
-    FRONTEND_ROOM_POST_URL: str = os.environ.get('FRONTEND_ROOM_POST_URL')
-    FRONTEND_USER_RESET_PASSWORD_URL: str = os.environ.get(
+    FRONTEND_LOGIN_URL: str = env('FRONTEND_LOGIN_URL')
+    FRONTEND_ROOM_POST_URL: str = env('FRONTEND_ROOM_POST_URL')
+    FRONTEND_USER_RESET_PASSWORD_URL: str = env(
         'FRONTEND_USER_RESET_PASSWORD_URL',
     )
-    FRONTEND_PASSWORD_RECOVERY_URL: str = os.environ.get('FRONTEND_PASSWORD_RECOVERY_URL')
+    FRONTEND_PASSWORD_RECOVERY_URL: str = env('FRONTEND_PASSWORD_RECOVERY_URL')
 
     # FILE SETTINGS
     MAX_FILE_SIZE: int = 64 * 1024 * 1024
@@ -93,3 +90,16 @@ class ProjectSettings(BaseModel):
     # STATIC
     STATIC_URL = env('STATIC_URL')
     DEFAULT_PROFILE_PICTURE_URL = env('DEFAULT_PROFILE_PICTURE_URL')
+
+    # KAFKA
+    KAFKA_URI = env('KAFKA_CONNECTION_URI')
+
+    # LOCALIZATION
+    SUPPORTED_LANGUAGES = ['en', 'ru']
+    LOCALE_DIR: str = BASE_DIR / 'locales'
+    DEFAULT_LANGUAGE: str = 'en'
+
+    CACHE_SERVICE_HOST: str = env('CACHE_SERVICE_HOST')
+    CACHE_SERVICE_PORT: str = env('CACHE_SERVICE_PORT')
+    CACHE_URL: str = env('SCHEDULER_REDIS_URL')
+    HUEY_IMMEDIATE: bool = env('HUEY_IMMEDIATE', bool)

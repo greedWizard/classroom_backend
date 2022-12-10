@@ -13,6 +13,7 @@ from core.apps.classroom.models import (
 from core.apps.classroom.repositories.assignment import HomeworkAssignmentRepository
 from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
+from core.apps.localization.utils import translate as _
 from core.common.services.author import AuthorMixin
 from core.common.services.base import CRUDService
 
@@ -82,7 +83,7 @@ class AttachmentService(AuthorMixin, CRUDService):
             return True, None
 
         if not await self._can_attach_to_room_post(value):
-            return False, 'You can not moderate this room.'
+            return False, _('You can not moderate this room.')
         self._post_checked = True
         return True, None
 
@@ -91,6 +92,6 @@ class AttachmentService(AuthorMixin, CRUDService):
             return True, None
 
         if not await self._can_attach_to_assignment(value):
-            return False, 'You are not allowed to do that.'
+            return False, _('You are not allowed to do that.')
         self._assignment_checked = True
         return True, None

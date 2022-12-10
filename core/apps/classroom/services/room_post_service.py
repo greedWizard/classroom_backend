@@ -8,6 +8,7 @@ from core.apps.classroom.repositories.post_repository import RoomPostRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.apps.classroom.schemas import RoomPostEmailNotificationSchema
 from core.apps.classroom.schemas.room_posts import RoomPostCreateSuccessSchema
+from core.apps.localization.utils import translate as _
 from core.common.config import config
 from core.common.services.author import AuthorMixin
 from core.common.services.base import CRUDService
@@ -30,18 +31,22 @@ class RoomPostService(AuthorMixin, CRUDService):
         if len(value) > config.DESCRIPTION_MAX_LENGTH:
             return (
                 False,
-                f'Description should be less than {config.TITLE_MAX_LENGTH}'
-                ' characters.',
+                _(
+                    'Description should be less than {TITLE_MAX_LENGTH}'
+                    ' characters.',
+                ).format(TITLE_MAX_LENGTH=config.TITLE_MAX_LENGTH),
             )
         return True, None
 
     async def validate_title(self, value: str):
         if not value:
-            return False, 'This field is required'
+            return False, _('This field is required')
         if len(value) > config.TITLE_MAX_LENGTH:
             return (
                 False,
-                f'Title should be less than {config.TITLE_MAX_LENGTH} characters.',
+                _(
+                    'Title should be less than {TITLE_MAX_LENGTH} characters.',
+                ).format(TITLE_MAX_LENGTH=config.TITLE_MAX_LENGTH),
             )
         return True, None
 
@@ -106,11 +111,11 @@ class RoomPostService(AuthorMixin, CRUDService):
                 room_id=filters['room_id'],
                 user_id=self.user.id,
             ):
-                return None, {'error': 'Access denied!'}
+                return None, {'error': _('Access denied!')}
         if search:
             return await self._repository.search_fetch(_ordering, join, limit=limit, offset=offset, **filters)
         return await super().fetch(_ordering, join, limit=limit, offset=offset, **filters)
-    
+
     @action
     async def update(
         self,
@@ -122,7 +127,7 @@ class RoomPostService(AuthorMixin, CRUDService):
         participation = await self._get_participation_by_room_post(id)
 
         if not await self._check_participant_permission(participation):
-            return None, {'error': 'You are not allowed to do that.'}
+            return None, {'error': _('You are not allowed to do that.')}
         return await super().update(id, updateSchema, join, exclude_unset)
 
     @action
@@ -138,7 +143,7 @@ class RoomPostService(AuthorMixin, CRUDService):
         )
 
         if not await self._check_participant_permission(participation):
-            return None, {'error': 'You are not allowed to do that.'}
+            return None, {'error': _('You are not allowed to do that.')}
         return await super().create(
             createSchema=createSchema,
             exclude_unset=exclude_unset,
@@ -152,5 +157,5 @@ class RoomPostService(AuthorMixin, CRUDService):
             participation = await self._get_participation_by_room_post(post_id)
 
             if not await self._check_participant_permission(participation):
-                return None, {'error': 'You are not allowed to do that.'}
+                return None, {'error': _('You are not allowed to do that.')}
         return await super().delete(**filters)

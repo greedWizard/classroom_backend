@@ -56,7 +56,7 @@ class Dialog(BaseDBModel, AuthorAbstract):
         return sa.select([
             sa.func.count(DialogsParticipants.c.dialog_id),
         ]).where(DialogsParticipants.c.dialog_id == cls.id).label('participants_count')
-    
+
     @hybrid_property
     def messages_count(self):
         return len(self.messages)

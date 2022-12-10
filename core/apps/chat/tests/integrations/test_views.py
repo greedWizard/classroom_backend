@@ -85,9 +85,7 @@ async def test_retrieve_dialog_in_dialog(
     client: FastAPITestClient,
 ):
     dialog = await DialogFactory.create(
-        participants=[
-            participation for participation in await UserFactory.create_batch(size=5)
-        ],
+        participants=await UserFactory.create_batch(size=5),
     )
 
     url = app.url_path_for('get_dialog_detail', dialog_id=dialog.id)
@@ -109,9 +107,7 @@ async def test_retrieve_dialog_not_participating(
     client: FastAPITestClient,
 ):
     dialog = await DialogFactory.create(
-        participants=[
-            participation for participation in await UserFactory.create_batch(size=5)
-        ],
+        participants=await UserFactory.create_batch(size=5),
     )
 
     url = app.url_path_for('get_dialog_detail', dialog_id=dialog.id)

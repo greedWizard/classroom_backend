@@ -13,6 +13,7 @@ storage/*
 # environment
 .env
 *.db
+project.po
 
 logs/*
 !logs/.gitkeep

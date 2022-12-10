@@ -7,6 +7,7 @@ from core.apps.classroom.constants import ParticipationRoleEnum
 from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.apps.classroom.schemas.participations import ParticipationSuccessSchema
+from core.apps.localization.utils import translate as _
 from core.apps.users.models import User
 from core.common.services.author import AuthorMixin
 from core.common.services.base import CRUDService
@@ -28,7 +29,7 @@ class ParticipationService(AuthorMixin, CRUDService):
         if not await self._room_repository.exists(
             join_slug=value,
         ):
-            return False, 'This room does not exist.'
+            return False, _('This room does not exist.')
         return True, None
 
     async def validate_user_id(self, value: int):
@@ -36,7 +37,7 @@ class ParticipationService(AuthorMixin, CRUDService):
         user_id = value
 
         if await self._repository.exists(room_id=room_id, user_id=user_id):
-            return False, 'User is already in this room.'
+            return False, _('User is already in this room.')
         return True, None
 
     async def validate(self, attrs: Dict) -> Dict:
@@ -60,14 +61,14 @@ class ParticipationService(AuthorMixin, CRUDService):
         errors = []
 
         if not participation:
-            return False, {'error': 'Not Found'}
+            return False, {'error': _('Not Found')}
         if not participation.can_remove_participants:
-            errors.append({'room_id': 'Permission denied'})
+            errors.append({'room_id': _('Permission denied')})
         if (
             participation.role == ParticipationRoleEnum.host
             and participation.user_id == user_id
         ):
-            errors.append({'user_id': "Can't remove a room host."})
+            errors.append({'user_id': _("Can't remove a room host.")})
         if errors:
             return False, errors
         await self.model.filter(user_id=user_id, room_id=room_id).delete()
@@ -96,4 +97,4 @@ class ParticipationService(AuthorMixin, CRUDService):
     ):
         if await self._repository.count(room_id=room_id, user_id=self.user.id):
             return await super().fetch(_ordering, join, room_id=room_id, **filters)
-        return None, {'error': 'Access denied.'}
+        return None, {'error': _('Access denied.')}

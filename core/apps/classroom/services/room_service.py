@@ -15,6 +15,7 @@ from core.apps.classroom.schemas.rooms import (
     RoomCreateSuccessSchema,
     RoomDetailSchema,
 )
+from core.apps.localization.utils import translate as _
 from core.common.services.author import AuthorMixin
 from core.common.services.base import CRUDService
 from core.common.services.decorators import action
@@ -70,9 +71,9 @@ class RoomService(AuthorMixin, CRUDService):
         )
 
         if not participation:
-            return None, 'You are not allowed to perform this operation.'
+            return None, _('You are not allowed to perform this operation.')
         if not participation.can_refresh_join_slug:
-            return {}, 'You are not allowed to perform this operation.'
+            return None, _('You are not allowed to perform this operation.')
 
         room = await self._repository.update_and_return_single(
             values={'join_slug': self.generate_join_slug()},
@@ -88,7 +89,7 @@ class RoomService(AuthorMixin, CRUDService):
             user_id=self.user.id,
             room_id=room_id,
         )
-        permission_error = 'You are not allowed to do that.'
+        permission_error = _('You are not allowed to do that.')
 
         if not participation:
             return None, permission_error
@@ -103,7 +104,7 @@ class RoomService(AuthorMixin, CRUDService):
 
     async def validate_name(self, value):
         if not value:
-            return False, 'This field is required'
+            return False, _('This field is required')
         return True, None
 
     async def update(
@@ -125,4 +126,4 @@ class RoomService(AuthorMixin, CRUDService):
                 join=join,
                 exclude_unset=exclude_unset,
             )
-        return None, {'error': 'You are not allowed to do that.'}
+        return None, {'error': _('You are not allowed to do that.')}

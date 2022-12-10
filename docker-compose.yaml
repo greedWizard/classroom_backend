@@ -1,7 +1,6 @@
 version: '3.9'
 
 services:
-
   db:
     image: postgres:14.2-alpine
     volumes:
@@ -10,6 +9,8 @@ services:
     container_name: classroom-db
     ports:
       - "5433:5432"
+    networks:
+      - classroom-network
 
   back:
     build:
@@ -26,6 +27,8 @@ services:
       - db
     container_name: classroom-back
     restart: always
+    networks:
+      - classroom-network
 
   huey:
     container_name: classroom-huey
@@ -40,12 +43,19 @@ services:
     depends_on:
       - db
       - back
+    networks:
+      - classroom-network
 
   redis:
     image: redis:alpine
     container_name: classroom-redis
     volumes:
       - ./storage/redis:/data
+    networks:
+      - classroom-network
 
 volumes:
   classroom_db:
+
+networks:
+  classroom-network:

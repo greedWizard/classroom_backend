@@ -1,0 +1,187 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-12-07 22:48+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: core/apps/chat/services/message_service.py:25
+#: core/apps/chat/services/message_service.py:43
+msgid "You are not participating in this dialog!"
+msgstr "Вы не являетесь участником диалога!"
+
+#: core/apps/attachments/services/attachment_service.py:86
+msgid "You can not moderate this room."
+msgstr "Вы не имеете права модерировать эту комнату."
+
+#: core/apps/attachments/services/attachment_service.py:95
+#: core/apps/classroom/services/room_service.py:92
+#: core/apps/classroom/services/room_service.py:129
+#: core/apps/classroom/services/room_post_service.py:126
+#: core/apps/classroom/services/room_post_service.py:142
+#: core/apps/classroom/services/room_post_service.py:156
+#: core/apps/classroom/services/homework_assignment_service.py:103
+#: core/apps/classroom/services/homework_assignment_service.py:202
+msgid "You are not allowed to do that."
+msgstr "Доступ запрещён."
+
+#: core/apps/classroom/services/room_service.py:74
+#: core/apps/classroom/services/room_service.py:76
+msgid "You are not allowed to perform this operation."
+msgstr "Операция не разрешена"
+
+#: core/apps/classroom/services/room_service.py:107
+#: core/apps/classroom/services/room_post_service.py:41
+#: core/apps/users/services/user_service.py:115
+msgid "This field is required"
+msgstr "Это поле обязательно."
+
+#: core/apps/classroom/services/participation_service.py:32
+msgid "This room does not exist."
+msgstr "Данной комнаты не существует"
+
+#: core/apps/classroom/services/participation_service.py:40
+msgid "User is already in this room."
+msgstr "Пользователь уже находится в комнате."
+
+#: core/apps/classroom/services/participation_service.py:64
+msgid "Not Found"
+msgstr "Не найдено."
+
+#: core/apps/classroom/services/participation_service.py:66
+msgid "Permission denied"
+msgstr "Отказано в доступе."
+
+#: core/apps/classroom/services/participation_service.py:71
+msgid "Can't remove a room host."
+msgstr "Нельзя удалить единственного создателя комнаты."
+
+#: core/apps/classroom/services/participation_service.py:100
+msgid "Access denied."
+msgstr "Доступ запрещён."
+
+#: core/apps/classroom/services/room_post_service.py:34
+#, python-brace-format
+msgid "Description should be less than {TITLE_MAX_LENGTH} characters."
+msgstr "Описание должно быть не длиннее {TITLE_MAX_LENGTH} символов."
+
+#: core/apps/classroom/services/room_post_service.py:45
+#, python-brace-format
+msgid "Title should be less than {TITLE_MAX_LENGTH} characters."
+msgstr "Название должно быть не больше {TITLE_MAX_LENGTH} символов"
+
+#: core/apps/classroom/services/room_post_service.py:110
+msgid "Access denied!"
+msgstr "Отказано в доступе!"
+
+#: core/apps/classroom/services/homework_assignment_service.py:55
+msgid "You are not participating in this room."
+msgstr "Вы не находитесь в данной комнате."
+
+#: core/apps/classroom/services/homework_assignment_service.py:57
+msgid "You can't assign the homework."
+msgstr "Вы не можете выкладывать ДЗ на проверку."
+
+#: core/apps/classroom/services/homework_assignment_service.py:82
+#: core/apps/classroom/services/homework_assignment_service.py:84
+msgid "You are not allowed to do that"
+msgstr "Отказано в доступе"
+
+#: core/apps/classroom/services/homework_assignment_service.py:156
+#, python-brace-format
+msgid "Can't change status from '{current_status}' to '{status}'."
+msgstr "Нельзя изменить статус с '{current_status}' на '{status}'"
+
+#: core/apps/users/services/user_service.py:52
+msgid "User with that credits is already registred."
+msgstr "Пользователь с такими данными уже зарегестрирован"
+
+#: core/apps/users/services/user_service.py:53
+msgid "User not found. He is either inactive or not registred yet."
+msgstr "Пользователь не активен или не зарегестрирован. Если вы регестрировались на портале, пожалуйста проверьте правильность вводимой почты и не забудьте активировать профиль по ссылке в письме. (Письма иногда могут попадать в папку спам)."
+
+#: core/apps/users/services/user_service.py:72
+#, python-brace-format
+msgid ""
+"Password should be at least {LENGTH} characters long and contain at least "
+"one digit and upper case letter."
+msgstr "Пароль должен содержать минимум {LENGTH} символов, включая одну заглавную букву и одну цифру."
+
+#: core/apps/users/services/user_service.py:83
+msgid "Passwords don't match."
+msgstr "Указанные пароли не совпадают."
+
+#: core/apps/users/services/user_service.py:85
+msgid "Password is too short."
+msgstr "Пароль слишком короткий."
+
+#: core/apps/users/services/user_service.py:90
+#: core/apps/users/services/user_service.py:95
+msgid "The field should not be empty"
+msgstr "Это поле обязательно."
+
+#: core/apps/users/services/user_service.py:100
+msgid "Invalid email format."
+msgstr "Неправильный формат электронной почты (должно быть example@example.ru)"
+
+#: core/apps/users/services/user_service.py:105
+msgid "User with that email is already registred."
+msgstr "Пользователь с такими данными уже существует. Если у вас уже есть аккаут вы можете восстановить пароль на странице входа."
+
+#: core/apps/users/services/user_service.py:110
+msgid "Please accept eula and try again."
+msgstr "Пожалуйста примите правила использования и повторите попытку."
+
+#: core/apps/users/services/user_service.py:118
+msgid "Invalid phone format."
+msgstr "Неверный формат вводимого номера (пример: +79999999999)"
+
+#: core/apps/users/services/user_service.py:123
+msgid "User with that phone number is already registred."
+msgstr "Пользователь с таким номером телефона уже существует."
+
+#: core/apps/users/services/user_service.py:128
+msgid "Incorrect password"
+msgstr "Неправильный пароль."
+
+#: core/apps/users/services/user_service.py:133
+msgid "Profile photo must be .png, .jpeg, .jpg"
+msgstr "Фото профиля должно быть одного из следующих форматов: .png .jpeg .jpg"
+
+#: core/apps/users/services/user_service.py:159
+#: core/apps/users/services/user_service.py:160
+msgid "this field is required"
+msgstr "Это поле обязательно"
+
+#: core/apps/users/services/user_service.py:170
+msgid "User not found or inactive"
+msgstr "Пользователь не найден или не активен. Если вы регестрировались на портале, пожалуйста проверьте правильность вводимой почты и не забудьте активировать профиль по ссылке в письме. (Письма иногда могут попадать в папку спам)"
+
+#: core/apps/users/services/user_service.py:190
+#: core/apps/users/services/user_service.py:279
+msgid "User not found"
+msgstr "Пользователь не найден. Если вы регестрировались на портале, пожалуйста проверьте правильность вводимой почты и не забудьте активировать профиль по ссылке в письме. (Письма иногда могут попадать в папку спам)"
+
+#: core/apps/users/services/user_service.py:216
+msgid "Token is not provided!"
+msgstr "Не передан токен!"
+
+#: core/apps/users/services/user_service.py:221
+msgid "Wrong token format!"
+msgstr "Токен неправильного формата или уже не валидный."
+
+#: core/apps/users/services/user_service.py:229
+msgid "There is no user with provided token in need of password reset"
+msgstr "Пользователь не запрашивал смену пароля. Если вы видите это сообщение по пошибке, попробуйте запросить смену пароля снова."

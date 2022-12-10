@@ -3,6 +3,7 @@ from typing import Optional
 from core.apps.chat.models import Message
 from core.apps.chat.repositories.dialog_repository import DialogRepository
 from core.apps.chat.repositories.message_repository import MessageRepository
+from core.apps.localization.utils import translate as _
 from core.common.services.base import CRUDService
 from core.common.services.decorators import action
 
@@ -21,7 +22,7 @@ class MessageService(CRUDService):
             participant_id=sender_id,
             dialog_id=value,
         ):
-            return False, 'You are not participating in this dialog!'
+            return False, _('You are not participating in this dialog!')
         return True, None
 
     @action
@@ -32,14 +33,14 @@ class MessageService(CRUDService):
         _ordering: list[str] = None,
         join: list[str] = None,
         limit: Optional[int] = None,
-        offset:int = 0,
+        offset: int = 0,
         **filters,
     ):
         if not await self._dialog_repository.check_participant_in_dialog(
             participant_id=user_id,
             dialog_id=dialog_id,
         ):
-            return None, { 'detail': 'You are not participating in this dialog!' }
+            return None, {'detail': _('You are not participating in this dialog!')}
         return await super().fetch(
             _ordering,
             join,

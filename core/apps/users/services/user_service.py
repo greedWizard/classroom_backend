@@ -18,6 +18,7 @@ from itsdangerous.exc import BadSignature
 
 from core.apps.attachments.models import Attachment
 from core.apps.attachments.repositories.attachment_repository import AttachmentRepository
+from core.apps.localization.utils import translate as _
 from core.apps.users.constants import (
     EMAIL_REGEX,
     PHONE_REGEX,
@@ -48,8 +49,8 @@ class UserService(CRUDService):
     _attachment_repository: AttachmentRepository = AttachmentRepository()
 
     error_messages = {
-        'create': 'User with that credits is already registred.',
-        'does_not_exist': 'User not found. He is either inactive or not registred yet.',
+        'create': _('User with that credits is already registred.'),
+        'does_not_exist': _('User not found. He is either inactive or not registred yet.'),
     }
 
     def set_user(self, user: User):
@@ -67,10 +68,11 @@ class UserService(CRUDService):
         return md5(password.encode()).hexdigest()  # no qa
 
     async def validate_password(self, value: str) -> ResultTuple:
-        password_error = (
-            f'Password should be at least {config.MINIMAL_PASSWORD_LENGTH} '
-            'characters long and contain at least one digit and upper case letter.'
+        password_error_text = _(
+            'Password should be at least {LENGTH} '
+            'characters long and contain at least one digit and upper case letter.',
         )
+        password_error = password_error_text.format(LENGTH=config.MINIMAL_PASSWORD_LENGTH)
         repeat_password = self.current_action_attributes.get('repeat_password')
 
         if not any(upper_char in value for upper_char in string.ascii_uppercase):
@@ -78,58 +80,58 @@ class UserService(CRUDService):
         if not any(digit in value for digit in string.digits):
             return False, password_error
         if value != repeat_password:
-            return False, "Passwords don't match."
+            return False, _("Passwords don't match.")
         if len(value) < config.MINIMAL_PASSWORD_LENGTH:
-            return False, 'Password is too short.'
-        return True, {}
+            return False, _('Password is too short.')
+        return True, None
 
     async def validate_first_name(self, value):
         if not value:
-            return False, 'The field should not be empty'
-        return True, {}
+            return False, _('The field should not be empty')
+        return True, None
 
     async def validate_last_name(self, value):
         if not value:
-            return False, 'The field should not be empty'
-        return True, {}
+            return False, _('The field should not be empty')
+        return True, None
 
     async def validate_email(self, value: str) -> ResultTuple:
         if not re.match(EMAIL_REGEX, value):
-            return False, 'Invalid email format.'
+            return False, _('Invalid email format.')
         if await self._repository.check_email_already_taken(
             email=value,
             user_id=self.current_user_id,
         ):
-            return False, 'User with that email is already registred.'
-        return True, {}
+            return False, _('User with that email is already registred.')
+        return True, None
 
     async def validate_accept_eula(self, value: bool) -> ResultTuple:
         if not value:
-            return False, 'Please accept eula and try again.'
-        return True, {}
+            return False, _('Please accept eula and try again.')
+        return True, None
 
     async def validate_phone_number(self, value: str) -> ResultTuple:
         if not value:
-            return False, 'This field is required'
+            return False, _('This field is required')
 
         if not re.match(PHONE_REGEX, value):
-            return False, 'Invalid phone format.'
+            return False, _('Invalid phone format.')
         if await self._repository.check_phone_number_already_taken(
             user_id=self.current_user_id,
             phone_number=value,
         ):
-            return False, 'User with that phone number is already registred.'
-        return True, {}
+            return False, _('User with that phone number is already registred.')
+        return True, None
 
     async def validate_confirm_password(self, value):
         if self._hash_password(value) != self.user.password:
-            return False, 'Incorrect password'
-        return True, {}
+            return False, _('Incorrect password')
+        return True, None
 
     async def validate_content_type_of_picture(self, content_type: str):
         if not content_type.startswith('image'):
-            return False, 'Profile photo must be .png, .jpeg, .jpg'
-        return True, {}
+            return False, _('Profile photo must be .png, .jpeg, .jpg')
+        return True, None
 
     async def validate(self, attrs):
         password = attrs.get('password')
@@ -154,8 +156,8 @@ class UserService(CRUDService):
     ) -> Tuple[User, str]:
         if not any((userLoginSchema.email, userLoginSchema.phone_number)):
             return None, {
-                'email': 'this field is required',
-                'phone_number': 'this field is required',
+                'email': _('this field is required'),
+                'phone_number': _('this field is required'),
             }
 
         user = await self._repository.get_user_by_auth_credentials(
@@ -165,7 +167,7 @@ class UserService(CRUDService):
         )
 
         if not user:
-            return None, 'User not found or inactive'
+            return None, _('User not found or inactive')
         await self._repository.update_last_login(user)
         return user, None
 
@@ -185,7 +187,7 @@ class UserService(CRUDService):
         user = await self._repository.retrieve_active_user(email=email)
 
         if not user:
-            return None, 'User not found'
+            return None, _('User not found')
 
         user = await self._repository.set_password_reset_deadline(user_id=user.id)
         token = await sign_timed_token(user.id)
@@ -211,12 +213,12 @@ class UserService(CRUDService):
         token: str,
     ) -> Tuple[bool, Optional[dict[str, str]]]:
         if not token:
-            return None, {'token': 'Token is not provided!'}
+            return None, {'token': _('Token is not provided!')}
 
         try:
             user_id = await unsign_timed_token(token, salt=config.PASSWORD_RESET_SALT)
         except (TypeError, BadSignature):
-            return None, {'token': 'Wrong token format!'}
+            return None, {'token': _('Wrong token format!')}
 
         user = await self._repository.retrieve_password_reset_needed_user(
             id=user_id,
@@ -224,7 +226,7 @@ class UserService(CRUDService):
 
         if not user:
             return None, {
-                'token': 'There is no user with provided token in need of password reset',
+                'token': _('There is no user with provided token in need of password reset'),
             }
 
         attrs, errors = await self._validate_values(**password_schema.dict())
@@ -266,7 +268,7 @@ class UserService(CRUDService):
             id=user.id,
         )
 
-        return updated_user, {}
+        return updated_user, None
 
     @action
     async def confirm_password_reset(
@@ -274,6 +276,6 @@ class UserService(CRUDService):
         activation_token: str,
     ) -> Tuple[bool, Optional[dict[str, str]]]:
         if not await self.exists(activation_token=activation_token):
-            return None, 'User not found'
+            return None, _('User not found')
         await self._repository.confirm_password_reset(activation_token=activation_token)
         return True, None
