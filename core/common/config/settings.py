@@ -91,9 +91,6 @@ class ProjectSettings(BaseModel):
     STATIC_URL = env('STATIC_URL')
     DEFAULT_PROFILE_PICTURE_URL = env('DEFAULT_PROFILE_PICTURE_URL')
 
-    # KAFKA
-    KAFKA_URI = env('KAFKA_CONNECTION_URI')
-
     # LOCALIZATION
     SUPPORTED_LANGUAGES = ['en', 'ru']
     LOCALE_DIR: str = BASE_DIR / 'locales'
