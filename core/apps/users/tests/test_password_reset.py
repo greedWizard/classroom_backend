@@ -60,7 +60,6 @@ async def test_initiate_password_reset_success(
     user: User = await user_repository.refresh(user)
 
     assert response.status_code == status.HTTP_200_OK, response.json()
-    assert not user.is_reset_needed
     assert user.password_reset_deadline
 
 

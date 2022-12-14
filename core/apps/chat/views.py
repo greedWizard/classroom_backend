@@ -18,6 +18,7 @@ from core.apps.chat.managers import ChatManager
 from core.apps.chat.repositories.dialog_repository import DialogRepository
 from core.apps.chat.schemas import (
     DialogDetailSchema,
+    DialogStartResponseSchema,
     DialogStartSchema,
     LastMessageDetail,
     MessageCreateSchema,
@@ -109,7 +110,7 @@ async def all_dialogs_preview(
 
 @router.post(
     '/start-private-dialog',
-    response_model=DialogDetailSchema,
+    response_model=DialogStartResponseSchema,
     status_code=status.HTTP_201_CREATED,
     operation_id='startDialogWithTeacher',
     summary='Start a new private dialog',
@@ -125,7 +126,6 @@ async def start_dialog(
     dialog, errors = await dialog_service.start_dialog(
         participants_ids=schema.participants_ids,
         author_id=current_user.id,
-        join=['participants', 'author'],
     )
 
     if errors:

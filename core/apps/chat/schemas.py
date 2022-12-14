@@ -65,6 +65,13 @@ class DialogDetailSchema(BaseModel):
 
 class DialogStartSchema(BaseModel):
     participants_ids: list[int]
+    
+
+class DialogStartResponseSchema(BaseModel):
+    id: int
+    
+    class Config:
+        orm_mode = True
 
 
 class MessageListItemSchema(BaseModel):
