@@ -58,5 +58,4 @@ class User(BaseDBModel):
     def profile_picture_path(self) -> str:
         if not self.profile_picture_id:
             return config.DEFAULT_PROFILE_PICTURE_URL
-
         return get_attachment_path(self.profile_picture_id)
