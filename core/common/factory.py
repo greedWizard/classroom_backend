@@ -53,10 +53,15 @@ class AppFactory:
     def _register_views(cls, app: FastAPI):
         from core.apps.attachments.views import router as attachment_router
         from core.apps.chat.views import router as chat_router
+        from core.apps.certbot.views import router as cert_router
         from core.apps.classroom.views import router as classroom_router
         from core.apps.localization.views import router as localization_router
         from core.apps.users.views import router as user_router
 
+        app.include_router(
+            cert_router,
+            prefix=''.join('/.well-known/acme-challenge'),
+        )
         app.include_router(
             localization_router,
             prefix=''.join([API_V1_PREFIX, 'localization']),

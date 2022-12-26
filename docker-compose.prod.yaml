@@ -20,6 +20,7 @@ services:
     volumes:
       - ./:/code/
       - certbot_volume:/etc/letsencrypt/
+      - certbot_files:/var/www/certbot/
     ports:
       - "8000:8000"
     env_file:
@@ -54,10 +55,23 @@ services:
       - ./storage/redis:/data
     networks:
       - classroom-network
+  
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot_volume:/etc/letsencrypt/
+      - certbot_files:/var/www/certbot/
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email slavik46111@gmail.com -d api.bezpart.ru --agree-tos
+    networks:
+      - classroom-network
+    depends_on:
+      - db
+      - back
 
 volumes:
   classroom_db:
   certbot_volume:
+  certbot_files:
 
 networks:
   classroom-network:
