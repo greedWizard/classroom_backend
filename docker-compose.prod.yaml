@@ -16,7 +16,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: sh ./docker/start_with_ssl.sh
+    command: sh ./docker/start_app.sh
     volumes:
       - ./:/code/
       - certbot_volume:/etc/letsencrypt/
@@ -55,7 +55,21 @@ services:
       - ./storage/redis:/data
     networks:
       - classroom-network
-  
+
+  nginx:
+    container_name: nginx
+    restart: unless-stopped
+    image: nginx
+    ports:
+        - 80:80
+        - 443:443
+    volumes:
+        - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+        - certbot_files:/var/www/certbot/
+        - certbot_volume:/etc/letsencrypt/
+    networks:
+      - classroom-network
+
   certbot:
     image: certbot/certbot:latest
     volumes:
