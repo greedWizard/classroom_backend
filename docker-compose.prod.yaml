@@ -57,7 +57,7 @@ services:
       - classroom-network
 
   back_nginx:
-    container_name: nginx
+    container_name: back_nginx
     restart: unless-stopped
     image: nginx
     ports:
