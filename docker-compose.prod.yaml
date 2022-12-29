@@ -56,32 +56,6 @@ services:
     networks:
       - classroom-network
 
-  back_nginx:
-    container_name: back_nginx
-    restart: unless-stopped
-    image: nginx
-    ports:
-        - 80:80
-        - 443:443
-    volumes:
-        - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-        - certbot_files:/var/www/certbot/
-        - certbot_volume:/etc/letsencrypt/
-    networks:
-      - classroom-network
-
-  back_certbot:
-    image: certbot/certbot:latest
-    volumes:
-      - certbot_volume:/etc/letsencrypt/
-      - certbot_files:/var/www/certbot/
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email slavik46111@gmail.com -d api.bezpart.ru --agree-tos
-    networks:
-      - classroom-network
-    depends_on:
-      - db
-      - back
-
 volumes:
   classroom_db:
   certbot_volume:
