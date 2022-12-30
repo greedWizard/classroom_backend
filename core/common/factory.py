@@ -32,6 +32,8 @@ class AppFactory:
         app = FastAPI(
             debug=config.DEBUG_MODE,
             title='Classroom API',
+            openapi_url='/api/openapi.json',
+            docs_url='/api/docs',
         )
 
         app.add_middleware(
