@@ -1,3 +1,5 @@
+import tempfile
+from mock import Mock, patch
 from fastapi import status
 from fastapi.applications import FastAPI
 
@@ -224,3 +226,40 @@ async def test_attach_file_assignment_or_post_id_not_provided(
     json_data = response.json()
     assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
     assert json_data.get('detail')
+
+
+@pytest.mark.asyncio
+async def test_attachment_file_is_large(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.moderator,
+    )
+    post = await RoomPostFactory.create(room=participation.room)
+    url = app.url_path_for('create_attachments')
+    check_file_size_mock = Mock()
+    check_file_size_mock.return_value = True
+
+    with patch(
+            'core.apps.attachments.services.attachment_service.AttachmentService._check_file_size',
+            check_file_size_mock,
+    ):
+        with tempfile.TemporaryFile() as file:
+            client.authorize(participation.user)
+            files = {
+                'attachments': ('file.txt', file, 'text/plan'),
+            }
+
+            response = client.post(
+                url=url,
+                files=files,
+                params={
+                    'room_id': post.room.id,
+                    'post_id': post.id,
+                },
+            )
+
+    json_data = response.json()
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
+    assert json_data['detail'] == [{'source': 'file.txt size is to large'}]
