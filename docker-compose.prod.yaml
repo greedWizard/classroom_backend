@@ -19,7 +19,7 @@ services:
     command: sh ./docker/start_prod.sh
     volumes:
       - ./:/code/
-      - certbot_volume:/code/letsencrypt/
+      - certbot_volume:/etc/letsencrypt/
       
     ports:
       - "8000:8000"
