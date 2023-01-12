@@ -59,6 +59,7 @@ services:
 volumes:
   classroom_db:
   certbot_volume:
+    external: True
 
 networks:
   classroom-network:
