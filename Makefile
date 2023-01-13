@@ -23,3 +23,11 @@ dev-logs:
 .PHONY: prod-logs
 prod-logs:
 	${DC} -f ${PRODFILE} logs
+
+.PHONY: stop-prod
+stop-prod:
+	${DC} -f ${PRODFILE} down
+
+.PHONY: stop-dev
+stop-dev:
+	${DC} -f ${DEVFILE} down
