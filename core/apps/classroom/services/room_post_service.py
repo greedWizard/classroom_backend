@@ -112,9 +112,9 @@ class RoomPostService(AuthorMixin, CRUDService):
                 user_id=self.user.id,
             ):
                 return None, {'error': _('Access denied!')}
-        if search:
-            return await self._repository.search_fetch(_ordering, join, limit=limit, offset=offset, **filters)
-        return await super().fetch(_ordering, join, limit=limit, offset=offset, **filters)
+        # if search:
+        #    return await self._repository.search_fetch(_ordering, join, limit=limit, offset=offset, **filters)
+        return await super().fetch(_ordering, join, limit=limit, offset=offset, search=search, **filters)
 
     @action
     async def update(

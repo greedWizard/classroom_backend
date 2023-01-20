@@ -118,6 +118,7 @@ class ReadOnlyRepository(AbstractBaseRepository):
         join: list[str] = None,
         offset: int = None,
         limit: int = None,
+        search: str = '',
         **filters,
     ):
         statement = select(self._model)
@@ -140,6 +141,8 @@ class ReadOnlyRepository(AbstractBaseRepository):
             statement = statement.offset(offset)
         if limit:
             statement = statement.limit(limit)
+        if search:
+            statement = statement.filter(self._model.title.like("%"+search+"%"))
         return statement
 
     async def fetch(
