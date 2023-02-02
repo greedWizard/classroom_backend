@@ -390,3 +390,37 @@ async def test_delete_room_success(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
     assert not await room_post_repository.count()
+
+async def test_get_room_posts_search(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create()
+    room = participation.room
+    posts_count = 8
+    room_posts = await RoomPostFactory.create_batch(posts_count, room=room)
+    titles = [room_post.title for room_post in room_posts]
+    url = app.url_path_for('get_room_posts')
+    client.authorize(participation.user)
+    for title in titles:
+        response = client.get(
+            url,
+            params={
+                'room_id': room.id,
+                'search': title
+            },
+        )
+        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK, response.json()
+        for item in response_json['items']:
+            assert item['title'] == title
+
+    title_not_found = 'Слава вернись'
+    response = client.get(
+            url,
+            params={
+                'room_id': room.id,
+                'search': title_not_found
+            },
+        )
+    assert response.json()['items'] == []
