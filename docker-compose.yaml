@@ -9,6 +9,9 @@ services:
     container_name: classroom-db
     ports:
       - "5433:5432"
+    networks:
+      - classroom-network
+
   back:
     build:
       context: .
@@ -24,26 +27,35 @@ services:
       - db
     container_name: classroom-back
     restart: always
+    networks:
+      - classroom-network
 
-  # huey:
-  #   container_name: classroom-huey
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   command: poetry run uvicorn app:app --reload
-  #   volumes:
-  #     - ./:/code/
-  #   env_file:
-  #     - .env
-  #   restart: always
-  #   depends_on:
-  #     - db
+  huey:
+    container_name: classroom-huey
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: poetry run huey_consumer.py core.scheduler.start_huey.huey_app -w 4 -k process
+    volumes:
+      - ./:/code/
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - back
+    networks:
+      - classroom-network
 
   redis:
     image: redis:alpine
     container_name: classroom-redis
     volumes:
       - ./storage/redis:/data
+    networks:
+      - classroom-network
 
 volumes:
   classroom_db:
+
+networks:
+  classroom-network:

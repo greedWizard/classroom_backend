@@ -8,7 +8,7 @@ repos:
       - id: check-case-conflict
       - id: check-json
       - id: check-toml
-      # - id: check-merge-conflict
+      - id: check-merge-conflict
       - id: debug-statements
       - id: end-of-file-fixer
       - id: double-quote-string-fixer
@@ -47,6 +47,13 @@ repos:
             --remove-unused-variables,
         ]
 
+# -   repo: https://github.com/psf/black
+#     rev: 22.3.0
+#     hooks:
+#     -   id: black
+#         language_version: python3.9
+#         args: ['-S']
+
 -   repo: https://github.com/pycqa/isort
     rev: 5.5.2
     hooks:
@@ -67,14 +74,7 @@ repos:
 #     -   id: mypy
 #         args: [--ignore-missing-imports]
 
--   repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-    -   id: black
-        language_version: python3.9
-        args: ['-S']
-
--   repo: https://gitlab.com/pycqa/flake8
+-   repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
     -   id: flake8

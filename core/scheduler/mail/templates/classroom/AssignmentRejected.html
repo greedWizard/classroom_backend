@@ -1,0 +1,10 @@
+{% extends "Base.html" %}
+
+{% block content %}
+<div>
+    <h1>bezpart.ru</h1>
+    <h2>
+        {{ assignment.author.first_name }} {{ assignment.author.last_name }} rejected your homework {{ assignment.assigned_room_post.title }} with comment {{ assignment.comment }}
+    </h2>
+</div>
+{% endblock content %}
