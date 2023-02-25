@@ -26,7 +26,7 @@ prod-logs:
 
 .PHONY: stop-prod
 stop-prod:
-	${DC} -f ${PRODFILE} down
+	${DC} -f ${PRODFILE} stop
 
 .PHONY: stop-dev
 stop-dev:
