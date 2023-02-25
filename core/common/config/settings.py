@@ -100,6 +100,6 @@ class ProjectSettings(BaseModel):
     CACHE_SERVICE_PORT: str = env('CACHE_SERVICE_PORT')
     CACHE_URL: str = env('SCHEDULER_REDIS_URL')
     HUEY_IMMEDIATE: bool = env('HUEY_IMMEDIATE', bool)
-    
+
     # CERTBOT
     WELL_KNOWN_PATH = '/var/www/certbot/{file_name}'

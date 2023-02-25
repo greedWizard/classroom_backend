@@ -1,4 +1,4 @@
-name: Classpace notifications CI/CD
+name: Classpace backend CI/CD
 
 on:
   push:

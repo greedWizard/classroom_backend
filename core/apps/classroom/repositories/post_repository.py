@@ -15,15 +15,15 @@ class RoomPostRepository(CRUDRepository):
         **filters,
     ):
         statement = await self._fetch_statement(
-            ordering, 
-            join, 
-            limit=limit, 
-            offset=offset, 
-            **filters
+            ordering,
+            join,
+            limit=limit,
+            offset=offset,
+            **filters,
         )
 
         statement = statement.filter(
-            self._model.title.ilike(f"%{search}%")
+            self._model.title.ilike(f'%{search}%'),
         )
 
         async with self.get_session() as session:
