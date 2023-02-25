@@ -47,7 +47,7 @@ jobs:
         KEY: ${{ secrets.SSHKEY }}
       with:
         source: "."
-        target: "/var/www/classpace-notifications"
+        target: "/var/www/classroom_backend"
 
     - name: Executing remote command
       uses: appleboy/ssh-action@master
@@ -56,4 +56,4 @@ jobs:
         USERNAME: ${{ secrets.USERNAME }}
         PORT: ${{ secrets.PORT }}
         KEY: ${{ secrets.SSHKEY }}
-        script: cd /var/www/classpace-notifications && make stop-prod && make prod
+        script: cd /var/www/classroom_backend && make stop-prod && make prod
