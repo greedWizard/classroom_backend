@@ -5,7 +5,12 @@ per-file-ignores =
     */__init__.py: F401,F403
     scheduler/*: F401,F403
     */conftest.py: F401, F403
-
+exclude =
+    .git,
+    __pycache__,
+    venv/*,
+    */migrations/*,
+    ./storage/*,
 max-line-length = 120
 
 
