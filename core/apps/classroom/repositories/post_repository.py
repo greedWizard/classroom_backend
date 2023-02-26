@@ -23,7 +23,11 @@ class RoomPostRepository(CRUDRepository):
         )
 
         statement = statement.filter(
-            self._model.title.ilike(f'%{search}%'),
+            (
+                self._model.title.ilike(f'%{search}%') | \
+                self._model.text.ilike(f'%{search}%') | \
+                self._model.description.ilike(f'%{search}%')
+            ),
         )
 
         async with self.get_session() as session:
