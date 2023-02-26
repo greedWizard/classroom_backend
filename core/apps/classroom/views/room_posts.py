@@ -90,6 +90,8 @@ async def get_room_posts(
         room_id=room_id,
         join=['author', 'attachments'],
         search=search,
+        limit=limit,
+        offset=offset,
     )
 
     if errors:
