@@ -9,14 +9,17 @@ from dependency_injector.wiring import (
 from core.apps.users.containers import UserContainer
 from core.apps.users.exceptions import NotAuthenticatedException
 from core.apps.users.models import User
+from core.apps.users.oauth import oauth2_scheme
 from core.apps.users.services.user_service import UserService
 
 
 async def _get_current_user(
-    Authorize: AuthJWT = Depends(),
+    token: str = Depends(oauth2_scheme),
     user_service: UserService = Depends(),
 ):
-    user_id = Authorize.get_jwt_subject()
+    # TODO: костыль, убрать. выпилить вообще эту либу нах
+    Authorize = AuthJWT()
+    user_id = Authorize.get_raw_jwt(token)['sub']
     current_user, _ = await user_service.retrieve(id=user_id)
     return current_user
 

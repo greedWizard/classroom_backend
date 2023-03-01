@@ -103,3 +103,7 @@ class ProjectSettings(BaseModel):
 
     # CERTBOT
     WELL_KNOWN_PATH = '/var/www/certbot/{file_name}'
+
+    # OAUTH
+    OUATH2_TOKEN_URL = '/api/v1/auth/user/authenticate'
+    TOKEN_TYPE = 'bearer'

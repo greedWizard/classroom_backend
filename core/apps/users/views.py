@@ -11,15 +11,13 @@ from fastapi.responses import (
     JSONResponse,
     RedirectResponse,
 )
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_jwt_auth import AuthJWT
 
 from dependency_injector.wiring import inject
 from starlette import status
 
-from core.apps.users.dependencies import (
-    get_current_user,
-    get_current_user_optional,
-)
+from core.apps.users.dependencies import get_current_user
 from core.apps.users.models import User
 from core.apps.users.schemas import (
     ProfilePicturePath,
@@ -94,18 +92,12 @@ async def register_user(
     operation_id='authenticateUser',
 )
 async def authenticate_user(
-    userLoginSchema: UserLoginSchema,
-    current_user: User = Depends(get_current_user_optional),
     user_service: UserService = Depends(),
+    form_data: OAuth2PasswordRequestForm = Depends(),
     Authorize: AuthJWT = Depends(),
 ):
-    if current_user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail='You are already logged in!',
-        )
-
-    user, error_message = await user_service.authenticate_user(userLoginSchema)
+    user_login_schema = UserLoginSchema(email=form_data.username, password=form_data.password)
+    user, error_message = await user_service.authenticate_user(user_login_schema)
 
     if not user:
         raise HTTPException(
@@ -118,14 +110,10 @@ async def authenticate_user(
         subject=user.id,
         expires_time=config.AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA,
     )
-    refresh_token = Authorize.create_refresh_token(
-        subject=user.id,
-        expires_time=config.AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA,
-    )
 
     return UserLoginSuccessSchema(
         access_token=access_token,
-        refresh_token=refresh_token,
+        token_type=config.TOKEN_TYPE,
     )
 
 
