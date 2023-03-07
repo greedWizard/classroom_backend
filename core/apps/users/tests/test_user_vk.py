@@ -2,7 +2,9 @@ from fastapi.applications import FastAPI
 from fastapi.testclient import TestClient
 
 import pytest
+from faker import Faker
 
+from core.apps.integrations.authentications.vk.schemas import VKResponseUserInfoSchema
 from core.apps.users.repositories.user_repository import UserRepository
 from core.apps.users.services.user_service import UserService
 
@@ -17,5 +19,22 @@ async def test_authentication_fail_not_active(
     client: TestClient,
     user_repository: UserRepository,
     user_service: UserService,
+    fake: Faker,
 ):
     await user_repository.count()
+
+    vk_user_id = 123
+    first_name = fake.first_name()
+    last_name = fake.last_name()
+
+    user = await user_service.create_user_via_vk(
+        VKResponseUserInfoSchema(
+            user_id=vk_user_id,
+            first_name=first_name,
+            last_name=last_name,
+        ),
+    )
+
+    assert user
+    assert user.first_name == first_name
+    assert user.last_name == last_name

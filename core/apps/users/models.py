@@ -1,12 +1,6 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import (
-    backref,
-    relationship,
-)
 
-from core.common.config import config
 from core.common.models.base import BaseDBModel
-from core.common.utils import get_attachment_path
 
 
 # TODO: info verbose name + translations
@@ -26,21 +20,9 @@ class User(BaseDBModel):
     is_banned = sa.Column(sa.Boolean, default=False)
     last_login = sa.Column(sa.DateTime)
 
-    profile_picture_id = sa.Column(
-        sa.Integer(),
-        sa.ForeignKey('attachments.id', use_alter=True, ondelete='SET NULL'),
-        unique=True,
-    )
-    profile_picture = relationship(
-        'Attachment',
-        backref=backref(
-            name='profile_picture_user',
-            uselist=False,
-        ),
-    )
-
     is_reset_needed = sa.Column(sa.Boolean, default=False)
     password_reset_deadline = sa.Column(sa.DateTime)
+    profile_picture_path = sa.Column(sa.String, default='')
 
     # INTEGRATIONS
     vk_user_id = sa.Column(sa.Integer)
@@ -56,9 +38,3 @@ class User(BaseDBModel):
     @property
     def full_name(self):
         return f'{self.first_name} {self.middle_name} {self.last_name}'
-
-    @property
-    def profile_picture_path(self) -> str:
-        if not self.profile_picture_id:
-            return config.DEFAULT_PROFILE_PICTURE_URL
-        return get_attachment_path(self.profile_picture_id)

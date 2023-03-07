@@ -92,10 +92,6 @@ class UserPasswordResetSchema(BaseModel):
     repeat_password: str
 
 
-class AddProfilePictureIdSchema(BaseModel):
-    profile_picture_id: int
-
-
 class ProfilePicturePath(BaseModel):
     profile_picture_path: str
 

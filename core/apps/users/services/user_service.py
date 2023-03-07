@@ -48,6 +48,7 @@ from core.common.services.base import (
 )
 from core.common.services.decorators import action
 from core.common.utils import (
+    get_attachment_path,
     sign_timed_token,
     unsign_timed_token,
 )
@@ -140,8 +141,8 @@ class UserService(CRUDService):
 
     async def validate_content_type_of_picture(self, content_type: str):
         if not content_type.startswith('image'):
-            return False, _('Profile photo must be .png, .jpeg, .jpg')
-        return True, None
+            return _('Profile photo must be .png, .jpeg, .jpg')
+        return None
 
     async def validate(self, attrs):
         password = attrs.get('password')
@@ -250,17 +251,16 @@ class UserService(CRUDService):
         )
         return user, None
 
-    @action
-    async def set_profile_picture(
+    async def _upload_profile_picture(
         self,
         profile_photo: UploadFile,
-        user: User,
-    ) -> Tuple[Union[Attachment, bool], dict[str, str]]:
-        _, errors = await self.validate_content_type_of_picture(
+    ) -> tuple[Optional[str], Optional[dict]]:
+        errors = await self.validate_content_type_of_picture(
             profile_photo.content_type,
         )
+
         if errors:
-            return False, {'content_type_of_profile_photo': errors}
+            return None, {'content_type_of_profile_photo': errors}
 
         resized_picture = await resize_image(
             await profile_photo.read(),
@@ -271,9 +271,24 @@ class UserService(CRUDService):
             filename=profile_photo.filename,
             source=resized_picture,
         )
+        return get_attachment_path(created_attachment.id), None
+
+    @action
+    async def set_profile_picture(
+        self,
+        profile_photo: UploadFile,
+        user: User,
+    ) -> Tuple[Union[Attachment, bool], dict[str, str]]:
+        profile_picture_path, errors = await self._upload_profile_picture(
+            profile_photo=profile_photo,
+        )
+
+        if errors is not None:
+            return None, errors
+
         updated_user = await self._repository.update_and_return_single(
             values={
-                'profile_picture_id': created_attachment.id,
+                'profile_picture_path': profile_picture_path,
             },
             id=user.id,
         )
@@ -309,3 +324,13 @@ class UserService(CRUDService):
             access_token=access_data.access_token,
             user_id=access_data.user_id,
         )
+
+    @action
+    async def create_user_via_vk(
+        self,
+        vk_user_id: int,
+        first_name: str,
+        last_name: str,
+        profile_photo_path: str = None,
+    ):
+        ...
