@@ -262,6 +262,7 @@ async def add_profile_picture(
     'user with vk.com. Otherwise, if user is not registered '
     'this handler automaticaly creates new user from vk data.',
     response_model=UserLoginSuccessSchema,
+    operation_id='OAuthVK',
 )
 async def authenticate_via_vk(
     code: str = Query(...),
