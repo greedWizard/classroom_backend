@@ -51,8 +51,8 @@ async def test_authentication_fail_not_active(
 
     response = client.post(
         url,
-        json={
-            'email': user.email,
+        data={
+            'username': user.email,
             'password': USER_TEST_PASSWORD,
         },
     )
@@ -92,8 +92,8 @@ async def test_authentication_success_email(
 
     response = client.post(
         url,
-        json={
-            'email': user.email,
+        data={
+            'username': user.email,
             'password': USER_TEST_PASSWORD,
         },
     )
@@ -102,64 +102,7 @@ async def test_authentication_success_email(
 
     assert response.status_code == status.HTTP_200_OK, json_data
     assert 'access_token' in json_data
-    assert 'refresh_token' in json_data
     assert user.last_login.date() == datetime.utcnow().date()
-
-
-@pytest.mark.asyncio
-async def test_authentication_success_phone(
-    app: FastAPI,
-    client: TestClient,
-):
-    url = app.url_path_for('authenticate_user')
-    user = await UserFactory.create(
-        is_active=True,
-        password=hash_string(USER_TEST_PASSWORD),
-    )
-
-    response = client.post(
-        url,
-        json={
-            'phone_number': user.phone_number,
-            'password': USER_TEST_PASSWORD,
-        },
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    json_data = response.json()
-
-    assert 'access_token' in json_data
-    assert 'refresh_token' in json_data
-
-    access_token = json_data['access_token']
-
-    url = app.url_path_for('current_user_info')
-    response = client.get(
-        url,
-        headers={
-            'Authorization': f'Bearer {access_token}',
-        },
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-
-
-@pytest.mark.asyncio
-async def test_authentication_fail_phone(
-    app: FastAPI,
-    client: TestClient,
-):
-    await UserFactory.create()
-    url = app.url_path_for('authenticate_user')
-
-    response = client.post(
-        url,
-        json={
-            'phone_number': '+0000000000',
-            'password': USER_TEST_PASSWORD,
-        },
-    )
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 @pytest.mark.asyncio
@@ -172,13 +115,13 @@ async def test_authentication_fail_email(
 
     response = client.post(
         url,
-        json={
-            'email': 'notauseremail@notamail.com',
+        data={
+            'username': 'notauseremail@notamail.com',
             'password': USER_TEST_PASSWORD,
         },
     )
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED, response.json()
 
 
 @pytest.mark.asyncio
@@ -192,8 +135,8 @@ async def test_any_user_info(
 
     response = client.post(
         url,
-        json={
-            'email': user.email,
+        data={
+            'username': user.email,
             'password': USER_TEST_PASSWORD,
         },
     )
@@ -202,7 +145,6 @@ async def test_any_user_info(
     json_data = response.json()
 
     assert 'access_token' in json_data
-    assert 'refresh_token' in json_data
 
     access_token = json_data['access_token']
 
@@ -243,8 +185,8 @@ async def test_current_user_update(
 
     response = client.post(
         url,
-        json={
-            'email': user.email,
+        data={
+            'username': user.email,
             'password': USER_TEST_PASSWORD,
         },
     )
@@ -253,7 +195,6 @@ async def test_current_user_update(
     assert response.status_code == status.HTTP_200_OK, json_data
 
     assert 'access_token' in json_data
-    assert 'refresh_token' in json_data
 
     access_token = json_data['access_token']
 
@@ -293,8 +234,8 @@ async def test_current_user_update_incorrect_password(
 
     response = client.post(
         url,
-        json={
-            'email': user.email,
+        data={
+            'username': user.email,
             'password': USER_TEST_PASSWORD,
         },
     )
@@ -303,7 +244,6 @@ async def test_current_user_update_incorrect_password(
     assert response.status_code == status.HTTP_200_OK, json_data
 
     assert 'access_token' in json_data
-    assert 'refresh_token' in json_data
 
     access_token = json_data['access_token']
 

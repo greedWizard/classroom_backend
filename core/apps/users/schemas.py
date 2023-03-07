@@ -41,7 +41,6 @@ class UserRegistrationCompleteSchema(BaseModel):
 
 
 class UserLoginSchema(BaseModel):
-    user_id: int
     email: str = None
     phone_number: str = None
     password: str

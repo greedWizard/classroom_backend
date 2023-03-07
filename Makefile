@@ -2,6 +2,9 @@ DC=docker-compose
 STORAGES=docker-compose/storage.yml
 DEVFILE=docker-compose.yaml
 PRODFILE=docker-compose.prod.yaml
+BACK_CONTAINER=classroom-back
+DOCKER_EXEC=docker exec -it
+RUN_TEST=poetry run pytest
 
 
 .PHONY: network
@@ -31,3 +34,8 @@ stop-prod:
 .PHONY: stop-dev
 stop-dev:
 	${DC} -f ${DEVFILE} down
+
+
+.PHONY: test
+test:
+	${DOCKER_EXEC} ${BACK_CONTAINER} ${RUN_TEST}
