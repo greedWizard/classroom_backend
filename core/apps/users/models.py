@@ -10,8 +10,8 @@ class User(BaseDBModel):
     first_name = sa.Column(sa.String(length=100), nullable=False)
     last_name = sa.Column(sa.String(length=100), nullable=False)
     middle_name = sa.Column(sa.String(length=100))
-    password = sa.Column(sa.String(length=250), nullable=False)
-    activation_token = sa.Column(sa.String(256), nullable=False)
+    password = sa.Column(sa.String(length=250))
+    activation_token = sa.Column(sa.String(256))
     activation_deadline_dt = sa.Column(sa.DateTime)
     is_active = sa.Column(sa.Boolean, default=False)
     phone_number = sa.Column(sa.String(15), unique=True)
@@ -25,7 +25,7 @@ class User(BaseDBModel):
     profile_picture_path = sa.Column(sa.String, default='')
 
     # INTEGRATIONS
-    vk_user_id = sa.Column(sa.Integer)
+    vk_user_id = sa.Column(sa.Integer, unique=True)
 
     def __str__(self) -> str:
         return (

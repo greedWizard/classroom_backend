@@ -185,3 +185,6 @@ msgstr "Токен неправильного формата или уже не 
 #: core/apps/users/services/user_service.py:229
 msgid "There is no user with provided token in need of password reset"
 msgstr "Пользователь не запрашивал смену пароля. Если вы видите это сообщение по пошибке, попробуйте запросить смену пароля снова."
+
+msgid "User with that vk id already exists!"
+msgstr "Пользователь с таким VK ID уже существует!"

@@ -22,6 +22,7 @@ class UserFactory(AsyncRepositoryFactory):
     last_login = datetime.utcnow()
     is_active = True
     password_reset_deadline = None
+    vk_user_id = None
 
     class Meta:
         model = User

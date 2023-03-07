@@ -261,6 +261,7 @@ async def add_profile_picture(
     description='Expects code to be sent from vk-side. Authenticates '
     'user with vk.com. Otherwise, if user is not registered '
     'this handler automaticaly creates new user from vk data.',
+    response_model=UserLoginSuccessSchema,
 )
 async def authenticate_via_vk(
     code: str = Query(...),
@@ -275,10 +276,15 @@ async def authenticate_via_vk(
             detail=error.errors,
         )
 
-    user = await user_service.get_user_from_vk(vk_user_id=vk_user_data.user_id)
+    user, _ = await user_service.retrieve(vk_user_id=vk_user_data.user_id)
 
     if user is None:
-        user = await user_service.create_user_via_vk(vk_user_data=vk_user_data)
+        user = await user_service.create_user_via_vk(
+            vk_user_id=vk_user_data.user_id,
+            first_name=vk_user_data.first_name,
+            last_name=vk_user_data.first_name,
+            profile_picture_path=vk_user_data.photo_400_orig,
+        )
 
     access_token = Authorize.create_access_token(
         subject=user.id,

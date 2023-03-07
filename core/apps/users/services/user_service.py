@@ -331,6 +331,16 @@ class UserService(CRUDService):
         vk_user_id: int,
         first_name: str,
         last_name: str,
-        profile_photo_path: str = None,
+        profile_picture_path: str = None,
     ):
-        ...
+        if await self._repository.exists(vk_user_id=vk_user_id):
+            raise ServiceError(
+                status_code=status.HTTP_400_BAD_REQUEST, errors={
+                    'vk_user_id': _('User with that vk id already exists!'),
+                },
+            )
+        return await self._repository.create(
+            first_name=first_name,
+            last_name=last_name,
+            profile_picture_path=profile_picture_path,
+        )
