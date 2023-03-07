@@ -11,7 +11,6 @@ from core.tests.factories.user.user import UserFactory
 class RoomFactory(AsyncRepositoryFactory):
     __repository__ = RoomRepository()
 
-    id = factory.Sequence(lambda n: n)
     created_at = datetime.utcnow()
     updated_at = datetime.utcnow()
     name = factory.Faker('job')

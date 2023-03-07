@@ -13,7 +13,6 @@ from core.tests.factories.user.user import UserFactory
 class ParticipationFactory(AsyncRepositoryFactory):
     __repository__ = ParticipationRepository()
 
-    id = factory.Sequence(lambda n: n)
     created_at = datetime.utcnow()
     updated_at = datetime.utcnow()
     user = factory.SubFactory(UserFactory)

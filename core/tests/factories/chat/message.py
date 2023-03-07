@@ -12,7 +12,6 @@ from core.tests.factories.user.user import UserFactory
 class MessageFactory(AsyncRepositoryFactory):
     __repository__: MessageRepository = MessageRepository()
 
-    id = factory.Sequence(lambda n: n)
     created_at = datetime.utcnow()
     updated_at = datetime.utcnow()
     text = factory.Faker('text')

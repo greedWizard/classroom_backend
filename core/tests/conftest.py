@@ -13,6 +13,7 @@ from core.apps.classroom.repositories.assignment import HomeworkAssignmentReposi
 from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
 from core.apps.users.repositories.user_repository import UserRepository
+from core.apps.users.services.user_service import UserService
 from core.common.database import test_engine
 from core.common.factory import AppFactory
 from core.common.models.base import BaseDBModel
@@ -48,6 +49,11 @@ def client(app: FastAPI, event_loop: asyncio.AbstractEventLoop) -> Generator:
 @pytest_asyncio.fixture
 async def user_repository():
     return UserRepository()
+
+
+@pytest_asyncio.fixture
+async def user_service() -> UserService:
+    return UserService()
 
 
 @pytest_asyncio.fixture

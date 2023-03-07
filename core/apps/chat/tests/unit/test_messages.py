@@ -97,7 +97,6 @@ async def test_get_unique_last_messages(
 
     last_message_text = 'unignored message from another dialog'
     last_message = await MessageFactory.create(
-        id=2,
         created_at=datetime.utcnow(),
         dialog=last_dialog,
         sender=sender,

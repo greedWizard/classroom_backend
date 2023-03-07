@@ -11,7 +11,6 @@ from core.tests.factories.base import AsyncRepositoryFactory
 class UserFactory(AsyncRepositoryFactory):
     __repository__ = UserRepository()
 
-    id = factory.Sequence(lambda n: n)
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
     middle_name = factory.Faker('first_name')

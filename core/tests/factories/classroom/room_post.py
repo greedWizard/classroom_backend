@@ -14,7 +14,6 @@ class RoomPostFactory(AsyncRepositoryFactory):
     __repository__ = RoomPostRepository()
 
     # TODO: AbstractBaseFactoryMixin
-    id = factory.Sequence(lambda n: n)
     created_at = datetime.utcnow()
     updated_at = datetime.utcnow()
     room = factory.SubFactory(RoomFactory)
