@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import Depends
 from fastapi_jwt_auth import AuthJWT
 
@@ -8,9 +10,12 @@ from core.apps.users.services.user_service import UserService
 
 
 async def _get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: Optional[str] = Depends(oauth2_scheme),
     user_service: UserService = Depends(),
 ):
+    if not token:
+        return None
+
     # TODO: костыль, убрать. выпилить вообще эту либу нах
     Authorize = AuthJWT()
     user_id = Authorize.get_raw_jwt(token)['sub']

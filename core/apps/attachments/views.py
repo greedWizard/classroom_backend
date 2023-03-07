@@ -37,7 +37,7 @@ async def get_attachment(
     attachment_id: int,
     user: User = Depends(
         get_current_user_optional,
-    ),  # TODO: на время для аватарок оставим пользователя опциональным
+    ),
 ):
     attachment_service = AttachmentService(user)
     attachment, errors = await attachment_service.retrieve(id=attachment_id)
