@@ -1,12 +1,6 @@
 from fastapi import Depends
 from fastapi_jwt_auth import AuthJWT
 
-from dependency_injector.wiring import (
-    inject,
-    Provide,
-)
-
-from core.apps.users.containers import UserContainer
 from core.apps.users.exceptions import NotAuthenticatedException
 from core.apps.users.models import User
 from core.apps.users.oauth import oauth2_scheme
@@ -32,11 +26,7 @@ async def get_current_user(
     return current_user
 
 
-@inject
-async def get_websocket_user(
-    token: str,
-    Authorize: AuthJWT = Provide[UserContainer.jwt_auth],
-):
+async def get_websocket_user(token: str):
     Authorize = AuthJWT()
     user_service = UserService()
 

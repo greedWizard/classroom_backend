@@ -14,10 +14,19 @@ from typing import (
 
 from fastapi import UploadFile
 
+from dependency_injector.wiring import (
+    inject,
+    Provide,
+)
 from itsdangerous.exc import BadSignature
+from starlette import status
 
 from core.apps.attachments.models import Attachment
 from core.apps.attachments.repositories.attachment_repository import AttachmentRepository
+from core.apps.integrations.authentications.vk.client import VKIntegratioinClient
+from core.apps.integrations.authentications.vk.schemas import VKResponseUserInfoSchema
+from core.apps.integrations.containers import IntegrationContainer
+from core.apps.integrations.exceptions import IntegrationException
 from core.apps.localization.utils import translate as _
 from core.apps.users.constants import (
     EMAIL_REGEX,
@@ -32,6 +41,7 @@ from core.apps.users.schemas import (
 )
 from core.apps.users.utils import resize_image
 from core.common.config import config
+from core.common.exceptions import ServiceError
 from core.common.services.base import (
     CRUDService,
     ResultTuple,
@@ -279,3 +289,23 @@ class UserService(CRUDService):
             return None, _('User not found')
         await self._repository.confirm_password_reset(activation_token=activation_token)
         return True, None
+
+    @action
+    @inject
+    async def get_vk_user_data_by_code(
+        self,
+        code: str,
+        vk_integration_client: VKIntegratioinClient = Provide[IntegrationContainer.vk_integration_client],
+    ) -> Optional[VKResponseUserInfoSchema]:
+        try:
+            access_data = await vk_integration_client.get_user_access_data(code=code)
+        except IntegrationException as error:
+            raise ServiceError(
+                status_code=status.HTTP_403_FORBIDDEN,
+                errors={'vk': [str(error)]},
+            )
+
+        return await vk_integration_client.get_user_data(
+            access_token=access_data.access_token,
+            user_id=access_data.user_id,
+        )

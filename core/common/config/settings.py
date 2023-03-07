@@ -107,3 +107,11 @@ class ProjectSettings(BaseModel):
     # OAUTH
     OUATH2_TOKEN_URL = '/api/v1/auth/user/authenticate'
     TOKEN_TYPE = 'bearer'
+
+    # INTEGRATIONS
+    VK_OAUTH_URL = 'https://oauth.vk.com'
+    VK_API_URL = 'https://api.vk.com'
+    VK_CLIENT_ID = env('VK_CLIENT_ID', default='')
+    VK_CLIENT_SECRET = env('VK_CLIENT_SECRET', default='')
+    VK_REDIRECT_URI = env('VK_REDIRECT_URI', default='')
+    VK_API_VERSION = '5.131'

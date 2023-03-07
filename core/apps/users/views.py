@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 from fastapi import (
     APIRouter,
     Depends,
+    Query,
     Request,
     UploadFile,
 )
@@ -34,6 +35,7 @@ from core.apps.users.schemas import (
 from core.apps.users.services.user_service import UserService
 from core.common.config import config
 from core.common.enums import OperationResultStatusEnum
+from core.common.exceptions import ServiceError
 from core.common.schemas import OperationResultSchema
 from core.scheduler.tasks.user import send_activation_email
 
@@ -105,7 +107,6 @@ async def authenticate_user(
             detail=error_message,
         )
 
-    # TODO: отдельно создавать access_token и refresh_token
     access_token = Authorize.create_access_token(
         subject=user.id,
         expires_time=config.AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA,
@@ -252,3 +253,39 @@ async def add_profile_picture(
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
     return updated_user
+
+
+@router.get(
+    '/vk-auth',
+    summary='Vk-auth pipeline',
+    description='Expects code to be sent from vk-side. Authenticates '
+    'user with vk.com. Otherwise, if user is not registered '
+    'this handler automaticaly creates new user from vk data.',
+)
+async def authenticate_via_vk(
+    code: str = Query(...),
+    user_service: UserService = Depends(),
+    Authorize: AuthJWT = Depends(),
+):
+    try:
+        vk_user_data = await user_service.get_vk_user_data_by_code(code=code)
+    except ServiceError as error:
+        raise HTTPException(
+            status_code=error.status_code,
+            detail=error.errors,
+        )
+
+    user = await user_service.get_user_from_vk(vk_user_id=vk_user_data.user_id)
+
+    if user is None:
+        user = await user_service.create_user_via_vk(vk_user_data=vk_user_data)
+
+    access_token = Authorize.create_access_token(
+        subject=user.id,
+        expires_time=config.AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA,
+    )
+
+    return UserLoginSuccessSchema(
+        access_token=access_token,
+        token_type=config.TOKEN_TYPE,
+    )

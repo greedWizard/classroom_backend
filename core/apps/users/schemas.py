@@ -35,13 +35,13 @@ class UserRegistrationCompleteSchema(BaseModel):
     status: str = config.USER_SUCCESS_STATUS
     is_active: bool = False
     email: str
-    activation_token: str
 
     class Config:
         orm_mode = True
 
 
 class UserLoginSchema(BaseModel):
+    user_id: int
     email: str = None
     phone_number: str = None
     password: str
@@ -62,7 +62,6 @@ class UserProfileSchema(NormalizedDatetimeModel):
     created_at: datetime
     updated_at: datetime
     is_active: bool
-
     profile_picture_path: Optional[str]
 
     class Config:

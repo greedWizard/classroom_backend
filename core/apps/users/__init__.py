@@ -1,4 +1,4 @@
-from core.apps.users.containers import UserContainer
+from core.apps.integrations.containers import IntegrationContainer
 
 
-UserContainer() # noqa
+container = IntegrationContainer()
