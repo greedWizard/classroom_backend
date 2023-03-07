@@ -255,7 +255,7 @@ async def add_profile_picture(
     return updated_user
 
 
-@router.get(
+@router.post(
     '/vk-auth',
     summary='Vk-auth pipeline',
     description='Expects code to be sent from vk-side. Authenticates '
