@@ -28,33 +28,19 @@ class UserRepository(CRUDRepository):
 
         return await self.get_scalar(statement)
 
-    async def check_phone_number_already_taken(
-        self,
-        phone_number: str,
-        user_id: Union[int, None],
-    ) -> bool:
-        statement = select(func.count(self._model.id)).filter(
-            self._model.id != user_id,
-            self._model.phone_number == phone_number,
-        )
-
-        return await self.get_scalar(statement)
-
     async def update_last_login(self, user: User) -> User:
         await self.update({'last_login': get_current_datetime()}, id=user.id)
 
     async def get_user_by_auth_credentials(
         self,
         password: str,
-        phone_number: str = None,
         email: str = None,
     ):
         async with self.get_session() as session:
             statement = select(self._model).filter(
                 self._model.password == hash_string(password),
                 self._model.is_active == True,
-                (self._model.email == email)
-                | (self._model.phone_number == phone_number),
+                self._model.email == email,
             )
             return (await session.execute(statement)).scalars().first()
 

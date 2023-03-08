@@ -11,7 +11,7 @@ class AuthorSchema(BaseModel):
     id: int
     first_name: str
     last_name: str
-    email: str
+    email: str = ''
     middle_name: Optional[str] = None
     full_name: str
     profile_picture_path: str
@@ -25,7 +25,6 @@ class UserRegisterSchema(BaseModel):
     last_name: str
     password: str
     repeat_password: str
-    phone_number: str
     email: str
     middle_name: Optional[str] = None
     accept_eula: bool = False
@@ -42,7 +41,6 @@ class UserRegistrationCompleteSchema(BaseModel):
 
 class UserLoginSchema(BaseModel):
     email: str = None
-    phone_number: str = None
     password: str
 
 
@@ -53,8 +51,7 @@ class UserLoginSuccessSchema(BaseModel):
 
 class UserProfileSchema(NormalizedDatetimeModel):
     id: int
-    email: str
-    phone_number: str
+    email: Optional[str]
     first_name: str
     last_name: str
     middle_name: Optional[str]
@@ -72,7 +69,6 @@ class UserProfileUpdateSchema(BaseModel):
     repeat_password: Optional[str]
     confirm_password: str
     email: Optional[str]
-    phone_number: Optional[str]
     first_name: Optional[str]
     last_name: Optional[str]
     middle_name: Optional[str]

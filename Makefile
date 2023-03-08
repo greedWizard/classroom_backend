@@ -35,6 +35,9 @@ stop-prod:
 stop-dev:
 	${DC} -f ${DEVFILE} down
 
+.PHONY: dev-shell
+dev-shell:
+	${DOCKER_EXEC} ${BACK_CONTAINER} poetry run ipython -i shell.py
 
 .PHONY: test
 test:

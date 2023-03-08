@@ -27,7 +27,6 @@ def user_data(fake: Faker):
         'last_name': fake.name(),
         'email': fake.email(),
         'password': hash_string(USER_TEST_PASSWORD),
-        'phone_number': '+79990001122',
         'activation_token': 'test_activation_token',
         'activation_deadline_dt': datetime.utcnow(),
     }

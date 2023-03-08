@@ -255,7 +255,7 @@ async def add_profile_picture(
     return updated_user
 
 
-@router.post(
+@router.get(
     '/vk-auth',
     summary='Vk-auth pipeline',
     description='Expects code to be sent from vk-side. Authenticates '
@@ -283,7 +283,7 @@ async def authenticate_via_vk(
         user = await user_service.create_user_via_vk(
             vk_user_id=vk_user_data.user_id,
             first_name=vk_user_data.first_name,
-            last_name=vk_user_data.first_name,
+            last_name=vk_user_data.last_name,
             profile_picture_path=vk_user_data.photo_400_orig,
         )
 
@@ -292,7 +292,6 @@ async def authenticate_via_vk(
         expires_time=config.AUTHORIZATION_TOKEN_EXPIRES_TIMEDELTA,
     )
 
-    return UserLoginSuccessSchema(
-        access_token=access_token,
-        token_type=config.TOKEN_TYPE,
+    return RedirectResponse(
+        url=config.FRONTEND_OAUTH_URL.format(client_secret=access_token),
     )

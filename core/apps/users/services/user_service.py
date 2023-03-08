@@ -7,6 +7,7 @@ from datetime import (
 )
 from hashlib import md5
 from typing import (
+    Any,
     Optional,
     Tuple,
     Union,
@@ -28,10 +29,7 @@ from core.apps.integrations.authentications.vk.schemas import VKResponseUserInfo
 from core.apps.integrations.containers import IntegrationContainer
 from core.apps.integrations.exceptions import IntegrationException
 from core.apps.localization.utils import translate as _
-from core.apps.users.constants import (
-    EMAIL_REGEX,
-    PHONE_REGEX,
-)
+from core.apps.users.constants import EMAIL_REGEX
 from core.apps.users.models import User
 from core.apps.users.repositories.user_repository import UserRepository
 from core.apps.users.schemas import (
@@ -79,6 +77,9 @@ class UserService(CRUDService):
         return md5(password.encode()).hexdigest()  # no qa
 
     async def validate_password(self, value: str) -> ResultTuple:
+        if self.user is not None and self.user.is_external and not value:
+            return True, None
+
         password_error_text = _(
             'Password should be at least {LENGTH} '
             'characters long and contain at least one digit and upper case letter.',
@@ -96,17 +97,19 @@ class UserService(CRUDService):
             return False, _('Password is too short.')
         return True, None
 
-    async def validate_first_name(self, value):
+    async def validate_first_name(self, value) -> ResultTuple:
         if not value:
             return False, _('The field should not be empty')
         return True, None
 
-    async def validate_last_name(self, value):
+    async def validate_last_name(self, value) -> ResultTuple:
         if not value:
             return False, _('The field should not be empty')
         return True, None
 
     async def validate_email(self, value: str) -> ResultTuple:
+        if self.user is not None and self.user.is_external and not value:
+            return True, None
         if not re.match(EMAIL_REGEX, value):
             return False, _('Invalid email format.')
         if await self._repository.check_email_already_taken(
@@ -121,30 +124,19 @@ class UserService(CRUDService):
             return False, _('Please accept eula and try again.')
         return True, None
 
-    async def validate_phone_number(self, value: str) -> ResultTuple:
-        if not value:
-            return False, _('This field is required')
-
-        if not re.match(PHONE_REGEX, value):
-            return False, _('Invalid phone format.')
-        if await self._repository.check_phone_number_already_taken(
-            user_id=self.current_user_id,
-            phone_number=value,
-        ):
-            return False, _('User with that phone number is already registred.')
-        return True, None
-
-    async def validate_confirm_password(self, value):
+    async def validate_confirm_password(self, value: str) -> ResultTuple:
+        if not self.user.password and self.user.is_external:
+            return True, None
         if self._hash_password(value) != self.user.password:
             return False, _('Incorrect password')
         return True, None
 
-    async def validate_content_type_of_picture(self, content_type: str):
+    async def validate_content_type_of_picture(self, content_type: str) -> ResultTuple:
         if not content_type.startswith('image'):
             return _('Profile photo must be .png, .jpeg, .jpg')
         return None
 
-    async def validate(self, attrs):
+    async def validate(self, attrs: dict[str, Any]):
         password = attrs.get('password')
 
         if password:
@@ -165,15 +157,13 @@ class UserService(CRUDService):
         self,
         userLoginSchema: UserLoginSchema,
     ) -> Tuple[User, str]:
-        if not any((userLoginSchema.email, userLoginSchema.phone_number)):
+        if not userLoginSchema.email:
             return None, {
                 'email': _('this field is required'),
-                'phone_number': _('this field is required'),
             }
 
         user = await self._repository.get_user_by_auth_credentials(
             password=userLoginSchema.password,
-            phone_number=userLoginSchema.phone_number,
             email=userLoginSchema.email,
         )
 
@@ -342,5 +332,7 @@ class UserService(CRUDService):
         return await self._repository.create(
             first_name=first_name,
             last_name=last_name,
+            vk_user_id=vk_user_id,
             profile_picture_path=profile_picture_path,
+            is_active=True,
         )

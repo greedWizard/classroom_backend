@@ -14,11 +14,6 @@ from core.tests.factories.user import UserFactory
 
 
 @pytest.fixture(scope='session')
-def phone_number(fake: Faker) -> str:
-    yield f'+{fake.random_int(1 * 10*11, int("9" * 13))}'
-
-
-@pytest.fixture(scope='session')
 def email(fake: Faker) -> str:
     yield fake.email()
 
@@ -27,7 +22,6 @@ def email(fake: Faker) -> str:
 async def test_user_registration_success(
     app: FastAPI,
     client: TestClient,
-    phone_number: str,
     email: str,
     mocker: MockerFixture,
     user_repository: UserRepository,
@@ -42,7 +36,6 @@ async def test_user_registration_success(
         'first_name': 'Валерий',
         'last_name': 'Жмышенко',
         'middle_name': 'Альбретович',
-        'phone_number': phone_number,
         'password': password,
         'repeat_password': password,
         'accept_eula': True,
@@ -85,7 +78,6 @@ async def test_user_registration_phone_and_email_taken(
         'first_name': fake.name(),
         'last_name': fake.name(),
         'middle_name': fake.name(),
-        'phone_number': user.phone_number,
         'password': password,
         'repeat_password': password,
         'accept_eula': True,
@@ -96,10 +88,6 @@ async def test_user_registration_phone_and_email_taken(
     json_data = response.json()
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert (
-        json_data['detail']['phone_number']
-        == 'User with that phone number is already registred.'
-    )
     assert json_data['detail']['email'] == 'User with that email is already registred.'
     assert await user_repository.count() == users_count
 
@@ -117,7 +105,6 @@ async def test_user_registration_eula_is_not_accepted(
         'first_name': fake.name(),
         'last_name': fake.name(),
         'middle_name': fake.name(),
-        'phone_number': '+79997078922',
         'email': fake.email(),
         'password': password,
         'repeat_password': password,
@@ -144,7 +131,6 @@ async def test_user_registration_eula_is_not_assigned(
         'first_name': fake.name(),
         'last_name': fake.name(),
         'middle_name': fake.name(),
-        'phone_number': '+79997078922',
         'email': 'jma@mail.ru',
         'password': password,
         'repeat_password': password,
@@ -170,7 +156,6 @@ async def test_user_registration_passwords_dont_match(
         'first_name': fake.name(),
         'last_name': fake.name(),
         'middle_name': fake.name(),
-        'phone_number': '+79997078922',
         'password': password + '123',
         'email': 'jma@mail.ru',
         'repeat_password': password,
@@ -193,13 +178,12 @@ async def test_user_registration_multiple_errors(
     url = app.router.url_path_for('register_user')
     password = 'Kjoisun41241kl19'
 
-    user = await UserFactory.create()
+    await UserFactory.create()
 
     user_creds = {
         'first_name': fake.name(),
         'last_name': fake.name(),
         'middle_name': fake.name(),
-        'phone_number': user.phone_number,
         'email': 'jma@mail.ru',
         'password': password + '123',
         'repeat_password': password,
@@ -209,10 +193,6 @@ async def test_user_registration_multiple_errors(
     response = client.post(url, json=user_creds)
     json_data = response.json()
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert json_data['detail']['password'] == "Passwords don't match."
-    assert (
-        json_data['detail']['phone_number']
-        == 'User with that phone number is already registred.'
-    )
-    assert json_data['detail']['accept_eula'] == 'Please accept eula and try again.'
+    assert response.status_code == status.HTTP_400_BAD_REQUEST, json_data
+    assert json_data['detail']['password'] == "Passwords don't match.", json_data
+    assert json_data['detail']['accept_eula'] == 'Please accept eula and try again.', json_data

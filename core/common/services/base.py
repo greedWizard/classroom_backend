@@ -25,7 +25,7 @@ from core.common.services.exceptions import ServiceMapException
 CreateSchema = NewType('CreateSchemaType', BaseModel)
 UpdateSchema = NewType('UpdateSchemaType', BaseModel)
 DeleteSchema = NewType('DeleteSchemaType', BaseModel)
-ResultTuple = NewType('ResultTuple', Tuple[bool, Union[Dict, None]])
+ResultTuple = NewType('ResultTuple', Tuple[bool, Optional[str]])
 
 
 class SchemaMapMixin:

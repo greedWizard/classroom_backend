@@ -17,7 +17,6 @@ class UserFactory(AsyncRepositoryFactory):
     password = factory.Sequence(lambda n: hash_string('123'))
     activation_token = factory.Faker('pystr')
     email = factory.Faker('email')
-    phone_number = factory.Sequence(lambda n: f'+7{10000000000 + n}')
     created_at = datetime.utcnow()
     last_login = datetime.utcnow()
     is_active = True
