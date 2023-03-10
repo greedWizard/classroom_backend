@@ -321,7 +321,7 @@ class UserService(CRUDService):
         vk_user_id: int,
         first_name: str,
         last_name: str,
-        profile_picture_path: str = None,
+        profile_picture_path: Optional[str] = None,
     ):
         if await self._repository.exists(vk_user_id=vk_user_id):
             raise ServiceError(

@@ -13,7 +13,7 @@ class AuthorSchema(BaseModel):
     last_name: str
     email: str = ''
     middle_name: Optional[str] = None
-    profile_picture_path: str = None
+    profile_picture_path: Optional[str] = None
     full_name: str
 
     class Config:
@@ -89,7 +89,7 @@ class UserPasswordResetSchema(BaseModel):
 
 
 class ProfilePicturePath(BaseModel):
-    profile_picture_path: str
+    profile_picture_path: Optional[str] = None
 
     class Config:
         orm_mode = True

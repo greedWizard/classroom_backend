@@ -35,7 +35,7 @@ class ParticipationUserSchema(BaseModel):
     last_name: str
     email: str
     middle_name: Optional[str]
-    profile_picture_path: str
+    profile_picture_path: Optional[str] = None
 
     class Config:
         orm_mode = True
