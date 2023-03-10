@@ -13,8 +13,8 @@ class AuthorSchema(BaseModel):
     last_name: str
     email: str = ''
     middle_name: Optional[str] = None
+    profile_picture_path: str = None
     full_name: str
-    profile_picture_path: str
 
     class Config:
         orm_mode = True

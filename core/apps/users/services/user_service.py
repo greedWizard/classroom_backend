@@ -307,7 +307,7 @@ class UserService(CRUDService):
         except IntegrationException as error:
             raise ServiceError(
                 status_code=status.HTTP_403_FORBIDDEN,
-                errors={'vk': [str(error)]},
+                errors={'vk': str(error)},
             )
 
         return await vk_integration_client.get_user_data(
