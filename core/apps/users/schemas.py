@@ -77,6 +77,7 @@ class UserProfileUpdateSchema(BaseModel):
 class UserHyperlinkEmailSchema(BaseModel):
     email: str
     hyperlink: str
+    first_name: str = ''
 
 
 class UserPasswordResetInitiationSchema(BaseModel):

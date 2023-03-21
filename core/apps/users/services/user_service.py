@@ -33,7 +33,6 @@ from core.apps.users.constants import EMAIL_REGEX
 from core.apps.users.models import User
 from core.apps.users.repositories.user_repository import UserRepository
 from core.apps.users.schemas import (
-    UserHyperlinkEmailSchema,
     UserLoginSchema,
     UserPasswordResetSchema,
 )
@@ -184,7 +183,7 @@ class UserService(CRUDService):
     async def initiate_user_password_reset(
         self,
         email: str,
-    ) -> Tuple[str, Optional[str]]:
+    ) -> Tuple[str, Optional[str], Optional[User]]:
         user = await self._repository.retrieve_active_user(email=email)
 
         if not user:
@@ -193,18 +192,16 @@ class UserService(CRUDService):
         user = await self._repository.set_password_reset_deadline(user_id=user.id)
         token = await sign_timed_token(user.id)
 
-        return token, None
+        return token, None, user
 
     async def send_password_reset_email(
         self,
-        user_email: User,
-        redirect_url: str,
+        schema: User,
+        localization: str,
     ) -> None:
         send_password_reset_email(
-            user=UserHyperlinkEmailSchema(
-                email=user_email,
-                hyperlink=redirect_url,
-            ),
+            user=schema,
+            localization=localization,
         )
 
     @action
