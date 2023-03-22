@@ -187,7 +187,7 @@ class UserService(CRUDService):
         user = await self._repository.retrieve_active_user(email=email)
 
         if not user:
-            return None, _('User not found')
+            return None, _('User not found'), None
 
         user = await self._repository.set_password_reset_deadline(user_id=user.id)
         token = await sign_timed_token(user.id)
