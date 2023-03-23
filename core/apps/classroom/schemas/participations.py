@@ -62,6 +62,7 @@ class ParticipationCurrentUserSchema(NormalizedDatetimeModel):
     can_remove_participants: bool
     can_manage_assignments: bool
     is_moderator: bool
+    can_create_topics: bool
     room_id: int
 
     class Config:
@@ -78,6 +79,7 @@ class ParticipationDetailSchema(NormalizedDatetimeModel):
     can_remove_participants: bool
     can_manage_assignments: bool
     is_moderator: bool
+    can_create_topics: bool
     room: RoomDetailSchema
 
     class Config:

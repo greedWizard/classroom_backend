@@ -41,11 +41,11 @@ class RoomService(AuthorMixin, CRUDService):
     @action
     async def create(
         self,
-        createSchema,
+        create_schema,
         exclude_unset: bool = False,
         join: list[str] = None,
     ):
-        created_room, errors = await super().create(createSchema, exclude_unset)
+        created_room, errors = await super().create(create_schema, exclude_unset)
 
         if errors:
             return None, errors
@@ -110,7 +110,7 @@ class RoomService(AuthorMixin, CRUDService):
     async def update(
         self,
         id: Union[str, None],
-        updateSchema,
+        update_schema,
         exclude_unset: bool = True,
         join: list[str] = None,
     ):
@@ -122,7 +122,7 @@ class RoomService(AuthorMixin, CRUDService):
         if participation.can_update_room:
             return await super().update(
                 id=id,
-                updateSchema=updateSchema,
+                update_schema=update_schema,
                 join=join,
                 exclude_unset=exclude_unset,
             )

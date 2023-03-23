@@ -87,3 +87,7 @@ class Participation(BaseDBModel, AuthorAbstract):
     @property
     def is_moderator(self):
         return self.role in self.MODERATOR_ROLES
+
+    @property
+    def can_create_topics(self):
+        return self.role in self.MODERATOR_ROLES
