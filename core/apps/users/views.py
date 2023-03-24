@@ -18,6 +18,7 @@ from fastapi_jwt_auth import AuthJWT
 from dependency_injector.wiring import inject
 from starlette import status
 
+from core.apps.localization.services import LocalizationService
 from core.apps.users.dependencies import get_current_user
 from core.apps.users.models import User
 from core.apps.users.schemas import (
@@ -82,7 +83,9 @@ async def register_user(
             user=UserHyperlinkEmailSchema(
                 email=user.email,
                 hyperlink=activation_link,
+                first_name=user.first_name,
             ),
+            localization=LocalizationService.translate_language,
         )
         return user
     raise HTTPException(detail=errors, status_code=status.HTTP_400_BAD_REQUEST)
@@ -186,7 +189,7 @@ async def initiate_user_password_reset(
     same token.
 
     """
-    timed_token, error = await user_service.initiate_user_password_reset(
+    timed_token, error, user = await user_service.initiate_user_password_reset(
         email=schema.email,
     )
 
@@ -202,8 +205,12 @@ async def initiate_user_password_reset(
     )
     redirect_url = config.FRONTEND_PASSWORD_RECOVERY_URL.format(token=timed_token)
     await user_service.send_password_reset_email(
-        schema.email,
-        redirect_url=redirect_url,
+        UserHyperlinkEmailSchema(
+            email=user.email,
+            hyperlink=redirect_url,
+            first_name=user.first_name,
+        ),
+        localization=LocalizationService.translate_language,
     )
     return JSONResponse(content=response_schema.dict())
 
