@@ -21,20 +21,30 @@ async def test_create_by_teacher(
     )
     previous_topics_count = await topic_repository.count()
     topic_name = 'Урок 1, биология для маслят'
-    order = 1
 
     topic_service = TopicService(teacher_participant.user)
 
-    _, errors = await topic_service.create(
+    topic, errors = await topic_service.create(
         create_schema=TopicCreateSchema(
             title=topic_name,
-            order=order,
             room_id=teacher_participant.room_id,
         ),
     )
 
     assert not errors, errors
     assert previous_topics_count + 1 == await topic_repository.count()
+    assert topic.order == 0, topic.order
+
+    topic, errors = await topic_service.create(
+        create_schema=TopicCreateSchema(
+            title=topic_name,
+            room_id=teacher_participant.room_id,
+        ),
+    )
+
+    assert not errors, errors
+    assert previous_topics_count + 2 == await topic_repository.count()
+    assert topic.order == 1, topic.order
 
 
 @pytest.mark.asyncio
@@ -217,3 +227,41 @@ async def test_fetch_topic_with_search():
 
     assert len(rooms) == 1, rooms
     assert rooms[0].id == topic.id
+
+
+@pytest.mark.asyncio
+async def test_delete_topic_as_teacher(
+    topic_repository: TopicRepository,
+):
+    participant = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.host,
+    )
+    topic_service = TopicService(participant.user)
+
+    topic = await TopicFactory.create(room=participant.room)
+    previous_topics_count = await topic_repository.count()
+
+    _, errors = await topic_service.delete(id=topic.id)
+
+    assert not errors
+    assert previous_topics_count - 1 == await topic_repository.count(), \
+        await topic_repository.count()
+
+
+@pytest.mark.asyncio
+async def test_delete_topic_as_participant(
+    topic_repository: TopicRepository,
+):
+    participant = await ParticipationFactory.create(
+        role=ParticipationRoleEnum.participant,
+    )
+    topic_service = TopicService(participant.user)
+
+    topic = await TopicFactory.create(room=participant.room)
+    previous_topics_count = await topic_repository.count()
+
+    _, errors = await topic_service.delete_and_displace_orders(id=topic.id)
+
+    assert errors
+    assert previous_topics_count == await topic_repository.count(), \
+        await topic_repository.count()

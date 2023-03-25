@@ -1,6 +1,13 @@
-from typing import Optional
+from typing import (
+    Iterable,
+    Optional,
+)
 
-from sqlalchemy import update
+from sqlalchemy import (
+    func,
+    select,
+    update,
+)
 
 from core.apps.classroom.models.topics import Topic
 from core.common.repositories.base import CRUDRepository
@@ -8,6 +15,27 @@ from core.common.repositories.base import CRUDRepository
 
 class TopicRepository(CRUDRepository):
     _model: type[Topic] = Topic
+
+    async def _displace_orders(self, room_id: int):
+        from_table = select(
+            self._model.id,
+            func.row_number().over(order_by=self._model.order.asc()).label('row_number'),
+        ).filter(self._model.room_id == room_id)
+
+        statement = update(self._model).values(order=from_table.c.row_number - 1).filter(
+            self._model.id == from_table.c.id,
+        )
+
+        async with self.get_session() as session:
+            await session.execute(statement)
+            await session.commit()
+
+    async def delete_and_displace_orders(self, instances: Iterable[_model]):
+        async with self.get_session() as session:
+            for instance in instances:
+                await self._displace_orders(instance.room_id)
+                session.delete(instance)
+            await session.commit()
 
     async def update_next_topics(
         self,

@@ -21,13 +21,11 @@ class TopicService(AuthorMixin, CRUDService):
     _repository: TopicRepository = TopicRepository()
     _participation_repository: ParticipationRepository = ParticipationRepository()
 
-    async def __validate_topic_create(
+    async def _validate_manage_topics_in_room(
         self,
         room_id: int,
-        title: str,
-    ) -> tuple[bool, Optional[str]]:
+    ) -> dict[str, list]:
         errors = defaultdict(list)
-
         participation: Participation = await self._participation_repository.retrieve(
             room_id=room_id,
             user_id=self.user.id,
@@ -41,12 +39,19 @@ class TopicService(AuthorMixin, CRUDService):
             errors['author'].append(
                 'У вас нет прав на редактирование учебного плана в данной комнате.',
             )
+        return errors
+
+    async def __validate_topic_create(
+        self,
+        room_id: int,
+        title: str,
+    ) -> tuple[bool, Optional[str]]:
+        errors = await self._validate_manage_topics_in_room(room_id)
 
         if not title:
             errors['title'].append(
                 'У темы обязательно должно быть название',
             )
-
         return errors
 
     async def __validate_fetch(self, room_id: int) -> dict:
@@ -66,15 +71,12 @@ class TopicService(AuthorMixin, CRUDService):
     async def __validate_topic_update(self, topic_id: int, title: str) -> dict:
         errors = defaultdict(list)
 
-        topic = await self._repository.retrieve(id=topic_id)
+        topic: Topic = await self._repository.retrieve(id=topic_id)
 
         if topic is None:
             errors['id'].append('Данной темы не существует.')
 
-        errors |= await self.__validate_topic_create(
-            topic.room_id,
-            title=title,
-        )
+        errors |= await self.__validate_topic_create(topic.room_id, title=title)
         return errors
 
     @action
@@ -133,4 +135,25 @@ class TopicService(AuthorMixin, CRUDService):
         if len(errors) > 0:
             return None, errors
 
-        return await super().create(create_schema, exclude_unset, join)
+        max_order = await self._repository.count(room_id=create_schema.room_id)
+        return await self._repository.create(
+            join=join,
+            order=max_order,
+            author_id=self.user.id,
+            **create_schema.dict(exclude_unset=exclude_unset),
+        ), None
+
+    @action
+    async def delete_and_displace_orders(self, id: int):
+        errors = defaultdict(list)
+        topic: Topic = await self._repository.retrieve(id=id)
+
+        if not topic:
+            errors['topic_id'].append('Данной темы не существует.')
+        errors |= await self._validate_manage_topics_in_room(room_id=topic.room_id)
+
+        if len(errors) > 0:
+            return None, errors
+        else:
+            await self._repository.delete_and_displace_orders([topic])
+        return None, errors
