@@ -73,7 +73,7 @@ class IServiceBase(SchemaMapMixin):
     @action
     async def create(
         self,
-        createSchema: CreateSchema,
+        create_schema: CreateSchema,
         exclude_unset: bool = False,
         join: list[str] = None,
     ) -> Tuple[BaseDBModel, Dict]:
@@ -82,7 +82,7 @@ class IServiceBase(SchemaMapMixin):
     @action
     async def bulk_update(
         self,
-        updateSchema: UpdateSchema,
+        update_schema: UpdateSchema,
         filters: Dict = {},
         exclude_unset: bool = True,
     ) -> Tuple[BaseDBModel, Dict]:
@@ -160,11 +160,11 @@ class CreateUpdateService(IServiceBase):
     @action
     async def create(
         self,
-        createSchema: CreateSchema,
+        create_schema: CreateSchema,
         exclude_unset: bool = False,
         join: list[str] = None,
     ) -> Tuple[BaseDBModel, Dict]:
-        schema_dict = createSchema.dict(exclude_unset=exclude_unset)
+        schema_dict = create_schema.dict(exclude_unset=exclude_unset)
         attrs, errors = await self._validate_values(**schema_dict)
 
         if errors:
@@ -181,8 +181,8 @@ class CreateUpdateService(IServiceBase):
         listCreateSchema: List[CreateSchema],
     ) -> Tuple[list[BaseDBModel], list[dict[str, Any]]]:
         results = [
-            await self.create(createSchema=createSchema)
-            for createSchema in listCreateSchema
+            await self.create(create_schema=create_schema)
+            for create_schema in listCreateSchema
         ]
 
         errors = [error for _, error in results]
@@ -206,11 +206,11 @@ class CreateUpdateService(IServiceBase):
     async def update(
         self,
         id: Union[int, str],
-        updateSchema: UpdateSchema,
+        update_schema: UpdateSchema,
         join: list[str] = None,
         exclude_unset: bool = True,
     ) -> Tuple[BaseDBModel, Dict]:
-        schema_dict = updateSchema.dict(exclude_unset=exclude_unset)
+        schema_dict = update_schema.dict(exclude_unset=exclude_unset)
         attrs, errors = await self._validate_values(**schema_dict)
 
         if errors:
@@ -226,12 +226,12 @@ class CreateUpdateService(IServiceBase):
     @action
     async def bulk_update(
         self,
-        updateSchema: UpdateSchema,
+        update_schema: UpdateSchema,
         filters: Dict = {},
         exclude_unset: bool = True,
     ) -> Tuple[BaseDBModel, Dict]:
         """Update multiple objects fitting assigned filters."""
-        schema_dict = updateSchema.dict(exclude_unset=exclude_unset)
+        schema_dict = update_schema.dict(exclude_unset=exclude_unset)
         errors = await self._validate_values(**schema_dict)
 
         if errors:

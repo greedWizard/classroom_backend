@@ -162,7 +162,7 @@ async def update_current_user(
     user_service.set_user(current_user)
     user, errors = await user_service.update(
         id=current_user.id,
-        updateSchema=userUpdateSchema,
+        update_schema=userUpdateSchema,
     )
 
     if errors:

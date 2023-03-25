@@ -127,7 +127,7 @@ class RoomPostService(AuthorMixin, CRUDService):
     async def update(
         self,
         id,
-        updateSchema,
+        update_schema,
         join: list[str] = None,
         exclude_unset: bool = True,
     ):
@@ -135,24 +135,24 @@ class RoomPostService(AuthorMixin, CRUDService):
 
         if not await self._check_participant_permission(participation):
             return None, {'error': _('You are not allowed to do that.')}
-        return await super().update(id, updateSchema, join, exclude_unset)
+        return await super().update(id, update_schema, join, exclude_unset)
 
     @action
     async def create(
         self,
-        createSchema,
+        create_schema,
         exclude_unset: bool = False,
         join: list[str] = None,
     ):
         participation: Participation = await self._participation_repository.retrieve(
             user_id=self.user.id,
-            room_id=createSchema.room_id,
+            room_id=create_schema.room_id,
         )
 
         if not await self._check_participant_permission(participation):
             return None, {'error': _('You are not allowed to do that.')}
         return await super().create(
-            createSchema=createSchema,
+            create_schema=create_schema,
             exclude_unset=exclude_unset,
             join=join,
         )

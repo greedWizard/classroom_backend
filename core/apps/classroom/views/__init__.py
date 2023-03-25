@@ -4,6 +4,7 @@ from .assignments import router as assignments_router
 from .classroom import classroom_router
 from .participations import participations_router
 from .room_posts import room_posts_router
+from .topics import topic_router
 
 
 router = APIRouter()
@@ -19,4 +20,9 @@ router.include_router(
     router=assignments_router,
     prefix='/homework-assignment',
     tags=['assignment'],
+)
+router.include_router(
+    router=topic_router,
+    prefix='/topic',
+    tags=['topics'],
 )

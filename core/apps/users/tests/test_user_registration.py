@@ -42,7 +42,9 @@ async def test_user_registration_success(
         'email': email,
     }
 
-    mocker.patch('core.common.services.email.NotificationsService.send_email')
+    mocker.patch(
+        'core.common.services.notifications.NotificationsService.send_registration_success',
+    )
 
     response = client.post(url, json=user_creds)
 

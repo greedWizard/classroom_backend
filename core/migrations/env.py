@@ -11,12 +11,12 @@ from alembic import context
 from core.common.config import config as project_config
 
 # import models
-from core.apps.classroom.models import * # no qa
-from core.apps.users.models import * # no qa
-from core.apps.attachments.models import * # no qa
-from core.apps.chat.models import *
+from core.apps.classroom.models import *  # no qa
+from core.apps.users.models import *  # no qa
+from core.apps.attachments.models import *  # no qa
+from core.apps.chat.models import *  # no qa
 
-from core.common.models.base import BaseDBModel # no qa
+from core.common.models.base import BaseDBModel  # no qa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
