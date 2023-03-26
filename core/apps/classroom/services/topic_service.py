@@ -135,7 +135,7 @@ class TopicService(AuthorMixin, CRUDService):
         if len(errors) > 0:
             return None, errors
 
-        max_order = await self._repository.count(room_id=create_schema.room_id)
+        max_order = await self._repository.count(room_id=create_schema.room_id) + 1
         return await self._repository.create(
             join=join,
             order=max_order,

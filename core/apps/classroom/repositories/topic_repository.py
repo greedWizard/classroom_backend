@@ -4,10 +4,10 @@ from typing import (
 )
 
 from sqlalchemy import (
-    func,
     select,
     update,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.apps.classroom.models.topics import Topic
 from core.common.repositories.base import CRUDRepository
@@ -16,25 +16,24 @@ from core.common.repositories.base import CRUDRepository
 class TopicRepository(CRUDRepository):
     _model: type[Topic] = Topic
 
-    async def _displace_orders(self, room_id: int):
-        from_table = select(
-            self._model.id,
-            func.row_number().over(order_by=self._model.order.asc()).label('row_number'),
-        ).filter(self._model.room_id == room_id)
-
-        statement = update(self._model).values(order=from_table.c.row_number - 1).filter(
-            self._model.id == from_table.c.id,
+    async def _displace_orders(self, room_id: int, session: Optional[AsyncSession]):
+        statement = select(self._model).where(
+            self._model.room_id == room_id,
+        ).order_by(
+            self._model.order.asc(),
         )
+        existing_topics_in_room = (await session.execute(statement)).scalars().all()
 
-        async with self.get_session() as session:
-            await session.execute(statement)
-            await session.commit()
+        for index, topic in enumerate(existing_topics_in_room, 1):
+            topic.order = index
+
+        session.add_all(existing_topics_in_room)
 
     async def delete_and_displace_orders(self, instances: Iterable[_model]):
         async with self.get_session() as session:
             for instance in instances:
-                await self._displace_orders(instance.room_id)
-                session.delete(instance)
+                await session.delete(instance)
+                await self._displace_orders(instance.room_id, session=session)
             await session.commit()
 
     async def update_next_topics(
