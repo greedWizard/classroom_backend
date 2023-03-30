@@ -188,3 +188,6 @@ msgstr "Пользователь не запрашивал смену парол
 
 msgid "User with that vk id already exists!"
 msgstr "Пользователь с таким VK ID уже существует!"
+
+msgid "The topic does not exist."
+msgstr "Данной темы не существует."

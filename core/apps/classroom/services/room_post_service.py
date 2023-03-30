@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from core.apps.classroom.constants import ParticipationRoleEnum
 from core.apps.classroom.models import (
     Participation,
@@ -6,8 +8,13 @@ from core.apps.classroom.models import (
 from core.apps.classroom.repositories.participation_repository import ParticipationRepository
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
+from core.apps.classroom.repositories.topic_repository import TopicRepository
 from core.apps.classroom.schemas import RoomPostEmailNotificationSchema
-from core.apps.classroom.schemas.room_posts import RoomPostCreateSuccessSchema
+from core.apps.classroom.schemas.room_posts import (
+    RoomPostCreateSchema,
+    RoomPostCreateSuccessSchema,
+    RoomPostUpdateSchema,
+)
 from core.apps.localization.utils import translate as _
 from core.common.config import config
 from core.common.services.author import AuthorMixin
@@ -20,6 +27,7 @@ class RoomPostService(AuthorMixin, CRUDService):
     _repository: RoomPostRepository = RoomPostRepository()
     _participation_repository: ParticipationRepository = ParticipationRepository()
     _room_repository: RoomRepository = RoomRepository()
+    _topic_repository: TopicRepository = TopicRepository()
 
     schema_map = {
         'create': RoomPostCreateSuccessSchema,
@@ -82,9 +90,7 @@ class RoomPostService(AuthorMixin, CRUDService):
     ):
         if not participation:
             return False
-        if not participation.can_manage_posts:
-            return False
-        return True
+        return participation.can_manage_posts
 
     async def _get_participation_by_room_post(
         self,
@@ -123,24 +129,52 @@ class RoomPostService(AuthorMixin, CRUDService):
             ), None
         return await super().fetch(_ordering, join, limit=limit, offset=offset, **filters)
 
+    async def _validate_topic(
+        self,
+        topic_id: int,
+        room_id: int,
+    ) -> dict:
+        errors = defaultdict(list)
+        topic = await self._topic_repository.retrieve(id=topic_id)
+
+        if topic is None:
+            errors['topic_id'].append('Данной темы не существует.')
+        elif topic.room_id != room_id:
+            errors['topic_id'].append('Вы не можете добавить тему из другой комнаты.')
+        return errors
+
     @action
     async def update(
         self,
-        id,
-        update_schema,
+        id: int,
+        update_schema: RoomPostUpdateSchema,
         join: list[str] = None,
         exclude_unset: bool = True,
     ):
         participation = await self._get_participation_by_room_post(id)
+        post = await self._repository.retrieve(
+            join=join,
+            id=id,
+        )
+        errors = defaultdict(list)
 
         if not await self._check_participant_permission(participation):
-            return None, {'error': _('You are not allowed to do that.')}
+            errors['room_id'].append(_('You are not allowed to do that.'))
+        if update_schema.topic_id is not None:
+            errors |= await self._validate_topic(
+                topic_id=update_schema.topic_id,
+                room_id=post.room_id,
+            )
+
+        if errors:
+            return None, errors
+
         return await super().update(id, update_schema, join, exclude_unset)
 
     @action
     async def create(
         self,
-        create_schema,
+        create_schema: RoomPostCreateSchema,
         exclude_unset: bool = False,
         join: list[str] = None,
     ):
@@ -148,9 +182,19 @@ class RoomPostService(AuthorMixin, CRUDService):
             user_id=self.user.id,
             room_id=create_schema.room_id,
         )
+        errors = defaultdict(list)
 
         if not await self._check_participant_permission(participation):
-            return None, {'error': _('You are not allowed to do that.')}
+            errors['room_id'].append(_('You are not allowed to do that.'))
+        if create_schema.topic_id is not None:
+            errors |= await self._validate_topic(
+                topic_id=create_schema.topic_id,
+                room_id=create_schema.room_id,
+            )
+
+        if errors:
+            return None, errors
+
         return await super().create(
             create_schema=create_schema,
             exclude_unset=exclude_unset,
