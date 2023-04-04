@@ -39,9 +39,10 @@ class RoomPostAbstractSchema(BaseModel):
 
 class RoomPostCreateSchema(RoomPostAbstractSchema):
     room_id: int
+    type: str
     text: Optional[str]
     author_id: Optional[int]
-    type: str
+    topic_id: Optional[int] = None
 
 
 class RoomPostCreateSuccessSchema(RoomPostCreateSchema):
@@ -49,10 +50,11 @@ class RoomPostCreateSuccessSchema(RoomPostCreateSchema):
 
 
 class RoomPostUpdateSchema(BaseModel):
-    type: str
+    type: Optional[str] = None
     description: Optional[str] = None
     text: Optional[str] = None
-    title: str
+    title: Optional[str] = None
+    topic_id: Optional[int] = None
 
 
 class RoomPostDetailSchema(BaseModel):

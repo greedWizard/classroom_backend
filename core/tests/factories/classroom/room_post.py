@@ -27,6 +27,7 @@ class RoomPostFactory(AsyncRepositoryFactory):
         'random_element',
         elements=[role.value for role in RoomPostType],
     )
+    topic = None
 
     class Meta:
         model = RoomPost

@@ -47,6 +47,17 @@ class RoomPost(BaseDBModel, AttachmentsCountMixin, AuthorAbstract):
         ),
         uselist=True,
     )
+    topic_id = sa.Column(
+        sa.Integer,
+        sa.ForeignKey('topics.id', ondelete='SET NULL'),
+    )
+    topic = relationship(
+        'Topic',
+        backref=backref(
+            'posts',
+            uselist=True,
+        ),
+    )
 
     @property
     def is_assignable(self):
