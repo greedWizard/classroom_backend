@@ -118,6 +118,7 @@ class RoomPostService(AuthorMixin, CRUDService):
                 user_id=self.user.id,
             ):
                 return None, {'error': _('Access denied!')}
+
         if search:
             return await self._repository.search_fetch(
                 _ordering,

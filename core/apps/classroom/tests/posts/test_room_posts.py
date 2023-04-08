@@ -1,3 +1,5 @@
+from typing import Iterable
+
 from fastapi import status
 from fastapi.applications import FastAPI
 
@@ -7,6 +9,7 @@ from core.apps.classroom.constants import (
     ParticipationRoleEnum,
     RoomPostType,
 )
+from core.apps.classroom.models.room_posts import RoomPost
 from core.apps.classroom.repositories.post_repository import RoomPostRepository
 from core.apps.classroom.repositories.room_repository import RoomRepository
 from core.tests.client import FastAPITestClient
@@ -425,3 +428,62 @@ async def test_get_room_posts_search(
         },
     )
     assert response.json()['items'] == []
+
+
+def assert_homeworks_found(
+    homeworks: Iterable[RoomPost],
+    type: str,
+    response: dict,
+):
+    assert 'items' in response, response
+    assert len(homeworks) == len(response['items']), response
+
+    response_ids = [item['id'] for item in response['items']]
+
+    assert all(
+        homework.id in response_ids for homework in homeworks
+    )
+    assert all(
+        item['type'] == type for item in response['items']
+    )
+
+
+@pytest.mark.asyncio
+async def test_room_post_fetch_type(
+    app: FastAPI,
+    client: FastAPITestClient,
+):
+    participation = await ParticipationFactory.create()
+    room = participation.room
+    homeworks_count = 8
+    materials_count = 5
+
+    homeworks = await RoomPostFactory.create_batch(
+        homeworks_count,
+        room=room,
+        type=RoomPostType.homework,
+    )
+    materials = await RoomPostFactory.create_batch(
+        materials_count,
+        room=room,
+        type=RoomPostType.material,
+    )
+
+    url = app.url_path_for('get_room_posts')
+    client.authorize(participation.user)
+
+    response = client.get(
+        url=url, params={
+            'type': RoomPostType.homework,
+            'room_id': participation.room.id,
+        },
+    )
+    assert_homeworks_found(homeworks, RoomPostType.homework, response.json())
+
+    response = client.get(
+        url=url, params={
+            'type': RoomPostType.material,
+            'room_id': participation.room.id,
+        },
+    )
+    assert_homeworks_found(materials, RoomPostType.material, response.json())
