@@ -13,6 +13,7 @@ from fastapi_pagination import (
 
 from starlette import status
 
+from core.apps.classroom.constants import RoomPostType
 from core.apps.classroom.schemas import (
     RoomPostCreateSchema,
     RoomPostCreateSuccessSchema,
@@ -83,7 +84,7 @@ async def get_room_posts(
     limit: int = Query(default=50),
     offset: int = Query(default=0),
     search: str = Query(default=''),
-    type: str = Query(default=None),
+    type: RoomPostType = Query(default=None, title='Тип поста'),
 ):
     room_post_service = RoomPostService(user)
 
