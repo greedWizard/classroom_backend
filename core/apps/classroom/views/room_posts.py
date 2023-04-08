@@ -83,16 +83,24 @@ async def get_room_posts(
     limit: int = Query(default=50),
     offset: int = Query(default=0),
     search: str = Query(default=''),
+    type: str = Query(default=None),
 ):
     room_post_service = RoomPostService(user)
-    room_posts, errors = await room_post_service.fetch(
-        _ordering=ordering,
-        room_id=room_id,
-        join=['author', 'attachments'],
-        search=search,
-        limit=limit,
-        offset=offset,
-    )
+
+    fetch_params = {
+        '_ordering': ordering,
+        'room_id': room_id,
+        'join': ['author', 'attachments'],
+        'search': search,
+        'limit': limit,
+        'offset': offset,
+    }
+
+    # TODO: Bad request если енму нет в списке доступных
+    if type is not None:
+        fetch_params['type'] = type
+
+    room_posts, errors = await room_post_service.fetch(**fetch_params)
 
     if errors:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=errors)
