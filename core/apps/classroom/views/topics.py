@@ -40,10 +40,10 @@ async def create_topic_handler(
     return topic
 
 
-@topic_router.put(
+@topic_router.patch(
     '/{topic_id}',
     response_model=TopicRetrieveSchema,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     operation_id='updateTopic',
     summary='Update room lessons topic',
     description='Updates room lessons topic',

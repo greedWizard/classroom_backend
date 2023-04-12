@@ -68,15 +68,17 @@ class TopicService(AuthorMixin, CRUDService):
             )
         return errors
 
-    async def __validate_topic_update(self, topic_id: int, title: str) -> dict:
+    async def __validate_topic_update(
+        self,
+        topic: Topic,
+    ) -> dict:
         errors = defaultdict(list)
 
-        topic: Topic = await self._repository.retrieve(id=topic_id)
-
         if topic is None:
-            errors['id'].append('Данной темы не существует.')
+            errors['topic_id'].append('Данной темы не существует.')
+        else:
+            errors: dict = await self._validate_manage_topics_in_room(topic.room_id)
 
-        errors |= await self.__validate_topic_create(topic.room_id, title=title)
         return errors
 
     @action
@@ -107,16 +109,18 @@ class TopicService(AuthorMixin, CRUDService):
         join: list[str] = None,
         **kwargs,
     ) -> tuple[Topic, dict]:
-        errors = await self.__validate_topic_update(topic_id=id, title=update_schema.title)
+        errors = await self.__validate_topic_update(
+            topic=await self._repository.retrieve(id=id),
+        )
 
         if len(errors) > 0:
             return None, errors
 
+        update_kwargs = update_schema.dict(exclude_unset=True, exclude_none=True)
         topic = await self._repository.update_with_order(
             topic_id=id,
-            title=update_schema.title,
-            order=update_schema.order,
             join=join,
+            **update_kwargs,
         )
         return topic, None
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -7,8 +9,8 @@ class TopicCreateSchema(BaseModel):
 
 
 class TopicUpdateSchema(BaseModel):
-    title: str
-    order: int
+    title: Optional[str] = None
+    order: Optional[int] = None
 
 
 class TopicRetrieveSchema(TopicCreateSchema):

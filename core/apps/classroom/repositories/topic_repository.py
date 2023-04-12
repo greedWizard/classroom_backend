@@ -4,6 +4,7 @@ from typing import (
 )
 
 from sqlalchemy import (
+    func,
     select,
     update,
 )
@@ -16,7 +17,7 @@ from core.common.repositories.base import CRUDRepository
 class TopicRepository(CRUDRepository):
     _model: type[Topic] = Topic
 
-    async def _displace_orders(self, room_id: int, session: Optional[AsyncSession]):
+    async def _displace_orders(self, room_id: int, session: AsyncSession):
         statement = select(self._model).where(
             self._model.room_id == room_id,
         ).order_by(
@@ -40,34 +41,47 @@ class TopicRepository(CRUDRepository):
         self,
         room_id: int,
         order: int,
+        session: AsyncSession,
+        current_order: Optional[int] = None,
     ) -> None:
-        statement = update(self._model).filter(
-            self._model.order >= order,
-            self._model.room_id == room_id,
-        ).values(order=self._model.order + 1)
+        max_order = (
+            await session.execute(
+                select(func.max(self._model.order)),
+            )
+        ).scalar()
 
-        async with self.get_session() as session:
-            await session.execute(statement)
-            await session.commit()
+        if order != max_order:
+            statement = update(self._model).filter(
+                self._model.order >= order,
+                self._model.room_id == room_id,
+            ).values(order=self._model.order + 1)
+        else:
+            statement = update(self._model).filter(
+                self._model.order > current_order,
+                self._model.room_id == room_id,
+            ).values(order=self._model.order - 1)
+        await session.execute(statement)
 
     async def update_with_order(
         self,
         topic_id: int,
-        title: str,
-        order: int,
         join: Optional[list[str]] = None,
+        **update_kwargs,
     ) -> _model:
-        current_topic = await self.retrieve(id=topic_id, join=join)
-
-        if current_topic.order != order:
-            await self.update_next_topics(
-                room_id=current_topic.room_id,
-                order=order,
-            )
+        order = update_kwargs.get('order')
+        current_topic: Topic = await self.retrieve(id=topic_id, join=join)
 
         async with self.get_session() as session:
-            current_topic.title = title
-            current_topic.order = order
+            if order is not None and current_topic.order != order:
+                await self.update_next_topics(
+                    room_id=current_topic.room_id,
+                    order=order,
+                    session=session,
+                    current_order=current_topic.order,
+                )
+
+            for field, value in update_kwargs.items():
+                setattr(current_topic, field, value)
 
             session.add(current_topic)
             await session.commit()
