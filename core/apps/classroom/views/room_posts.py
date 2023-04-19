@@ -85,21 +85,24 @@ async def get_room_posts(
     offset: int = Query(default=0),
     search: str = Query(default=''),
     type: RoomPostType = Query(default=None, title='Тип поста'),
+    topic_id: int = Query(None),
 ):
     room_post_service = RoomPostService(user)
 
     fetch_params = {
         '_ordering': ordering,
         'room_id': room_id,
-        'join': ['author', 'attachments'],
+        'join': ['author', 'attachments', 'topic'],
         'search': search,
         'limit': limit,
         'offset': offset,
     }
 
-    # TODO: Bad request если енму нет в списке доступных
+    # TODO: Bad request если енума нет в списке доступных
     if type is not None:
         fetch_params['type'] = type
+    if topic_id is not None:
+        fetch_params['topic_id'] = topic_id
 
     room_posts, errors = await room_post_service.fetch(**fetch_params)
 

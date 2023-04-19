@@ -4,7 +4,6 @@ from typing import (
 )
 
 from sqlalchemy import (
-    func,
     select,
     update,
 )
@@ -37,30 +36,30 @@ class TopicRepository(CRUDRepository):
                 await self._displace_orders(instance.room_id, session=session)
             await session.commit()
 
-    async def update_next_topics(
+    async def change_orders(
         self,
         room_id: int,
-        order: int,
+        current_topic: Topic,
+        new_order: int,
         session: AsyncSession,
-        current_order: Optional[int] = None,
     ) -> None:
-        max_order = (
-            await session.execute(
-                select(func.max(self._model.order)),
-            )
-        ).scalar()
+        if current_topic.order == new_order:
+            return
 
-        if order != max_order:
-            statement = update(self._model).filter(
-                self._model.order >= order,
-                self._model.room_id == room_id,
-            ).values(order=self._model.order + 1)
-        else:
-            statement = update(self._model).filter(
-                self._model.order > current_order,
-                self._model.room_id == room_id,
-            ).values(order=self._model.order - 1)
-        await session.execute(statement)
+        available_orders = (
+            await session.execute(
+                select(self._model.order).filter(self._model.room_id == room_id),
+            )
+        ).scalars().all()
+
+        if new_order in available_orders:
+            await session.execute(
+                update(self._model).where(
+                    self._model.room_id == room_id,
+                    self._model.order == new_order,
+                ).values(order=current_topic.order),
+            )
+        current_topic.order = new_order
 
     async def update_with_order(
         self,
@@ -73,11 +72,11 @@ class TopicRepository(CRUDRepository):
 
         async with self.get_session() as session:
             if order is not None and current_topic.order != order:
-                await self.update_next_topics(
+                await self.change_orders(
                     room_id=current_topic.room_id,
-                    order=order,
                     session=session,
-                    current_order=current_topic.order,
+                    current_topic=current_topic,
+                    new_order=order,
                 )
 
             for field, value in update_kwargs.items():
