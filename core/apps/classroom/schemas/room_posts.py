@@ -7,6 +7,7 @@ from typing import (
 from pydantic import BaseModel
 
 from core.apps.attachments.schemas import AttachmentListItemSchema
+from core.apps.classroom.constants import RoomPostType
 from core.apps.users.schemas import AuthorSchema
 from core.common.schemas import NormalizedDatetimeModel
 
@@ -39,9 +40,8 @@ class RoomPostAbstractSchema(BaseModel):
 
 class RoomPostCreateSchema(RoomPostAbstractSchema):
     room_id: int
-    type: str
+    type: RoomPostType
     text: Optional[str]
-    author_id: Optional[int]
     topic_id: Optional[int] = None
 
 

@@ -31,7 +31,8 @@ async def test_fetch_posts_with_topics(
     client.authorize(participation.user)
 
     topic = await TopicFactory.create()
-    posts_with_topics_count, posts_without_topics_count = 3, 4
+
+    posts_with_topics_count, posts_without_topics_count = 2, 5
     posts_with_topics = await RoomPostFactory.create_batch(
         posts_with_topics_count,
         room=participation.room,
@@ -53,7 +54,7 @@ async def test_fetch_posts_with_topics(
     response_data = response.json()
 
     await assert_posts_matched(
-        response_data,
+        response_data['items'],
         response.status_code,
         posts_with_topics + posts_without_topics,
     )
@@ -68,7 +69,7 @@ async def test_fetch_posts_with_topics(
     response_data = response.json()
 
     await assert_posts_matched(
-        response_data,
+        response_data['items'],
         response.status_code,
         posts_with_topics,
     )

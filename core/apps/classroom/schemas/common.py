@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel
+
 from core.apps.users.schemas import AuthorSchema
 from core.common.schemas import NormalizedDatetimeModel
 
@@ -23,6 +25,15 @@ class RoomNestedSchema(RoomBaseSchema, NormalizedDatetimeModel):
         orm_mode = True
 
 
+class TopicNestedSchema(BaseModel):
+    id: int
+    title: str = ''
+    order: int
+
+    class Config:
+        orm_mode = True
+
+
 class RoomPostListItemSchema(NormalizedDatetimeModel):
     id: int
     title: str
@@ -34,6 +45,7 @@ class RoomPostListItemSchema(NormalizedDatetimeModel):
     attachments_count: int
     room_id: int
     type: str
+    topic: Optional[TopicNestedSchema] = None
 
     class Config(NormalizedDatetimeModel.Config):
         orm_mode = True
